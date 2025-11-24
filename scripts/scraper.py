@@ -171,44 +171,99 @@ TARGET_URLS = [
         "url": "https://wiki.52poke.com/wiki/%E7%B4%ABex%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "",
-        "name": "",
-        "url": ""
+        "code": "SV2P",
+        "name": "冰雪險境",
+        "url": "https://wiki.52poke.com/wiki/%E5%86%B0%E9%9B%AA%E9%99%A9%E5%A2%83%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "",
-        "name": "",
-        "url": ""
+        "code": "SV2D",
+        "name": "碟旋暴擊",
+        "url": "https://wiki.52poke.com/wiki/%E7%A2%9F%E6%97%8B%E6%9A%B4%E5%87%BB%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "",
-        "name": "",
-        "url": ""
+        "code": "SV3",
+        "name": "黯焰支配者",
+        "url": "https://wiki.52poke.com/wiki/%E9%BB%AF%E7%84%B0%E6%94%AF%E9%85%8D%E8%80%85%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "",
-        "name": "",
-        "url": ""
+        "code": "SV4K",
+        "name": "古代咆哮",
+        "url": "https://wiki.52poke.com/wiki/%E5%8F%A4%E4%BB%A3%E5%92%86%E5%93%AE%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "",
-        "name": "",
-        "url": ""
+        "code": "SV4M",
+        "name": "未來閃光",
+        "url": "https://wiki.52poke.com/wiki/%E6%9C%AA%E6%9D%A5%E9%97%AA%E5%85%89%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "",
-        "name": "",
-        "url": ""
+        "code": "SV5K",
+        "name": "狂野之力",
+        "url": "https://wiki.52poke.com/wiki/%E7%8B%82%E9%87%8E%E4%B9%8B%E5%8A%9B%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "",
-        "name": "",
-        "url": ""
+        "code": "SV5M",
+        "name": "異度審判",
+        "url": "https://wiki.52poke.com/wiki/%E7%95%B0%E5%BA%A6%E5%AF%A9%E5%88%A4%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "",
-        "name": "",
-        "url": ""
+        "code": "SV6",
+        "name": "變幻假面",
+        "url": "https://wiki.52poke.com/wiki/%E5%8F%98%E5%B9%BB%E5%81%87%E9%9D%A2%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV7",
+        "name": "星晶奇跡",
+        "url": "https://wiki.52poke.com/wiki/%E6%98%9F%E6%99%B6%E5%A5%87%E8%BF%B9%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV8",
+        "name": "超電突圍",
+        "url": "https://wiki.52poke.com/wiki/%E8%B6%85%E9%9B%BB%E7%AA%81%E5%9C%8D%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV9",
+        "name": "對戰搭檔",
+        "url": "https://wiki.52poke.com/wiki/%E5%B0%8D%E6%88%B0%E6%90%AD%E6%AA%94%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV1a",
+        "name": "三連音爆",
+        "url": "https://wiki.52poke.com/wiki/%E4%B8%89%E8%BF%9E%E9%9F%B3%E7%88%86%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV2a",
+        "name": "寶可夢卡牌151",
+        "url": "https://wiki.52poke.com/wiki/%E5%AE%9D%E5%8F%AF%E6%A2%A6%E5%8D%A1%E7%89%8C151%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV3a",
+        "name": "激狂駭浪",
+        "url": "https://wiki.52poke.com/wiki/%E6%BF%80%E7%8B%82%E9%A7%AD%E6%B5%AA%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV4a",
+        "name": "閃色寶藏ex",
+        "url": "https://wiki.52poke.com/wiki/%E9%97%AA%E8%89%B2%E5%AE%9D%E8%97%8Fex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV5a",
+        "name": "緋紅薄霧",
+        "url": "https://wiki.52poke.com/wiki/%E7%BB%AF%E7%BA%A2%E8%96%84%E9%9B%BE%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV6a",
+        "name": "黑夜漫遊者",
+        "url": "https://wiki.52poke.com/wiki/%E9%BB%91%E5%A4%9C%E6%BC%AB%E6%B8%B8%E8%80%85%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV7a",
+        "name": "樂園騰龍",
+        "url": "https://wiki.52poke.com/wiki/%E4%B9%90%E5%9B%AD%E8%85%BE%E9%BE%99%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV8a",
+        "name": "太晶慶典ex",
+        "url": "https://wiki.52poke.com/wiki/%E5%A4%AA%E6%99%B6%E6%85%B6%E5%85%B8ex%EF%BC%88TCG%EF%BC%89"
     },
     {
         "code": "SV-P",
