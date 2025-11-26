@@ -1,3 +1,3 @@
 # poke_scan_tw
 
-A new Flutter project.
+beta測試中
