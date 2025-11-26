@@ -389,3 +389,7 @@ if __name__ == "__main__":
     import subprocess
     print("\n🚦 開始簡體轉繁體...")
     subprocess.run(["python", "convert.py"], check=True)
+
+    print("\n🚦 開始轉換台灣翻譯...")
+    subprocess.run(["python", "fix_translation.py"], check=True)
+    print("\n✅ 全部完成！")
