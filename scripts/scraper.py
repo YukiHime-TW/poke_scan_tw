@@ -271,17 +271,17 @@ TARGET_URLS = [
         "url": "https://wiki.52poke.com/wiki/SV-P%E7%B9%81%E4%BD%93%E4%B8%AD%E6%96%87%E7%89%88%E7%89%B9%E5%85%B8%E5%8D%A1%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "M1LF",
+        "code": "M1L",
         "name": "超級勇氣",
         "url": "https://wiki.52poke.com/wiki/%E8%B6%85%E7%B4%9A%E5%8B%87%E6%B0%A3%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "M1SF",
+        "code": "M1S",
         "name": "超級交響樂",
         "url": "https://wiki.52poke.com/wiki/%E8%B6%85%E7%B4%9A%E4%BA%A4%E9%9F%BF%E6%A8%82%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "M2F",
+        "code": "M2",
         "name": "烈獄狂火X",
         "url": "https://wiki.52poke.com/wiki/%E7%83%88%E7%8D%84%E7%8B%82%E7%81%ABX%EF%BC%88TCG%EF%BC%89"
     },
