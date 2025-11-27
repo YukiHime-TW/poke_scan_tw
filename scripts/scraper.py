@@ -1,10 +1,11 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-from tcgdexsdk import TCGdex
 import time
+import os
+from tcgdexsdk import TCGdex
 
-# 定義要抓取的系列 (可以自行擴充 URL)
+# 定義要抓取的系列
 TARGET_URLS = [
     {
         "code": "AC1a",
@@ -319,7 +320,10 @@ PROMO_CODES = [
     "M-P"
 ]
 
-database = {}
+JSON_FILE_PATH = 'assets/data.json' # 設定您的 JSON 檔案路徑
+
+# 初始化 TCGdex
+tcgdex = TCGdex("zh-tw")
 
 def clean_text(text):
     return text.strip().replace('\n', '')
@@ -330,25 +334,46 @@ def run_scraper():
 
     headers = {'User-Agent': 'Mozilla/5.0'}
 
-    tcgdex = TCGdex("zh-tw")
+    # --- [修改 1] 讀取現有的資料庫 (而不是每次都重置) ---
+    if os.path.exists(JSON_FILE_PATH):
+        print(f"📂 讀取現有資料庫: {JSON_FILE_PATH}")
+        try:
+            with open(JSON_FILE_PATH, 'r', encoding='utf-8') as f:
+                database = json.load(f)
+        except json.JSONDecodeError:
+            print("⚠️ JSON 格式錯誤，將建立新資料庫")
+            database = {}
+    else:
+        print("⚠️ 找不到資料庫，將建立新資料庫")
+        database = {}
 
     for target in TARGET_URLS:
-        print(f"正在處理: {target['name']} ({target['code']})...")
+        set_code = target['code']
+
+        # --- [修改 2] 核心邏輯：檢查是否已存在且有資料 ---
+        # 如果資料庫有這個系列，且該系列的 'cards' 不為空，就跳過
+        if set_code in database and database[set_code].get('cards'):
+            # 取得目前該系列有幾張卡
+            count = len(database[set_code]['cards'])
+            if count > 0:
+                print(f"⏩ [{set_code}] {target['name']} 已存在 ({count} 張)，跳過爬取。")
+                continue # 直接進入下一個迴圈
+        
+        # --- 如果沒有資料，才開始爬取 ---
+        print(f"🕷️ 正在爬取: {target['name']} ({set_code})...")
         
         try:
-            resp = requests.get(target['url'], headers=headers)
+            resp = requests.get(target['url'], headers=headers, timeout=15)
             soup = BeautifulSoup(resp.text, 'html.parser')
             
-            # 初始化該系列的資料結構
-            database[target['code']] = {
-                "name": target['name'],
-                "cards": {}
-            }
+            # 初始化該系列的資料結構 (如果不存在)
+            if set_code not in database:
+                database[set_code] = {
+                    "name": target['name'],
+                    "cards": {}
+                }
             
-            # 52Poke 的卡表通常在 table.roundy 裡面
-            # 我們尋找包含卡片列表的表格
             tables = soup.find_all('table', class_='roundy')
-            
             card_count = 0
             
             for table in tables:
@@ -356,14 +381,10 @@ def run_scraper():
                 for row in rows:
                     cols = row.find_all('td')
                     if len(cols) < 3: continue
-                    
-                    # 嘗試解析欄位 (編號、名稱、稀有度)
-                    # 結構通常是: [編號] [圖片] [名稱] [稀有度]
+
                     try:
-                        # 提取編號 (第1欄)
+                        # 提取編號
                         num_text = clean_text(cols[0].text)
-                        
-                        # 如果編號不是數字開頭，跳過 (例如標題列)
                         if not num_text or not num_text[0].isdigit():
                             continue
 
@@ -371,13 +392,12 @@ def run_scraper():
                         # 編號格式不改動
                         card_num = num_text
 
-                        # 提取名稱 (第2欄)
-                        # 有時候結構會變，這裡做一個簡單的容錯
+                        # 提取名稱
                         name_text = "未知"
                         if len(cols) >= 3:
                             name_text = clean_text(cols[1].text)
 
-                        # 提取稀有度 (第3欄)
+                        # 提取稀有度
                         rarity_text = ""
                         if len(cols) >= 4:
                             rarity_text = clean_text(cols[2].text)
@@ -386,40 +406,50 @@ def run_scraper():
                         if any(code in num_text for code in PROMO_CODES):
                             rarity_text = "PROMO"
 
-                        # 組合完整卡號，編號移除/後的部分
-                        card_num_for_search = card_num.split('/')[0]
-                        full_card_num = f"{target['code']}-{card_num_for_search}"
-                        # 取得卡片圖片URL
-                        print(f"    處理卡片: {full_card_num} - {name_text}")
+                        # 處理圖片 (您原本的邏輯)
                         image_url = ""
                         try:
-                            card = tcgdex.card.getSync(full_card_num)
-                            image_url = f"{card.image}/high.png"
-                        except Exception as e:
-                            print(f"      ❌ 在 TCGdex SDK 中找不到卡片 {full_card_num}")
-                            # image_url 保持空字串
+                            card_num_for_search = card_num.split('/')[0]
+                            full_card_num = f"{set_code}-{card_num_for_search}"
+                            try:
+                                print(f"   🔍 嘗試在 TCGdex 找卡片: {full_card_num} - {name_text}")
+                                card = tcgdex.card.getSync(full_card_num)
+                                image_url = f"{card.image}/high.webp"
+                            except:
+                                print(f"   ⚠️ 無法在 TCGdex 找到卡片: {full_card_num}")
+                                pass 
+                        except:
+                            pass
 
                         # 存入資料庫
-                        database[target['code']]['cards'][card_num] = {
+                        database[set_code]['cards'][card_num] = {
                             "name": name_text,
                             "rarity": rarity_text,
                             "image": image_url
                         }
                         card_count += 1
-                    except Exception as e:
+                    except Exception:
                         continue
 
-            print(f"  ✅ 成功抓取 {card_count} 張卡片")
+            print(f"   ✅ 成功更新 {card_count} 張卡片")
+            
+            # --- [修改 3] 每爬完一個系列就存檔 (避免爬到一半失敗全沒了) ---
+            with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
+                json.dump(database, f, ensure_ascii=False, indent=2)
+
+            # 禮貌性暫停
+            time.sleep(1)
 
         except Exception as e:
-            print(f"  ❌ 錯誤: {e}")
+            print(f"   ❌ 發生錯誤: {e}")
 
-    # 輸出 JSON
-    with open('data.json', 'w', encoding='utf-8') as f:
+    # 最終確認存檔
+    with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
         json.dump(database, f, ensure_ascii=False, indent=2)
-    print("\n🎉 資料庫建立完成！請將 data.json 複製到 Flutter 專案的 assets 資料夾。")
+        
     elapsed_time = time.time() - start_time
-    print(f"⏱️ 爬取完成，總共花費 {elapsed_time:.2f} 秒。")
+    print(f"\n🎉 全部完成！檔案已儲存至 {JSON_FILE_PATH}")
+    print(f"⏱️ 總共花費 {elapsed_time:.2f} 秒。")
 
 if __name__ == "__main__":
     run_scraper()
