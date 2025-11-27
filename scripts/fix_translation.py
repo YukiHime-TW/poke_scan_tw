@@ -23,7 +23,7 @@ REPLACEMENTS = {
     "鈎": "鉤",               # 爪鉤
     "綫": "線",
     "滙": "匯",
-    "群": "群",               # 有些字體會顯示 "羣"，統一為 "群"
+    "羣": "群",               # 有些字體會顯示 "羣"，統一為 "群"
     "巖": "岩",
     "託": "托",
 
@@ -94,12 +94,13 @@ def process_data():
                 
                 if original_name != fixed_name:
                     card_info['name'] = fixed_name
-                    # print(f"    [卡片] {original_name} -> {fixed_name}") # 太多了，註解掉不顯示
                     count += 1
                 
                 # (選用) 修正稀有度，如果有中文字的話
                 if 'rarity' in card_info:
                     card_info['rarity'] = fix_text(card_info['rarity'])
+                    if card_info['rarity'] == '全':
+                        card_info['rarity'] = 'SR'
 
     print(f"✅ 修正完成！共修正了 {count} 處。")
     
