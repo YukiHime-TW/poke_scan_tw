@@ -3,7 +3,9 @@ from opencc import OpenCC
 
 cc = OpenCC('s2t')  # 簡體轉繁體
 
-with open('data.json', 'r', encoding='utf-8') as f:
+JSON_FILE_PATH = '../assets/data.json'
+
+with open(JSON_FILE_PATH, 'r', encoding='utf-8') as f:
     data = json.load(f)
 
 def convert_dict(d):

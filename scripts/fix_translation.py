@@ -1,12 +1,7 @@
 import json
 import re
 
-# 來源檔案與輸出檔案
-INPUT_FILE = 'data.json'
-OUTPUT_FILE = 'data.json'
-
-# 修正後的檔案路徑
-ASSETS_DIR = 'assets'
+JSON_FILE_PATH = '../assets/data.json'
 
 # 定義修正字典 (左邊是錯誤/異體字，右邊是台灣官方標準字)
 # 這些是針對您提供的檔案中觀察到的問題，以及常見的轉換錯誤
@@ -65,10 +60,10 @@ def fix_text(text):
 def process_data():
     print("📂 讀取 data.json 中...")
     try:
-        with open(INPUT_FILE, 'r', encoding='utf-8') as f:
+        with open(JSON_FILE_PATH, 'r', encoding='utf-8') as f:
             data = json.load(f)
     except FileNotFoundError:
-        print(f"❌ 找不到 {INPUT_FILE}，請確認檔案位置。")
+        print(f"❌ 找不到 {JSON_FILE_PATH}，請確認檔案位置。")
         return
 
     print("🔧 開始修正翻譯與異體字...")
@@ -105,8 +100,8 @@ def process_data():
     print(f"✅ 修正完成！共修正了 {count} 處。")
     
     # 輸出檔案至assets資料夾
-    print(f"💾 儲存至 {ASSETS_DIR}/{OUTPUT_FILE} ...")
-    with open(f"../{ASSETS_DIR}/{OUTPUT_FILE}", 'w', encoding='utf-8') as f:
+    print(f"💾 儲存至 {JSON_FILE_PATH} ...")
+    with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
         json.dump(data, f, ensure_ascii=False, indent=2)
 
     print("🎉 完成！ data.json 已放入您的 Flutter 專案。")
