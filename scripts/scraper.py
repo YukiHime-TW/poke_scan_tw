@@ -396,7 +396,7 @@ def run_scraper():
                             card = tcgdex.card.getSync(full_card_num)
                             image_url = f"{card.image}/high.png"
                         except Exception as e:
-                            print(f"      ❌ 無法在 TCGdex SDK 中找到卡片 {full_card_num}，image_url 留空。")
+                            print(f"      ❌ 在 TCGdex SDK 中找不到卡片 {full_card_num}")
                             # image_url 保持空字串
 
                         # 存入資料庫
