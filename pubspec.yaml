@@ -25,6 +25,18 @@ dependencies:
   firebase_auth: ^5.1.0
   cloud_firestore: ^5.0.0
   google_sign_in: ^6.2.1
+  # 加入這個套件
+  flutter_launcher_icons: ^0.13.1
+
+# 在最下方加入設定區塊
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/icon.png" # 您的圖片路徑
+  min_sdk_android: 21 # android min sdk min:16, default 21
+  web:
+    generate: true
+    image_path: "assets/icon.png"
 
 flutter:
   uses-material-design: true

@@ -1,0 +1,22 @@
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圓形 -->
+  <circle cx="256" cy="256" r="256" fill="#F44336"/>
+  
+  <!-- 下半部白色 -->
+  <path d="M256 512C397.385 512 512 397.385 512 256C512 235.9 509.8 216.3 505.6 197.5H6.4C2.2 216.3 0 235.9 0 256C0 397.385 114.615 512 256 512Z" fill="white"/>
+  
+  <!-- 中間黑帶 -->
+  <rect x="0" y="236" width="512" height="40" fill="#333333"/>
+  
+  <!-- 中間按鈕外圈 -->
+  <circle cx="256" cy="256" r="70" fill="white" stroke="#333333" stroke-width="40"/>
+  
+  <!-- 中間按鈕內圈 (掃描鏡頭感) -->
+  <circle cx="256" cy="256" r="35" fill="white">
+    <animate attributeName="fill" values="#ffffff;#81D4FA;#ffffff" dur="2s" repeatCount="indefinite" />
+  </circle>
+  
+  <!-- 掃描框框 (象徵掃描卡片) -->
+  <path d="M166 166 L136 166 L136 226 M346 166 L376 166 L376 226 M166 346 L136 346 L136 286 M346 346 L376 346 L376 286" 
+        stroke="#333333" stroke-width="25" fill="none" stroke-linecap="round"/>
+</svg>
