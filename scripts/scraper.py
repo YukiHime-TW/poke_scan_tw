@@ -1,7 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-import re
+from tcgdexsdk import TCGdex
+import time
 
 # 定義要抓取的系列 (可以自行擴充 URL)
 TARGET_URLS = [
@@ -226,6 +227,21 @@ TARGET_URLS = [
         "url": "https://wiki.52poke.com/wiki/%E5%B0%8D%E6%88%B0%E6%90%AD%E6%AA%94%EF%BC%88TCG%EF%BC%89"
     },
     {
+        "code": "SV10",
+        "name": "火箭隊的榮耀",
+        "url": "https://wiki.52poke.com/wiki/%E7%81%AB%E7%AE%AD%E9%9A%8A%E7%9A%84%E6%A6%AE%E8%80%80%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV11W",
+        "name": "純白閃焰",
+        "url": "https://wiki.52poke.com/wiki/%E7%B4%94%E7%99%BD%E9%96%83%E7%84%B0%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV11B",
+        "name": "漆黑伏特",
+        "url": "https://wiki.52poke.com/wiki/%E6%BC%86%E9%BB%91%E4%BC%8F%E7%89%B9%EF%BC%88TCG%EF%BC%89"
+    },
+    {
         "code": "SV1a",
         "name": "三連音爆",
         "url": "https://wiki.52poke.com/wiki/%E4%B8%89%E8%BF%9E%E9%9F%B3%E7%88%86%EF%BC%88TCG%EF%BC%89"
@@ -264,6 +280,11 @@ TARGET_URLS = [
         "code": "SV8a",
         "name": "太晶慶典ex",
         "url": "https://wiki.52poke.com/wiki/%E5%A4%AA%E6%99%B6%E6%85%B6%E5%85%B8ex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SV9a",
+        "name": "熱風競技場",
+        "url": "https://wiki.52poke.com/wiki/%E7%86%B1%E9%A2%A8%E7%AB%B6%E6%8A%80%E5%A0%B4%EF%BC%88TCG%EF%BC%89"
     },
     {
         "code": "SV-P",
@@ -305,8 +326,11 @@ def clean_text(text):
 
 def run_scraper():
     print("🚀 開始爬取繁體中文卡表...")
-    
+    start_time = time.time()
+
     headers = {'User-Agent': 'Mozilla/5.0'}
+
+    tcgdex = TCGdex("zh-tw")
 
     for target in TARGET_URLS:
         print(f"正在處理: {target['name']} ({target['code']})...")
@@ -362,13 +386,26 @@ def run_scraper():
                         if any(code in num_text for code in PROMO_CODES):
                             rarity_text = "PROMO"
 
+                        # 組合完整卡號，編號移除/後的部分
+                        card_num_for_search = card_num.split('/')[0]
+                        full_card_num = f"{target['code']}-{card_num_for_search}"
+                        # 取得卡片圖片URL
+                        print(f"    處理卡片: {full_card_num} - {name_text}")
+                        image_url = ""
+                        try:
+                            card = tcgdex.card.getSync(full_card_num)
+                            image_url = f"{card.image}/high.png"
+                        except Exception as e:
+                            print(f"      ❌ 無法在 TCGdex SDK 中找到卡片 {full_card_num}，image_url 留空。")
+                            # image_url 保持空字串
+
                         # 存入資料庫
                         database[target['code']]['cards'][card_num] = {
                             "name": name_text,
-                            "rarity": rarity_text
+                            "rarity": rarity_text,
+                            "image": image_url
                         }
                         card_count += 1
-                        
                     except Exception as e:
                         continue
 
@@ -381,6 +418,8 @@ def run_scraper():
     with open('data.json', 'w', encoding='utf-8') as f:
         json.dump(database, f, ensure_ascii=False, indent=2)
     print("\n🎉 資料庫建立完成！請將 data.json 複製到 Flutter 專案的 assets 資料夾。")
+    elapsed_time = time.time() - start_time
+    print(f"⏱️ 爬取完成，總共花費 {elapsed_time:.2f} 秒。")
 
 if __name__ == "__main__":
     run_scraper()
