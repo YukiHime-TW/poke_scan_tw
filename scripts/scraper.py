@@ -428,14 +428,14 @@ TARGET_URLS = [
         "url": "https://wiki.52poke.com/wiki/%E8%B6%85%E7%B4%9A%E4%BA%A4%E9%9F%BF%E6%A8%82%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "M2a",
+        "code": "M2",
         "name": "烈獄狂火X",
         "url": "https://wiki.52poke.com/wiki/%E7%83%88%E7%8D%84%E7%8B%82%E7%81%ABX%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "M2",
+        "code": "M2a",
         "name": "超級進化夢想ex",
-        "url": ""
+        "url": "https://wiki.52poke.com/wiki/%E8%B6%85%E7%B4%9A%E9%80%B2%E5%8C%96%E5%A4%A2%E6%83%B3ex%EF%BC%88TCG%EF%BC%89"
     },
     {
         "code": "M-P",
