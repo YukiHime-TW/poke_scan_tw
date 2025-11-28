@@ -34,16 +34,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<CollectionProvider>(context);
 
-    // --- 1. 【新增】取得螢幕寬度與計算列數 ---
+    // --- 1. 取得螢幕寬度與計算列數 (響應式設計) ---
     double screenWidth = MediaQuery.of(context).size.width;
     int crossAxisCount;
 
     if (screenWidth < 600) {
-      crossAxisCount = 3; // 手機直向：3列 (卡片大一點才看得到圖)
+      crossAxisCount = 3; // 手機直向：3列
     } else if (screenWidth < 1000) {
       crossAxisCount = 5; // 平板或手機橫向：5列
     } else {
-      crossAxisCount = 8; // 電腦/大螢幕：8列 (維持您原本的設定)
+      crossAxisCount = 8; // 電腦/大螢幕：8列
     }
 
     // 讀取資料中
@@ -55,20 +55,31 @@ class _HomeScreenState extends State<HomeScreen> {
     List<Widget> slivers = [];
     String query = _searchText.trim().toLowerCase();
 
-    for (String setCode in provider.database.keys) {
+    // 1. 排序 Key (依照日期降冪)
+    var sortedKeys = provider.database.keys.toList();
+    sortedKeys.sort((keyA, keyB) {
+      var dataA = provider.database[keyA];
+      var dataB = provider.database[keyB];
+      // 如果沒有日期，預設排在最後
+      String dateA = dataA['releaseDate'] ?? "2000-01-01";
+      String dateB = dataB['releaseDate'] ?? "2000-01-01";
+      return dateB.compareTo(dateA); // 新的在上面
+    });
+
+    for (String setCode in sortedKeys) {
       var setData = provider.database[setCode];
       Map allCards = setData['cards'];
 
       Map filteredCards = {};
 
-      // 1. 篩選卡片
+      // 2. 篩選卡片
       if (query.isEmpty) {
         filteredCards = allCards;
       } else {
         String setNameLower = setData['name'].toString().toLowerCase();
         String setCodeLower = setCode.toLowerCase();
 
-        // 如果系列名稱或代號符合 (例如搜尋 "AC1a")，顯示整套
+        // 如果系列名稱或代號符合，顯示整套
         bool setMatches = setNameLower.contains(query) || setCodeLower.contains(query);
 
         if (setMatches) {
@@ -77,11 +88,8 @@ class _HomeScreenState extends State<HomeScreen> {
           // 否則篩選單卡 (名稱、編號、稀有度)
           allCards.forEach((k, v) {
             String cardNameLower = v['name'].toString().toLowerCase();
-            // 【修改重點】新增稀有度判斷
             String rarityLower = (v['rarity'] ?? "").toString().toLowerCase();
 
-            // 判斷：名稱符合 OR 編號符合 OR 稀有度符合
-            // 例如輸入 "SR"，這裡的 rarityLower 包含 "sr" 就會成立
             if (cardNameLower.contains(query) ||
                 k.contains(query) ||
                 rarityLower.contains(query)) {
@@ -93,7 +101,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (filteredCards.isEmpty) continue;
 
-      // 2. 計算進度 (計算該系列總進度，不受搜尋影響)
+      // 3. 計算進度 (計算該系列總進度，不受搜尋影響)
       int ownedCount = 0;
       allCards.keys.forEach((key) {
         if (provider.userCollection.containsKey("$setCode-$key")) {
@@ -107,7 +115,7 @@ class _HomeScreenState extends State<HomeScreen> {
       bool isExpanded =
           query.isNotEmpty ? true : (_expandedState[setCode] ?? false);
 
-      // 3. 建構介面
+      // 4. 建構介面 (Slivers)
       slivers.add(
         MultiSliver(
           pushPinnedChildren: true, // 讓標題有推擠效果
@@ -249,7 +257,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: const TextStyle(color: Colors.white),
                 cursorColor: Colors.white,
                 decoration: const InputDecoration(
-                  hintText: "搜尋 名稱 / 編號 / 稀有度(SR)...", // 提示文字更新
+                  hintText: "搜尋 名稱 / 編號 / 稀有度 ...",
                   hintStyle: TextStyle(color: Colors.white70),
                   border: InputBorder.none,
                 ),
@@ -543,17 +551,9 @@ class _CardGridItemState extends State<CardGridItem> {
     String? imgUrl = widget.cardData['image'];
 
     if (kIsWeb && imgUrl != null && imgUrl.isNotEmpty) {
-      // 判斷圖片來源
       if (imgUrl.contains("asia.pokemon-card.com")) {
-        // 情況 A：台灣官網圖片 -> 會擋 CORS -> 必須走代理
-        // 去除原本網址的 https:// 前綴
         String cleanUrl = imgUrl.replaceFirst(RegExp(r'^https?://'), '');
-        // 加上 wsrv.nl 代理
         imgUrl = "https://wsrv.nl/?url=$cleanUrl&output=webp";
-        // (小技巧：加 &output=webp 可以讓代理幫忙轉檔，讀取更快)
-      } else {
-        // 情況 B：TCGdex 或其他來源 -> 通常支援 CORS -> 直接用原網址
-        // 這樣載入速度最快，不用繞路
       }
     }
 
