@@ -542,6 +542,21 @@ class _CardGridItemState extends State<CardGridItem> {
     // 圖片連結
     String? imgUrl = widget.cardData['image'];
 
+    if (kIsWeb && imgUrl != null && imgUrl.isNotEmpty) {
+      // 判斷圖片來源
+      if (imgUrl.contains("asia.pokemon-card.com")) {
+        // 情況 A：台灣官網圖片 -> 會擋 CORS -> 必須走代理
+        // 去除原本網址的 https:// 前綴
+        String cleanUrl = imgUrl.replaceFirst(RegExp(r'^https?://'), '');
+        // 加上 wsrv.nl 代理
+        imgUrl = "https://wsrv.nl/?url=$cleanUrl&output=webp";
+        // (小技巧：加 &output=webp 可以讓代理幫忙轉檔，讀取更快)
+      } else {
+        // 情況 B：TCGdex 或其他來源 -> 通常支援 CORS -> 直接用原網址
+        // 這樣載入速度最快，不用繞路
+      }
+    }
+
     return GestureDetector(
       // 單擊：增加
       onTap: () => provider.addCard(widget.setCode, widget.cNum),
