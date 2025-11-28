@@ -568,6 +568,10 @@ def run_scraper():
                         if len(cols) >= 3:
                             name_text = clean_text(cols[1].text)
 
+                        # 特例處理: name_text 為 "25周年收藏版" 的資料是錯誤的，跳過不存
+                        if name_text == "25周年收藏版":
+                            continue
+
                         # 提取稀有度
                         rarity_text = ""
                         if len(cols) >= 4:
