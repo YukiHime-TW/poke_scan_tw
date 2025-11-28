@@ -12,6 +12,11 @@ JSON_FILE_PATH = '../assets/data.json'
 
 TARGET_URLS = [
     {
+        "code": "SM-P",
+        "name": "SM-P 太陽&月亮 特典卡",
+        "url": "https://wiki.52poke.com/wiki/SM-P%E7%B9%81%E4%BD%93%E4%B8%AD%E6%96%87%E7%89%88%E7%89%B9%E5%85%B8%E5%8D%A1%EF%BC%88TCG%EF%BC%89"
+    },
+    {
         "code": "AC1a",
         "name": "眾星雲集組合篇 SET A",
         "url": "https://wiki.52poke.com/wiki/%E4%BC%97%E6%98%9F%E4%BA%91%E9%9B%86%E7%BB%84%E5%90%88%E7%AF%87_SET_A%EF%BC%88TCG%EF%BC%89"
@@ -20,6 +25,11 @@ TARGET_URLS = [
         "code": "AC1b",
         "name": "眾星雲集組合篇 SET B",
         "url": "https://wiki.52poke.com/wiki/%E4%BC%97%E6%98%9F%E4%BA%91%E9%9B%86%E7%BB%84%E5%90%88%E7%AF%87_SET_B%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "AC1D",
+        "name": "G超起始牌組 眾星雲集組合篇",
+        "url": "https://wiki.52poke.com/wiki/G%E8%B6%85%E8%B5%B7%E5%A7%8B%E7%89%8C%E7%B5%84_%E7%9C%BE%E6%98%9F%E9%9B%B2%E9%9B%86%E7%B5%84%E5%90%88%E7%AF%87%EF%BC%88TCG%EF%BC%89"
     },
     {
         "code": "AC2a",
@@ -32,6 +42,11 @@ TARGET_URLS = [
         "url": "https://wiki.52poke.com/wiki/%E7%BE%8E%E5%A4%A2%E6%88%90%E7%9C%9F%E7%B5%84%E5%90%88%E7%AF%87_SET_B%EF%BC%88TCG%EF%BC%89"
     },
     {
+        "code": "AC2D",
+        "name": "G超起始牌組 美夢成真組合篇",
+        "url": "https://wiki.52poke.com/wiki/G%E8%B6%85%E8%B5%B7%E5%A7%8B%E7%89%8C%E7%B5%84_%E7%BE%8E%E5%A4%A2%E6%88%90%E7%9C%9F%E7%B5%84%E5%90%88%E7%AF%87%EF%BC%88TCG%EF%BC%89"
+    },
+    {
         "code": "AS5a",
         "name": "雙倍爆擊 SET A",
         "url": "https://wiki.52poke.com/wiki/%E5%8F%8C%E5%80%8D%E7%88%86%E5%87%BB_SET_A%EF%BC%88TCG%EF%BC%89"
@@ -42,6 +57,11 @@ TARGET_URLS = [
         "url": "https://wiki.52poke.com/wiki/%E5%8F%8C%E5%80%8D%E7%88%86%E5%87%BB_SET_B%EF%BC%88TCG%EF%BC%89"
     },
     {
+        "code": "AS5D",
+        "name": "G超起始牌組 雙倍爆擊",
+        "url": "https://wiki.52poke.com/wiki/G%E8%B6%85%E8%B5%B7%E5%A7%8B%E7%89%8C%E7%B5%84_%E9%9B%99%E5%80%8D%E7%88%86%E6%93%8A%EF%BC%88TCG%EF%BC%89"
+    },
+    {
         "code": "AS6a",
         "name": "傳說交鋒 SET A",
         "url": "https://wiki.52poke.com/wiki/%E4%BC%A0%E8%AF%B4%E4%BA%A4%E9%94%8B_SET_A%EF%BC%88TCG%EF%BC%89"
@@ -50,6 +70,41 @@ TARGET_URLS = [
         "code": "AS6b",
         "name": "傳說交鋒 SET B",
         "url": "https://wiki.52poke.com/wiki/%E4%BC%A0%E8%AF%B4%E4%BA%A4%E9%94%8B_SET_B%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "AS6D",
+        "name": "G超起始牌組 傳說交鋒",
+        "url": "https://wiki.52poke.com/wiki/G%E8%B6%85%E8%B5%B7%E5%A7%8B%E7%89%8C%E7%B5%84_%E5%82%B3%E8%AA%AA%E4%BA%A4%E9%8B%92%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SC1a",
+        "name": "劍&盾 SET A",
+        "url": "https://wiki.52poke.com/wiki/%E5%89%91%26%E7%9B%BE_SET_A%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SC1b",
+        "name": "劍&盾 SET B",
+        "url": "https://wiki.52poke.com/wiki/%E5%89%91%26%E7%9B%BE_SET_B%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SC1D",
+        "name": "V起始牌組 劍&盾",
+        "url": "https://wiki.52poke.com/wiki/V%E8%B5%B7%E5%A7%8B%E7%89%8C%E7%BB%84_%E5%89%91%26%E7%9B%BE%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SC2a",
+        "name": "無極力量 SET A",
+        "url": "https://wiki.52poke.com/wiki/%E6%97%A0%E6%9E%81%E5%8A%9B%E9%87%8F_SET_A%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SC2b",
+        "name": "無極力量 SET B",
+        "url": "https://wiki.52poke.com/wiki/%E6%97%A0%E6%9E%81%E5%8A%9B%E9%87%8F_SET_B%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SC2D",
+        "name": "V起始牌組 無極力量",
+        "url": "https://wiki.52poke.com/wiki/V%E8%B5%B7%E5%A7%8B%E7%89%8C%E7%BB%84_%E6%97%A0%E6%9E%81%E5%8A%9B%E9%87%8F%EF%BC%88TCG%EF%BC%89"
     },
     {
         "code": "S4",
@@ -65,6 +120,26 @@ TARGET_URLS = [
         "code": "S5R",
         "name": "連擊大師",
         "url": "https://wiki.52poke.com/wiki/%E8%BF%9E%E5%87%BB%E5%A4%A7%E5%B8%88%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SCA",
+        "name": "V起始牌組 搭檔",
+        "url": "https://wiki.52poke.com/wiki/V%E8%B5%B7%E5%A7%8B%E7%89%8C%E7%BB%84_%E6%90%AD%E6%A1%A3%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SCB",
+        "name": "V起始牌組 挑戰",
+        "url": "https://wiki.52poke.com/wiki/V%E8%B5%B7%E5%A7%8B%E7%89%8C%E7%BB%84_%E6%8C%91%E6%88%98%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SCC",
+        "name": "V起始牌組 進化",
+        "url": "https://wiki.52poke.com/wiki/V%E8%B5%B7%E5%A7%8B%E7%89%8C%E7%BB%84_%E8%BF%9B%E5%8C%96%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SCD",
+        "name": "V起始牌組 強大",
+        "url": "https://wiki.52poke.com/wiki/V%E8%B5%B7%E5%A7%8B%E7%89%8C%E7%BB%84_%E5%BC%BA%E5%A4%A7%EF%BC%88TCG%EF%BC%89"
     },
     {
         "code": "S6H",
@@ -132,19 +207,59 @@ TARGET_URLS = [
         "url": "https://wiki.52poke.com/wiki/%E4%BC%8A%E5%B8%83%E8%8B%B1%E9%9B%84%EF%BC%88TCG%EF%BC%89"
     },
     {
+        "code": "S8a",
+        "name": "25週年收藏版",
+        "url": "https://wiki.52poke.com/wiki/25%E5%91%A8%E5%B9%B4%E6%94%B6%E8%97%8F%E7%89%88%EF%BC%88TCG%EF%BC%89"
+    },
+    {
         "code": "S9a",
         "name": "對戰地區",
         "url": "https://wiki.52poke.com/wiki/%E5%AF%B9%E6%88%98%E5%9C%B0%E5%8C%BA%EF%BC%88TCG%EF%BC%89"
     },
     {
+        "code": "SLD",
+        "name": "起始組合VSTAR 達克萊伊",
+        "url": "https://wiki.52poke.com/wiki/%E8%B5%B7%E5%A7%8B%E7%BB%84%E5%90%88VSTAR_%E8%BE%BE%E5%85%8B%E8%8E%B1%E4%BC%8A%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SLL",
+        "name": "起始組合VSTAR 路卡利歐",
+        "url": "https://wiki.52poke.com/wiki/%E8%B5%B7%E5%A7%8B%E7%BB%84%E5%90%88VSTAR_%E8%B7%AF%E5%8D%A1%E5%88%A9%E6%AC%A7%EF%BC%88TCG%EF%BC%89"
+    },
+    {
         "code": "S10b",
-        "name": "強化擴充包 Pokémon GO",
+        "name": "Pokémon GO",
         "url": "https://wiki.52poke.com/wiki/%E5%BC%BA%E5%8C%96%E6%89%A9%E5%85%85%E5%8C%85_Pok%C3%A9mon_GO%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SPZ",
+        "name": "VSTAR&VMAX高級牌組 捷拉奧拉",
+        "url": "https://wiki.52poke.com/wiki/VSTAR%26VMAX%E9%AB%98%E7%BA%A7%E7%89%8C%E7%BB%84_%E6%8D%B7%E6%8B%89%E5%A5%A5%E6%8B%89%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SPD",
+        "name": "VSTAR&VMAX高級牌組 代歐奇希斯",
+        "url": "https://wiki.52poke.com/wiki/VSTAR%26VMAX%E9%AB%98%E7%BA%A7%E7%89%8C%E7%BB%84_%E4%BB%A3%E6%AC%A7%E5%A5%87%E5%B8%8C%E6%96%AF%EF%BC%88TCG%EF%BC%89"
     },
     {
         "code": "S11a",
         "name": "白熱奧祕",
         "url": "https://wiki.52poke.com/wiki/%E7%99%BD%E7%83%AD%E5%A5%A5%E7%A7%98%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SDL",
+        "name": "V初階牌組 噴火龍",
+        "url": "https://wiki.52poke.com/wiki/V%E5%88%9D%E9%98%B6%E7%89%8C%E7%BB%84_%E5%96%B7%E7%81%AB%E9%BE%99%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SDP",
+        "name": "V初階牌組 皮卡丘",
+        "url": "https://wiki.52poke.com/wiki/V%E5%88%9D%E9%98%B6%E7%89%8C%E7%BB%84_%E7%9A%AE%E5%8D%A1%E4%B8%98%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SDM",
+        "name": "V初階牌組 超夢",
+        "url": "https://wiki.52poke.com/wiki/V%E5%88%9D%E9%98%B6%E7%89%8C%E7%BB%84_%E8%B6%85%E6%A2%A6%EF%BC%88TCG%EF%BC%89"
     },
     {
         "code": "S4a",
@@ -162,8 +277,13 @@ TARGET_URLS = [
         "url": "https://wiki.52poke.com/wiki/%E5%A4%A9%E5%9C%B0%E4%B8%87%E7%89%A9VSTAR%EF%BC%88TCG%EF%BC%89"
     },
     {
+        "code": "SK",
+        "name": "頂級訓練家收藏箱 VSTAR",
+        "url": "https://wiki.52poke.com/wiki/%E9%A0%82%E7%B4%9A%E8%A8%93%E7%B7%B4%E5%AE%B6%E6%94%B6%E8%97%8F%E7%AE%B1_VSTAR%EF%BC%88TCG%EF%BC%89"
+    },
+    {
         "code": "S-P",
-        "name": "S-P繁體中文版特典卡",
+        "name": "S-P 劍&盾 特典卡",
         "url": "https://wiki.52poke.com/wiki/S-P%E7%B9%81%E4%BD%93%E4%B8%AD%E6%96%87%E7%89%88%E7%89%B9%E5%85%B8%E5%8D%A1%EF%BC%88TCG%EF%BC%89"
     },
     {
@@ -293,7 +413,7 @@ TARGET_URLS = [
     },
     {
         "code": "SV-P",
-        "name": "SV-P繁體中文版特典卡",
+        "name": "SV-P 朱&紫 特典卡",
         "url": "https://wiki.52poke.com/wiki/SV-P%E7%B9%81%E4%BD%93%E4%B8%AD%E6%96%87%E7%89%88%E7%89%B9%E5%85%B8%E5%8D%A1%EF%BC%88TCG%EF%BC%89"
     },
     {
@@ -307,13 +427,18 @@ TARGET_URLS = [
         "url": "https://wiki.52poke.com/wiki/%E8%B6%85%E7%B4%9A%E4%BA%A4%E9%9F%BF%E6%A8%82%EF%BC%88TCG%EF%BC%89"
     },
     {
-        "code": "M2",
+        "code": "M2a",
         "name": "烈獄狂火X",
         "url": "https://wiki.52poke.com/wiki/%E7%83%88%E7%8D%84%E7%8B%82%E7%81%ABX%EF%BC%88TCG%EF%BC%89"
     },
     {
+        "code": "M2",
+        "name": "超級進化夢想",
+        "url": ""
+    },
+    {
         "code": "M-P",
-        "name": "M-P繁體中文版特典卡",
+        "name": "M-P 超級進化 特典卡",
         "url": "https://wiki.52poke.com/wiki/M-P%E7%B9%81%E4%BD%93%E4%B8%AD%E6%96%87%E7%89%88%E7%89%B9%E5%85%B8%E5%8D%A1%EF%BC%88TCG%EF%BC%89"
     },
 ]
@@ -518,4 +643,8 @@ if __name__ == "__main__":
 
     print("\n🚦 開始轉換台灣翻譯...")
     subprocess.run(["python", "fix_translation.py"], check=True)
+
+    print("\n🚦 加入擴充包發售日期...")
+    subprocess.run(["python", "add_date.py"], check=True)
+
     print("\n✅ 全部完成！")
