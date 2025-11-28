@@ -20,7 +20,7 @@ def convert_dict(d):
 
 data_traditional = convert_dict(data)
 
-with open('data.json', 'w', encoding='utf-8') as f:
+with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
     json.dump(data_traditional, f, ensure_ascii=False, indent=2)
 
 print("轉換完成，請查看 data.json")
