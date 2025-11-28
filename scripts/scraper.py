@@ -495,7 +495,7 @@ def run_scraper():
                 for card in cards.values():
                     if card.get('image') and len(card['image']) > 0:
                         cards_with_img += 1
-                
+
                 if cards_with_img == total_cards:
                     # 情況 1: 系列存在 + 所有卡片都有圖片 -> 跳過
                     print(f"⏩ [{set_code}] {set_name} 系列完整")
@@ -522,24 +522,24 @@ def run_scraper():
         try:
             resp = requests.get(target['url'], headers=headers, timeout=15)
             soup = BeautifulSoup(resp.text, 'html.parser')
-            
+
             # 確保資料庫結構
             if set_code not in database:
                 database[set_code] = {
                     "name": set_name,
                     "cards": {}
                 }
-            
+
             tables = soup.find_all('table', class_='roundy')
             processed_count = 0
             skipped_count = 0
-            
+
             for table in tables:
                 rows = table.find_all('tr')
                 for row in rows:
                     cols = row.find_all('td')
                     if len(cols) < 3: continue
-                    
+
                     try:
                         # 提取編號
                         num_text = clean_text(cols[0].text)
@@ -558,7 +558,7 @@ def run_scraper():
                             # 如果已經有資料且有圖片，直接跳過，不浪費時間打 API
                             skipped_count += 1
                             continue
-                        
+
                         # ======================================================
                         # 👇 以下只有「缺圖」或「新卡」才會執行
                         # ======================================================
@@ -591,7 +591,7 @@ def run_scraper():
                             try:
                                 card_num_for_search = card_num.split('/')[0] # 取斜線前部分 (例如 005)
                                 full_card_num = f"{set_code}-{card_num_for_search}"
-                                
+
                                 # TCGdex 查詢
                                 card = tcgdex.card.getSync(full_card_num)
                                 if card and card.image:
@@ -610,7 +610,7 @@ def run_scraper():
                                     if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
                                         if int(parts[0]) > int(parts[1]):
                                             is_high_rarity = True
-                                
+
                                 if not is_high_rarity:
                                     # 尋找該系列的 001 號卡片 (需要模糊搜尋，因為 Key 可能是 "001/165")
                                     base_card = None
@@ -621,7 +621,7 @@ def run_scraper():
                                         if k.startswith("001/") or k == "001":
                                             base_card = v
                                             break
-                                    
+
                                     # 如果找到了 001 且它有官網圖片連結
                                     if base_card and base_card.get('image') and "asia.pokemon-card.com" in base_card['image']:
                                         base_image_url = base_card['image']
@@ -631,20 +631,20 @@ def run_scraper():
                                         if match:
                                             base_number_str = match.group(1) # "00004637"
                                             base_number_int = int(base_number_str)
-                                            
+
                                             # 計算目標卡片的檔名數字
                                             # 公式: 001的檔名數字 + (當前卡號 - 1)
                                             target_offset = int(card_num_for_search) - 1
                                             new_number_int = base_number_int + target_offset
-                                            
+
                                             # 轉回字串並補零 (保持跟原本一樣的位數，通常是8位)
                                             new_number_str = str(new_number_int).zfill(len(base_number_str))
-                                            
+
                                             # 替換網址
                                             image_url = base_image_url.replace(f"tw{base_number_str}.png", f"tw{new_number_str}.png")
                                             print(f"   📸 官網補圖成功: {full_card_num}")
                                     else:
-                                        print(f"   ⚠️ 官網補圖失敗: 找不到系列 {set_code} 的 001 號卡片作為基準")
+                                        print(f"   ⚠️ 官網補圖失敗: 找不到系列 {set_code} 的 001 號卡片作為基準，無法推算 {full_card_num} 的圖片")
                             except Exception as e:
                                 print(f"   ⚠️ 官網補圖邏輯錯誤: {e}")
                                 pass
