@@ -433,7 +433,7 @@ TARGET_URLS = [
     },
     {
         "code": "M2",
-        "name": "超級進化夢想",
+        "name": "超級進化夢想ex",
         "url": ""
     },
     {
@@ -574,10 +574,6 @@ def run_scraper():
 
                         # 如果編號格式為 "001/S-P"、"001/SV-P"、"001/M-P"，則將稀有度設置為PROMO
                         if any(code in num_text for code in PROMO_CODES):
-                            rarity_text = "PROMO"
-
-                        # 特別處理稀有度縮寫
-                        if rarity_text == "PR":
                             rarity_text = "PROMO"
 
                         # --------------------------------------------------
