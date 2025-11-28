@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 import json
 import time
 import os
+import re
 from tcgdexsdk import TCGdex
 
 # ==========================================
@@ -580,24 +581,70 @@ def run_scraper():
                         # 圖片獲取 (呼叫 TCGdex SDK)
                         # --------------------------------------------------
                         image_url = ""
-                        try:
-                            # 如果資料庫裡本來就有圖片連結 (雖然上面檢查過了，但防呆)，就沿用
-                            if current_card_data and current_card_data.get('image'):
-                                image_url = current_card_data.get('image')
-                            else:
-                                # 真的沒圖，才打 API
-                                card_num_for_search = card_num.split('/')[0]
+
+                        # 1. 嘗試保留舊圖片
+                        if current_card_data and current_card_data.get('image'):
+                            image_url = current_card_data.get('image')
+
+                        # 2. 嘗試 TCGdex SDK
+                        if not image_url:
+                            try:
+                                card_num_for_search = card_num.split('/')[0] # 取斜線前部分 (例如 005)
                                 full_card_num = f"{set_code}-{card_num_for_search}"
                                 
+                                # TCGdex 查詢
                                 card = tcgdex.card.getSync(full_card_num)
-                                if card is not None:
-                                    if card.image is not None:
-                                        image_url = f"{card.image}/high.webp"
-                                        print(f"   📸 補圖成功: {full_card_num}")
-                        except:
-                            # 找不到圖是正常的 (例如 TCGdex 還沒更新)，保持空字串即可
-                            print(f"   ⚠️ 補圖失敗: {full_card_num} - {name_text}，保持空白")
-                            pass 
+                                if card and card.image:
+                                    image_url = f"{card.image}/high.webp"
+                            except:
+                                pass 
+
+                        # 3. 嘗試從官網推算 (Fallback)
+                        if not image_url:
+                            try:
+                                # 檢查是否為高版本卡 (SR/SAR 等)，如果是通常不適用順序推算，跳過
+                                is_high_rarity = False
+                                if '/' in card_num:
+                                    parts = card_num.split('/')
+                                    if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+                                        if int(parts[0]) > int(parts[1]):
+                                            is_high_rarity = True
+                                
+                                if not is_high_rarity:
+                                    # 尋找該系列的 001 號卡片 (需要模糊搜尋，因為 Key 可能是 "001/165")
+                                    base_card = None
+                                    cards_in_set = database[set_code]['cards']
+                                    
+                                    # 遍歷尋找 001 開頭的卡
+                                    for k, v in cards_in_set.items():
+                                        if k.startswith("001/") or k == "001":
+                                            base_card = v
+                                            break
+                                    
+                                    # 如果找到了 001 且它有官網圖片連結
+                                    if base_card and base_card.get('image') and "asia.pokemon-card.com" in base_card['image']:
+                                        base_image_url = base_card['image']
+                                        
+                                        # 解析檔名數字 (例如 tw00004637.png -> 00004637)
+                                        match = re.search(r'tw(\d+)\.png', base_image_url)
+                                        if match:
+                                            base_number_str = match.group(1) # "00004637"
+                                            base_number_int = int(base_number_str)
+                                            
+                                            # 計算目標卡片的檔名數字
+                                            # 公式: 001的檔名數字 + (當前卡號 - 1)
+                                            target_offset = int(card_num_for_search) - 1
+                                            new_number_int = base_number_int + target_offset
+                                            
+                                            # 轉回字串並補零 (保持跟原本一樣的位數，通常是8位)
+                                            new_number_str = str(new_number_int).zfill(len(base_number_str))
+                                            
+                                            # 替換網址
+                                            image_url = base_image_url.replace(f"tw{base_number_str}.png", f"tw{new_number_str}.png")
+                                            print(f"   📸 官網補圖成功: {full_card_num}")
+                            except Exception as e:
+                                print(f"官網補圖邏輯錯誤: {e}") 
+                                pass
                         # --------------------------------------------------
 
                         # 存入資料庫
