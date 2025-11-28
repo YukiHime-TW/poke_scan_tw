@@ -597,7 +597,8 @@ def run_scraper():
                                 if card and card.image:
                                     image_url = f"{card.image}/high.webp"
                             except:
-                                pass 
+                                print(f"   ⚠️ TCGdex 查詢失敗: {full_card_num}")
+                                pass
 
                         # 3. 嘗試從官網推算 (Fallback)
                         if not image_url:
@@ -642,8 +643,10 @@ def run_scraper():
                                             # 替換網址
                                             image_url = base_image_url.replace(f"tw{base_number_str}.png", f"tw{new_number_str}.png")
                                             print(f"   📸 官網補圖成功: {full_card_num}")
+                                    else:
+                                        print(f"   ⚠️ 官網補圖失敗: 找不到系列 {set_code} 的 001 號卡片作為基準")
                             except Exception as e:
-                                print(f"官網補圖邏輯錯誤: {e}") 
+                                print(f"   ⚠️ 官網補圖邏輯錯誤: {e}")
                                 pass
                         # --------------------------------------------------
 
