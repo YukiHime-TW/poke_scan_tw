@@ -11,7 +11,7 @@ class CollectionProvider with ChangeNotifier {
   Map<String, int> _userCollection = {};
   bool _isLoading = true;
 
-  // 【修正重點 1】恢復使用本地變數來儲存 User，由 Stream 控制，確保同步
+  // 恢復使用本地變數來儲存 User，由 Stream 控制
   User? _user;
 
   bool get isLoading => _isLoading;
@@ -28,7 +28,7 @@ class CollectionProvider with ChangeNotifier {
     final String jsonString = await rootBundle.loadString('assets/data.json');
     _database = json.decode(jsonString);
 
-    // 2. 【修正重點 2】這是唯一的真理來源。當 Firebase 通知狀態改變，我們才更新 UI
+    // 2. 這是唯一的真理來源。當 Firebase 通知狀態改變，我們才更新 UI
     FirebaseAuth.instance.authStateChanges().listen((User? firebaseUser) async {
       _user = firebaseUser; // 更新本地變數
 
@@ -57,7 +57,6 @@ class CollectionProvider with ChangeNotifier {
     } else {
       _userCollection = {};
     }
-    // 注意：這裡不呼叫 notifyListeners，統一交給 authStateChanges 處理，避免重複刷新
   }
 
   Future<void> _loadFromCloud(String uid) async {
@@ -121,7 +120,6 @@ class CollectionProvider with ChangeNotifier {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      // 不需要手動 notifyListeners，因為 authStateChanges 會觸發
     } catch (e) {
       print("登入錯誤: $e");
     }
@@ -131,13 +129,14 @@ class CollectionProvider with ChangeNotifier {
     try {
       await GoogleSignIn().signOut();
       await FirebaseAuth.instance.signOut();
-      // 不需要手動 notifyListeners，因為 authStateChanges 會觸發
     } catch (e) {
       print("登出錯誤: $e");
     }
   }
 
-  // --- 修改卡片 ---
+  // --- 修改卡片與查詢 ---
+
+  // 內部使用：找尋真正的 Key (解決 "001" vs "001/158" 的問題)
   String? _findRealKeyInDatabase(String setCode, String inputNumber) {
     if (!_database.containsKey(setCode)) return null;
     Map<String, dynamic> cards = _database[setCode]['cards'];
@@ -145,6 +144,15 @@ class CollectionProvider with ChangeNotifier {
     if (cards.containsKey(cleanNum)) return cleanNum;
     for (String dbKey in cards.keys) {
       if (dbKey == cleanNum || dbKey.startsWith("$cleanNum/")) return dbKey;
+    }
+    return null;
+  }
+
+  // 【新增】供 ScannerScreen 查詢卡片資訊用
+  Map<String, dynamic>? getCardInfo(String setCode, String rawCardNum) {
+    String? realKey = _findRealKeyInDatabase(setCode, rawCardNum);
+    if (realKey != null) {
+      return _database[setCode]['cards'][realKey];
     }
     return null;
   }
