@@ -19,6 +19,9 @@ class _HomeScreenState extends State<HomeScreen> {
   // 展開狀態紀錄
   final Map<String, bool> _expandedState = {};
 
+  // 【新增 1】用來定位每一個標題的 Key Map
+  final Map<String, GlobalKey> _headerKeys = {};
+
   // 搜尋相關變數
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
@@ -30,11 +33,27 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
+  // 【新增 2】捲動到指定 Key 的函式
+  void _scrollToHeader(String setCode) {
+    // 稍微延遲一下，等待介面收合渲染完畢後再捲動
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final key = _headerKeys[setCode];
+      if (key != null && key.currentContext != null) {
+        Scrollable.ensureVisible(
+          key.currentContext!,
+          duration: const Duration(milliseconds: 300), // 動畫時間
+          curve: Curves.easeInOut, // 動畫曲線
+          alignment: 0.0, // 0.0 代表對齊螢幕「最上方」 (1.0 是最下方)
+        );
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CollectionProvider>(context);
 
-    // --- 1. 取得螢幕寬度與計算列數 (響應式設計) ---
+    // 1. 取得螢幕寬度與計算列數 (響應式設計)
     double screenWidth = MediaQuery.of(context).size.width;
     int crossAxisCount;
 
@@ -46,7 +65,6 @@ class _HomeScreenState extends State<HomeScreen> {
       crossAxisCount = 8; // 電腦/大螢幕：8列
     }
 
-    // 讀取資料中
     if (provider.isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
@@ -69,10 +87,9 @@ class _HomeScreenState extends State<HomeScreen> {
     for (String setCode in sortedKeys) {
       var setData = provider.database[setCode];
       Map allCards = setData['cards'];
-
       Map filteredCards = {};
 
-      // 2. 篩選卡片
+      // 篩選卡片
       if (query.isEmpty) {
         filteredCards = allCards;
       } else {
@@ -89,7 +106,6 @@ class _HomeScreenState extends State<HomeScreen> {
           allCards.forEach((k, v) {
             String cardNameLower = v['name'].toString().toLowerCase();
             String rarityLower = (v['rarity'] ?? "").toString().toLowerCase();
-
             if (cardNameLower.contains(query) ||
                 k.contains(query) ||
                 rarityLower.contains(query)) {
@@ -101,7 +117,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (filteredCards.isEmpty) continue;
 
-      // 3. 計算進度 (計算該系列總進度，不受搜尋影響)
+      // 計算進度 (計算該系列總進度，不受搜尋影響)
       int ownedCount = 0;
       allCards.keys.forEach((key) {
         if (provider.userCollection.containsKey("$setCode-$key")) {
@@ -112,10 +128,13 @@ class _HomeScreenState extends State<HomeScreen> {
           allCards.isNotEmpty ? ownedCount / allCards.length : 0.0;
 
       // 搜尋模式下強制展開，否則讀取狀態
-      bool isExpanded =
-          query.isNotEmpty ? true : (_expandedState[setCode] ?? false);
+      bool isExpanded = query.isNotEmpty ? true : (_expandedState[setCode] ?? false);
 
-      // 4. 建構介面 (Slivers)
+      // 【新增 3】確保這個系列有一個對應的 GlobalKey
+      if (!_headerKeys.containsKey(setCode)) {
+        _headerKeys[setCode] = GlobalKey();
+      }
+
       slivers.add(
         MultiSliver(
           pushPinnedChildren: true, // 讓標題有推擠效果
@@ -126,13 +145,24 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   // 搜尋時不允許收合，避免邏輯混亂
                   if (query.isEmpty) {
+                    bool currentlyExpanded = _expandedState[setCode] ?? false;
+
                     setState(() {
-                      _expandedState[setCode] = !isExpanded;
+                      // 切換狀態
+                      _expandedState[setCode] = !currentlyExpanded;
                     });
+
+                    // 【新增 4】如果是執行「收合」動作，觸發捲動
+                    if (currentlyExpanded) {
+                      _scrollToHeader(setCode);
+                    }
                   }
                 },
                 child: Container(
-                  height: 90.0, // 高度加高以容納大字體
+                  // 【新增 5】綁定 Key，這樣系統才知道要捲動到哪裡
+                  key: _headerKeys[setCode],
+
+                  height: 90.0,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     boxShadow: [
@@ -205,13 +235,13 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
 
-            // --- 內容網格 (Cards Grid) ---
+            // --- 內容網格 ---
             if (isExpanded)
               SliverPadding(
                 padding: const EdgeInsets.all(8.0),
                 sliver: SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount, // 使用動態計算的列數
+                    crossAxisCount: crossAxisCount,
                     childAspectRatio: 0.7,
                     crossAxisSpacing: 8,
                     mainAxisSpacing: 8,
@@ -380,7 +410,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-
       body: CustomScrollView(
         slivers: slivers.isNotEmpty
             ? slivers
@@ -458,7 +487,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 輔助用的小元件：建立說明項目
   Widget _buildHelpItem(IconData icon, String title, String desc) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -507,15 +535,13 @@ class CardGridItem extends StatefulWidget {
 
 class _CardGridItemState extends State<CardGridItem> {
   Timer? _timer;
-  int _interval = 500; // 初始連點速度
+  int _interval = 500;
 
-  // 開始扣除循環
   void _startDecreasing(CollectionProvider provider) {
     _interval = 500;
     _decreaseLoop(provider);
   }
 
-  // 執行扣除並加速
   void _decreaseLoop(CollectionProvider provider) {
     provider.removeCard(widget.setCode, widget.cNum);
 
@@ -529,7 +555,6 @@ class _CardGridItemState extends State<CardGridItem> {
     });
   }
 
-  // 停止計時
   void _stopDecreasing() {
     if (_timer != null && _timer!.isActive) {
       _timer!.cancel();
@@ -547,7 +572,6 @@ class _CardGridItemState extends State<CardGridItem> {
 
     // 處理編號 (去除斜線後)
     String shortNum = widget.cNum.split('/')[0];
-    // 圖片連結
     String? imgUrl = widget.cardData['image'];
 
     if (kIsWeb && imgUrl != null && imgUrl.isNotEmpty) {
@@ -567,11 +591,10 @@ class _CardGridItemState extends State<CardGridItem> {
       },
       onLongPressEnd: (_) => _stopDecreasing(),
       onLongPressCancel: () => _stopDecreasing(),
-
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isOwned ? Colors.white : Colors.grey[200], // 未擁有底色灰一點
+          color: isOwned ? Colors.white : Colors.grey[200], // 未擁有，底色灰一點
           borderRadius: BorderRadius.circular(6),
           // 邊框：已擁有顯示金黃色，未擁有灰色
           border: isOwned
