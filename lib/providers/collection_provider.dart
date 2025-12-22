@@ -24,25 +24,43 @@ class CollectionProvider with ChangeNotifier {
   }
 
   Future<void> _init() async {
-    // 1. 載入靜態資料庫
-    final String jsonString = await rootBundle.loadString('assets/data.json');
-    _database = json.decode(jsonString);
+    try {
+      // 1. 先讀取索引檔 (目錄)
+      final String indexString =
+          await rootBundle.loadString('assets/index.json');
+      List<dynamic> setList = json.decode(indexString);
 
-    // 2. 這是唯一的真理來源。當 Firebase 通知狀態改變，我們才更新 UI
-    FirebaseAuth.instance.authStateChanges().listen((User? firebaseUser) async {
-      _user = firebaseUser; // 更新本地變數
+      // 2. 準備平行讀取所有擴充包
+      // 我們建立一個 Future 列表，讓所有檔案同時開始讀取，速度最快
+      List<Future<String>> futures = setList.map((code) {
+        return rootBundle.loadString('assets/sets/$code.json');
+      }).toList();
 
-      if (firebaseUser != null) {
-        print("✅ 監聽器偵測到登入: ${firebaseUser.displayName}");
-        await _loadFromCloud(firebaseUser.uid);
-      } else {
-        print("💤 監聽器偵測到未登入/已登出");
-        _userCollection = {};
-        await _loadFromLocal();
+      // 3. 等待所有檔案讀取完成
+      final List<String> results = await Future.wait(futures);
+
+      // 4. 合併資料
+      _database = {};
+      for (String jsonString in results) {
+        Map<String, dynamic> part = json.decode(jsonString);
+        _database.addAll(part);
       }
 
+      print("✅ 資料庫載入完成，共載入 ${setList.length} 個擴充包");
+    } catch (e) {
+      print("⚠️ 資料庫載入失敗: $e");
+    }
+
+    // 5. 監聽 Firebase (保持原本邏輯)
+    FirebaseAuth.instance.authStateChanges().listen((User? firebaseUser) async {
+      _user = firebaseUser;
+      if (firebaseUser != null) {
+        await _loadFromCloud(firebaseUser.uid);
+      } else {
+        await _loadFromLocal();
+      }
       _isLoading = false;
-      notifyListeners(); // 強制通知 UI 重繪
+      notifyListeners();
     });
   }
 

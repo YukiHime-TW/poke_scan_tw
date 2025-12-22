@@ -41,4 +41,7 @@ flutter_launcher_icons:
 flutter:
   uses-material-design: true
   assets:
-    - assets/data.json
+    # 這是索引檔
+    - assets/index.json
+    # 這是存放所有擴充包的資料夾 (注意最後要有斜線 /)
+    - assets/sets/
