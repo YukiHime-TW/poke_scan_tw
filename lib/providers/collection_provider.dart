@@ -112,15 +112,38 @@ class CollectionProvider with ChangeNotifier {
 
   Future<void> _saveToCloud() async {
     if (_user == null) return;
+
     try {
-      await FirebaseFirestore.instance.collection('users').doc(_user!.uid).set({
+      // 【修改重點】
+      // 嘗試使用 update 來 "覆蓋" data 欄位
+      // 這樣當本地刪除卡片時，雲端也會跟著變成空的，而不是保留舊資料
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user!.uid)
+          .update({
         'data': _userCollection,
         'last_updated': FieldValue.serverTimestamp(),
+        // 這裡可以順便更新基本資料，確保最新
         'email': _user!.email,
         'name': _user!.displayName,
-      }, SetOptions(merge: true));
+      });
     } catch (e) {
-      print("雲端儲存失敗: $e");
+      // 如果 update 失敗（通常是因為文件還不存在，例如第一次登入）
+      // 我們就改用 set 來建立新文件
+      print("Update 失敗，改用 Set 建立新文件: $e");
+      try {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(_user!.uid)
+            .set({
+          'data': _userCollection,
+          'last_updated': FieldValue.serverTimestamp(),
+          'email': _user!.email,
+          'name': _user!.displayName,
+        });
+      } catch (e2) {
+        print("雲端儲存完全失敗: $e2");
+      }
     }
   }
 
