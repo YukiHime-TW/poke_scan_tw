@@ -444,9 +444,130 @@ TARGET_URLS = [
         "name": "M-P 超級進化 特典卡",
         "url": "https://wiki.52poke.com/wiki/M-P%E7%B9%81%E4%BD%93%E4%B8%AD%E6%96%87%E7%89%88%E7%89%B9%E5%85%B8%E5%8D%A1%EF%BC%88TCG%EF%BC%89"
     },
+    {
+        "code": "SJ",
+        "name": "特別牌組組合 蒼響・藏瑪然特VS無極汰那",
+        "url": "https://wiki.52poke.com/wiki/%E7%89%B9%E5%88%A5%E7%89%8C%E7%B5%84%E7%B5%84%E5%90%88_%E8%92%BC%E9%9F%BF%E3%83%BB%E8%97%8F%E7%91%AA%E7%84%B6%E7%89%B9VS%E7%84%A1%E6%A5%B5%E6%B1%B0%E9%82%A3%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SI",
+        "name": "初階牌組100",
+        "url": "https://wiki.52poke.com/wiki/%E5%88%9D%E9%98%B6%E7%89%8C%E7%BB%84100%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SN",
+        "name": "初階牌組100特別版",
+        "url": "https://wiki.52poke.com/wiki/%E5%88%9D%E9%98%B6%E7%89%8C%E7%BB%84100%E7%89%B9%E5%88%AB%E7%89%88%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "MBG",
+        "name": "挑戰牌組 超級耿鬼ex",
+        "url": "https://wiki.52poke.com/wiki/%E6%8C%91%E6%88%B0%E7%89%8C%E7%B5%84_%E8%B6%85%E7%B4%9A%E8%80%BF%E9%AC%BCex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "MBD",
+        "name": "挑戰牌組 超級蒂安希ex",
+        "url": "https://wiki.52poke.com/wiki/%E6%8C%91%E6%88%B0%E7%89%8C%E7%B5%84_%E8%B6%85%E7%B4%9A%E8%92%82%E5%AE%89%E5%B8%8Cex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVAW",
+        "name": "起始組合ex 潤水鴨&謎擬Ｑex",
+        "url": "https://wiki.52poke.com/wiki/%E8%B5%B7%E5%A7%8B%E7%BB%84%E5%90%88ex_%E6%B6%A6%E6%B0%B4%E9%B8%AD%26%E8%B0%9C%E6%8B%9F%EF%BC%B1ex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVAL",
+        "name": "起始組合ex 呆火鱷&電龍ex",
+        "url": "https://wiki.52poke.com/wiki/%E8%B5%B7%E5%A7%8B%E7%BB%84%E5%90%88ex_%E5%91%86%E7%81%AB%E9%B3%84%26%E7%94%B5%E9%BE%99ex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVAM",
+        "name": "起始組合ex 新葉喵&路卡利歐ex",
+        "url": "https://wiki.52poke.com/wiki/%E8%B5%B7%E5%A7%8B%E7%BB%84%E5%90%88ex_%E6%96%B0%E5%8F%B6%E5%96%B5%26%E8%B7%AF%E5%8D%A1%E5%88%A9%E6%AC%A7ex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVB",
+        "name": "頂級訓練家收藏箱ex",
+        "url": "https://wiki.52poke.com/wiki/%E9%A1%B6%E7%BA%A7%E8%AE%AD%E7%BB%83%E5%AE%B6%E6%94%B6%E8%97%8F%E7%AE%B1ex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVC",
+        "name": "起始組合ex 皮卡丘ex&巴布土撥",
+        "url": "https://wiki.52poke.com/wiki/%E8%B5%B7%E5%A7%8B%E7%BB%84%E5%90%88ex_%E7%9A%AE%E5%8D%A1%E4%B8%98ex%26%E5%B7%B4%E5%B8%83%E5%9C%9F%E6%8B%A8%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVP1",
+        "name": "ex特別組合",
+        "url": "https://wiki.52poke.com/wiki/Ex%E7%89%B9%E5%88%AB%E7%BB%84%E5%90%88%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVD",
+        "name": "ex初階牌組",
+        "url": "https://wiki.52poke.com/wiki/Ex%E5%88%9D%E9%98%B6%E7%89%8C%E7%BB%84%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVF",
+        "name": "牌組構築BOX 黯焰支配者",
+        "url": "https://wiki.52poke.com/wiki/%E7%89%8C%E7%BB%84%E6%9E%84%E7%AD%91BOX_%E9%BB%AF%E7%84%B0%E6%94%AF%E9%85%8D%E8%80%85%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVEM",
+        "name": "起始組合 太晶 超夢ex",
+        "url": "https://wiki.52poke.com/wiki/%E8%B5%B7%E5%A7%8B%E7%BB%84%E5%90%88_%E5%A4%AA%E6%99%B6_%E8%B6%85%E6%A2%A6ex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVEL",
+        "name": "起始組合 太晶 骨紋巨聲鱷ex",
+        "url": "https://wiki.52poke.com/wiki/%E8%B5%B7%E5%A7%8B%E7%BB%84%E5%90%88_%E5%A4%AA%E6%99%B6_%E9%AA%A8%E7%BA%B9%E5%B7%A8%E5%A3%B0%E9%B3%84ex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVHK",
+        "name": "起始組合 古代故勒頓ex",
+        "url": "https://wiki.52poke.com/wiki/%E8%B5%B7%E5%A7%8B%E7%BB%84%E5%90%88_%E5%8F%A4%E4%BB%A3%E6%95%85%E5%8B%92%E9%A1%BFex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVHM",
+        "name": "起始組合 未來密勒頓ex",
+        "url": "https://wiki.52poke.com/wiki/%E8%B5%B7%E5%A7%8B%E7%BB%84%E5%90%88_%E6%9C%AA%E6%9D%A5%E5%AF%86%E5%8B%92%E9%A1%BFex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVK",
+        "name": "牌組構築BOX 樂園騰龍",
+        "url": "https://wiki.52poke.com/wiki/%E7%89%8C%E7%BB%84%E6%9E%84%E7%AD%91BOX_%E4%B9%90%E5%9B%AD%E8%85%BE%E9%BE%99%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVPN",
+        "name": "ex特別組合 太晶屬性：星晶 仙子伊布ex",
+        "url": "https://wiki.52poke.com/wiki/Ex%E7%89%B9%E5%88%A5%E7%B5%84%E5%90%88_%E5%A4%AA%E6%99%B6%E5%B1%AC%E6%80%A7%EF%BC%9A%E6%98%9F%E6%99%B6_%E4%BB%99%E5%AD%90%E4%BC%8A%E5%B8%83ex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVPS",
+        "name": "ex特別組合 太晶屬性：星晶 蒼炎刃鬼ex",
+        "url": "https://wiki.52poke.com/wiki/Ex%E7%89%B9%E5%88%A5%E7%B5%84%E5%90%88_%E5%A4%AA%E6%99%B6%E5%B1%AC%E6%80%A7%EF%BC%9A%E6%98%9F%E6%99%B6_%E8%92%BC%E7%82%8E%E5%88%83%E9%AC%BCex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVOM",
+        "name": "挑戰牌組 瑪俐的莫魯貝可&長毛巨魔ex",
+        "url": "https://wiki.52poke.com/wiki/%E6%8C%91%E6%88%98%E7%89%8C%E7%BB%84_%E7%8E%9B%E4%BF%90%E7%9A%84%E8%8E%AB%E9%B2%81%E8%B4%9D%E5%8F%AF%26%E9%95%BF%E6%AF%9B%E5%B7%A8%E9%AD%94ex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SVOD",
+        "name": "挑戰牌組 大吾的鐵啞鈴&巨金怪ex",
+        "url": "https://wiki.52poke.com/wiki/%E6%8C%91%E6%88%98%E7%89%8C%E7%BB%84_%E5%A4%A7%E5%90%BE%E7%9A%84%E9%93%81%E5%93%91%E9%93%83%26%E5%B7%A8%E9%87%91%E6%80%AAex%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SO",
+        "name": "特別牌組組合 噴火龍VSTAR vs 烈空坐VMAX",
+        "url": "https://wiki.52poke.com/wiki/%E7%89%B9%E5%88%AB%E7%89%8C%E7%BB%84%E7%BB%84%E5%90%88_%E5%96%B7%E7%81%AB%E9%BE%99VSTAR_vs_%E7%83%88%E7%A9%BA%E5%9D%90VMAX%EF%BC%88TCG%EF%BC%89"
+    },
+    {
+        "code": "SP6",
+        "name": "VSTAR特別組合",
+        "url": "https://wiki.52poke.com/wiki/VSTAR%E7%89%B9%E5%88%AB%E7%BB%84%E5%90%88%EF%BC%88TCG%EF%BC%89"
+    },
 ]
 
 PROMO_CODES = [
+    "SM-P",
     "S-P",
     "SV-P",
     "M-P"
