@@ -19,9 +19,6 @@ class _HomeScreenState extends State<HomeScreen> {
   // 展開狀態紀錄
   final Map<String, bool> _expandedState = {};
 
-  // 【新增 1】用來定位每一個標題的 Key Map
-  final Map<String, GlobalKey> _headerKeys = {};
-
   // 搜尋相關變數
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
@@ -33,27 +30,11 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // 【新增 2】捲動到指定 Key 的函式
-  void _scrollToHeader(String setCode) {
-    // 稍微延遲一下，等待介面收合渲染完畢後再捲動
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final key = _headerKeys[setCode];
-      if (key != null && key.currentContext != null) {
-        Scrollable.ensureVisible(
-          key.currentContext!,
-          duration: const Duration(milliseconds: 300), // 動畫時間
-          curve: Curves.easeInOut, // 動畫曲線
-          alignment: 0.0, // 0.0 代表對齊螢幕「最上方」 (1.0 是最下方)
-        );
-      }
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CollectionProvider>(context);
 
-    // 1. 取得螢幕寬度與計算列數 (響應式設計)
+    // --- 取得螢幕寬度與計算列數 ---
     double screenWidth = MediaQuery.of(context).size.width;
     int crossAxisCount;
 
@@ -130,11 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // 搜尋模式下強制展開，否則讀取狀態
       bool isExpanded = query.isNotEmpty ? true : (_expandedState[setCode] ?? false);
 
-      // 【新增 3】確保這個系列有一個對應的 GlobalKey
-      if (!_headerKeys.containsKey(setCode)) {
-        _headerKeys[setCode] = GlobalKey();
-      }
-
+      // 建構介面 (Slivers)
       slivers.add(
         MultiSliver(
           pushPinnedChildren: true, // 讓標題有推擠效果
@@ -145,23 +122,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 onTap: () {
                   // 搜尋時不允許收合，避免邏輯混亂
                   if (query.isEmpty) {
-                    bool currentlyExpanded = _expandedState[setCode] ?? false;
-
                     setState(() {
-                      // 切換狀態
-                      _expandedState[setCode] = !currentlyExpanded;
+                      _expandedState[setCode] = !isExpanded;
                     });
-
-                    // 【新增 4】如果是執行「收合」動作，觸發捲動
-                    if (currentlyExpanded) {
-                      _scrollToHeader(setCode);
-                    }
                   }
                 },
                 child: Container(
-                  // 【新增 5】綁定 Key，這樣系統才知道要捲動到哪裡
-                  key: _headerKeys[setCode],
-
                   height: 90.0,
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -241,7 +207,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 padding: const EdgeInsets.all(8.0),
                 sliver: SliverGrid(
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: crossAxisCount,
+                    crossAxisCount: crossAxisCount, // 使用動態計算的列數
                     childAspectRatio: 0.7,
                     crossAxisSpacing: 8,
                     mainAxisSpacing: 8,
@@ -535,7 +501,7 @@ class CardGridItem extends StatefulWidget {
 
 class _CardGridItemState extends State<CardGridItem> {
   Timer? _timer;
-  int _interval = 500;
+  int _interval = 500; // 初始連點速度
 
   void _startDecreasing(CollectionProvider provider) {
     _interval = 500;
