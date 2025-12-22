@@ -30,7 +30,6 @@ def clean_text(text):
     return text.strip().replace('\n', '')
     
 def load_target_urls():
-    """讀取外部設定檔 target_urls.json"""
     if not os.path.exists(TARGET_URLS_DIR):
         print(f"❌ 錯誤：找不到設定檔 {TARGET_URLS_DIR}")
         return []
