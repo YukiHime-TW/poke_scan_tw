@@ -4,12 +4,14 @@ import json
 import time
 import os
 import re
+import subprocess
 from tcgdexsdk import TCGdex
 
 # ==========================================
 # 1. 設定區
 # ==========================================
-JSON_FILE_PATH = '../assets/data.json'
+SETS_DIR = '../assets/sets'     # 存放分開 JSON 的資料夾
+INDEX_FILE = '../assets/index.json' # 索引檔案路徑
 
 TARGET_URLS = [
     {
@@ -454,86 +456,59 @@ PROMO_CODES = [
 tcgdex = TCGdex("zh-tw")
 
 def clean_text(text):
+    if not text: return ""
     return text.strip().replace('\n', '')
 
 def run_scraper():
-    print("🚀 開始執行智慧補圖爬蟲...")
+    print("🚀 開始執行智慧爬蟲...")
     start_time = time.time()
 
     headers = {'User-Agent': 'Mozilla/5.0'}
 
-    # 1. 讀取現有資料庫
-    if os.path.exists(JSON_FILE_PATH):
-        print(f"📂 讀取現有資料庫: {JSON_FILE_PATH}")
-        try:
-            with open(JSON_FILE_PATH, 'r', encoding='utf-8') as f:
-                database = json.load(f)
-        except json.JSONDecodeError:
-            print("⚠️ JSON 格式錯誤，將建立新資料庫")
-            database = {}
-    else:
-        print("⚠️ 找不到資料庫，將建立新資料庫")
-        database = {}
+    # 1. 確保資料夾存在
+    if not os.path.exists(SETS_DIR):
+        os.makedirs(SETS_DIR)
 
     # 2. 開始迴圈
     for target in TARGET_URLS:
         set_code = target['code']
         set_name = target['name']
 
-        # ======================================================
-        # 👇 邏輯判斷 A: 系列層級檢查
-        # ======================================================
-        need_to_scrape_set = True # 預設要爬
+        # 定義該系列的檔案路徑
+        set_file_path = os.path.join(SETS_DIR, f"{set_code}.json")
         
-        if set_code in database and 'cards' in database[set_code]:
-            cards = database[set_code]['cards']
-            total_cards = len(cards)
-            
-            if total_cards > 0:
-                # 計算有圖片的卡片數量
-                cards_with_img = 0
-                for card in cards.values():
-                    if card.get('image') and len(card['image']) > 0:
-                        cards_with_img += 1
+        # ------------------------------------------------------
+        # 👇 步驟 A: 讀取單一系列的舊資料
+        # ------------------------------------------------------
+        current_set_data = {}
+        if os.path.exists(set_file_path):
+            try:
+                with open(set_file_path, 'r', encoding='utf-8') as f:
+                    full_data = json.load(f)
+                    if set_code in full_data:
+                        current_set_data = full_data[set_code]
+            except:
+                pass 
 
-                if cards_with_img == total_cards:
-                    # 情況 1: 系列存在 + 所有卡片都有圖片 -> 跳過
-                    print(f"⏩ [{set_code}] {set_name} 系列完整")
-                    need_to_scrape_set = False
-                elif cards_with_img == 0:
-                    # 情況 3: 系列存在 + 所有卡片都沒有圖片 -> 重爬
-                    print(f"🔄 [{set_code}] {set_name} 系列存在但沒有圖，重新取得")
-                else:
-                    # 情況 2: 系列存在 + 其中幾張沒有圖片 -> 爬取 (進去後再過濾)
-                    print(f"🔧 [{set_code}] {set_name} 部分缺圖 ({cards_with_img}/{total_cards})")
-            else:
-                print(f"🔄 [{set_code}] {set_name} 是一個空系列，爬取")
-        else:
-            # 情況 4: 系列不存在 -> 爬取
-            print(f"✨ [{set_code}] {set_name} 新系列，爬取")
+        # 初始化資料結構 (如果是新檔案)
+        if not current_set_data:
+            current_set_data = {
+                "name": set_name,
+                "releaseDate": "2000-01-01", # 預設日期，之後可用 add_date.py 更新
+                "cards": {}
+            }
 
-        # 如果判定不需要爬，就直接換下一個系列
-        if not need_to_scrape_set:
-            continue
-
-        # ======================================================
-        # 👇 開始爬取網頁
-        # ======================================================
+        # ------------------------------------------------------
+        # 👇 步驟 B: 爬取網頁 (這裡不跳過，必須爬才能比對新卡)
+        # ------------------------------------------------------
+        print(f"🕷️ 掃描系列: {set_name} ({set_code})...")
         try:
             resp = requests.get(target['url'], headers=headers, timeout=15)
             soup = BeautifulSoup(resp.text, 'html.parser')
-
-            # 確保資料庫結構
-            if set_code not in database:
-                database[set_code] = {
-                    "name": set_name,
-                    "cards": {}
-                }
-
             tables = soup.find_all('table', class_='roundy')
-            processed_count = 0
-            skipped_count = 0
-
+            processed_count = 0 # 新增或補圖的數量
+            skipped_count = 0   # 已存在的數量
+            
             for table in tables:
                 rows = table.find_all('tr')
                 for row in rows:
@@ -548,20 +523,27 @@ def run_scraper():
 
                         card_num = num_text # e.g. 001/158
 
-                        # ======================================================
-                        # 👇 邏輯判斷 B: 卡片層級檢查
-                        # ======================================================
-                        # 檢查這張卡是否已經存在且有圖片
-                        current_card_data = database[set_code]['cards'].get(card_num)
+                        # ==================================================
+                        # 👇 【核心修改】: 判斷是否為新卡或缺圖卡
+                        # ==================================================
                         
-                        if current_card_data and current_card_data.get('image') and len(current_card_data['image']) > 0:
-                            # 如果已經有資料且有圖片，直接跳過，不浪費時間打 API
+                        existing_card = current_set_data['cards'].get(card_num)
+                        
+                        # 情況 1: 卡片已存在 且 有圖片 -> 完美，跳過
+                        if existing_card and existing_card.get('image') and len(existing_card['image']) > 0:
                             skipped_count += 1
                             continue
+                        
+                        # 情況 2: 卡片不存在 (新卡!) 或 存在但沒圖 -> 往下執行
+                        if not existing_card:
+                            print(f"   ✨ 發現新卡片: {card_num}")
+                        elif not existing_card.get('image'):
+                            print(f"   🔄 補圖中: {card_num}")
+                            pass
 
-                        # ======================================================
-                        # 👇 以下只有「缺圖」或「新卡」才會執行
-                        # ======================================================
+                        # ==================================================
+                        # 👇 資料解析與補圖邏輯
+                        # ==================================================
 
                         # 提取名稱 (順便更新文字，以防是新卡)
                         name_text = "未知"
@@ -587,8 +569,8 @@ def run_scraper():
                         image_url = ""
 
                         # 1. 嘗試保留舊圖片
-                        if current_card_data and current_card_data.get('image'):
-                            image_url = current_card_data.get('image')
+                        if existing_card and existing_card.get('image'):
+                            image_url = existing_card.get('image')
 
                         # 2. 嘗試 TCGdex SDK
                         if not image_url:
@@ -618,7 +600,7 @@ def run_scraper():
                                 if not is_high_rarity:
                                     # 尋找該系列的 001 號卡片 (需要模糊搜尋，因為 Key 可能是 "001/165")
                                     base_card = None
-                                    cards_in_set = database[set_code]['cards']
+                                    cards_in_set = current_set_data[set_code]['cards']
                                     
                                     # 遍歷尋找 001 開頭的卡
                                     for k, v in cards_in_set.items():
@@ -651,45 +633,60 @@ def run_scraper():
                                         print(f"   ⚠️ 官網補圖失敗: 找不到系列 {set_code} 的 001 號卡片作為基準，無法推算 {full_card_num} 的圖片")
                                 else:
                                     print(f"   ⚠️ 官網補圖跳過: {full_card_num} 為高版本卡，跳過官網補圖邏輯")
-                            except Exception as e:
-                                print(f"   ⚠️ 官網補圖邏輯錯誤: {e}")
+                            except Exception as logic_error:
+                                print(f"   ⚠️ 官網補圖邏輯錯誤: {logic_error}")
                                 pass
                         # --------------------------------------------------
 
-                        # 存入資料庫
-                        database[set_code]['cards'][card_num] = {
-                            "name": name_text,
-                            "rarity": rarity_text,
-                            "image": image_url
-                        }
+                        # 4. 更新/寫入資料
+                        # 這裡使用 update 確保如果原本有其他欄位(如 note)不會被洗掉
+                        if card_num not in current_set_data['cards']:
+                            current_set_data['cards'][card_num] = {}
+
+                        current_set_data['cards'][card_num]['name'] = name_text
+                        current_set_data['cards'][card_num]['rarity'] = rarity_text
+                        
+                        # 只有當真的抓到新圖時才更新 image，避免把原本手動填的蓋成空字串
+                        if image_url:
+                            current_set_data['cards'][card_num]['image'] = image_url
+                        elif 'image' not in current_set_data['cards'][card_num]:
+                            current_set_data['cards'][card_num]['image'] = ""
+
                         processed_count += 1
                     except Exception:
                         continue
-
-            print(f"   -> 完成。跳過(已有圖): {skipped_count} 張, 處理(補圖/新增): {processed_count} 張")
             
-            # 即時存檔
-            with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
-                json.dump(database, f, ensure_ascii=False, indent=2)
-
-            time.sleep(0.5) # 禮貌性暫停
+            print(f"   💾 {set_code} 處理完畢。跳過(已有圖): {skipped_count} 張, 處理(補圖/新增): {processed_count} 張")
+            
+            # --- 步驟 C: 儲存單一檔案 ---
+            output_data = {set_code: current_set_data}
+            with open(set_file_path, 'w', encoding='utf-8') as f:
+                json.dump(output_data, f, ensure_ascii=False, indent=2)
+            
+            # 只有在真的有發送大量請求時才睡覺
+            if processed_count > 5:
+                time.sleep(1)
+            else:
+                time.sleep(0.1)
 
         except Exception as e:
-            print(f"   ❌ 發生錯誤: {e}")
+            print(f"   ❌ {set_code} 失敗: {e}")
 
-    # 最終存檔
-    with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
-        json.dump(database, f, ensure_ascii=False, indent=2)
-        
+    # 3. 建立索引檔 (Index)
+    print("📑 正在更新索引檔 index.json ...")
+    actual_files = [f.replace('.json', '') for f in os.listdir(SETS_DIR) if f.endswith('.json')]
+    actual_files.sort()
+
+    with open(INDEX_FILE, 'w', encoding='utf-8') as f:
+        json.dump(actual_files, f, ensure_ascii=False, indent=2)
+
     elapsed_time = time.time() - start_time
-    print(f"\n🎉 全部完成！檔案已儲存至 {JSON_FILE_PATH}")
+    print(f"\n🎉 全部完成！")
     print(f"⏱️ 總共花費 {elapsed_time:.2f} 秒。")
 
 if __name__ == "__main__":
     run_scraper()
 
-    # 執行 convert.py
-    import subprocess
     print("\n🚦 開始簡體轉繁體...")
     subprocess.run(["python", "convert.py"], check=True)
 

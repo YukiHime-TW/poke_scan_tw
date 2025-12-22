@@ -1,7 +1,8 @@
 import json
 import os
+import time
 
-FILE_PATH = '../assets/data.json'
+SETS_DIR = '../assets/sets'
 
 # 台灣繁體中文版 發售日期對照表 (YYYY-MM-DD)
 # 資料來源：台灣寶可夢官網/Wiki
@@ -131,31 +132,49 @@ SET_DATES = {
     "M-P": "2025-08-07" 
 }
 
-def update_json_dates():
-    if not os.path.exists(FILE_PATH):
-        print("❌ 找不到 data.json")
+def add_dates_to_files():
+    if not os.path.exists(SETS_DIR):
+        print(f"❌ 找不到目錄: {SETS_DIR}")
         return
 
-    with open(FILE_PATH, 'r', encoding='utf-8') as f:
-        data = json.load(f)
-
-    updated_count = 0
+    print("📅 開始補齊擴充包日期...")
     
-    for set_code, set_data in data.items():
-        # 如果字典裡有這個代號，就更新日期
-        if set_code in SET_DATES:
-            set_data['releaseDate'] = SET_DATES[set_code]
-            updated_count += 1
-        else:
-            # 如果字典裡沒有，預設給一個舊日期，讓它排在後面
-            if 'releaseDate' not in set_data:
-                print(f"⚠️ 未知日期的系列: {set_code} (將設為 2000-01-01)")
-                set_data['releaseDate'] = "2000-01-01"
+    files = [f for f in os.listdir(SETS_DIR) if f.endswith('.json')]
+    updated_files_count = 0
 
-    with open(FILE_PATH, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+    for filename in files:
+        file_path = os.path.join(SETS_DIR, filename)
+        is_modified = False
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
 
-    print(f"✅ 更新完成！共更新了 {updated_count} 個系列的日期。")
+            # 遍歷 key (其實每個檔案通常只有一個 key，就是 set_code)
+            for set_code, set_data in data.items():
+
+                # 檢查是否需要更新日期
+                if set_code in SET_DATES:
+                    if set_data.get('releaseDate') != SET_DATES[set_code]:
+                        set_data['releaseDate'] = SET_DATES[set_code]
+                        is_modified = True
+                else:
+                    # 如果清單裡沒有，給個預設值 (當下的日期)
+                    today = time.strftime("%Y-%m-%d")
+                    if 'releaseDate' not in set_data:
+                        set_data['releaseDate'] = today
+                        print(f"⚠️ 未知日期的系列: {set_code}")
+                        is_modified = True
+
+            if is_modified:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+                updated_files_count += 1
+
+        except Exception as e:
+            print(f"   ❌ {filename} 處理失敗: {e}")
+
+    print(f"✅ 日期更新完成！共更新了 {updated_files_count} 個檔案。")
 
 if __name__ == "__main__":
-    update_json_dates()
+    add_dates_to_files()

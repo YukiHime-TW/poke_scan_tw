@@ -1,10 +1,10 @@
 import json
-import re
+import os
 
-JSON_FILE_PATH = '../assets/data.json'
+# 設定目錄
+SETS_DIR = '../assets/sets'
 
-# 定義修正字典 (左邊是錯誤/異體字，右邊是台灣官方標準字)
-# 這些是針對您提供的檔案中觀察到的問題，以及常見的轉換錯誤
+# 修正字典
 REPLACEMENTS = {
     # --- 常見錯別字/轉換錯誤 ---
     "樹纔怪": "樹才怪",       # "纔" 是 "才" 的錯誤繁體轉換
@@ -56,61 +56,67 @@ REPLACEMENTS = {
 def fix_text(text):
     if not isinstance(text, str):
         return text
-    
     new_text = text
     for wrong, correct in REPLACEMENTS.items():
         if wrong in new_text:
             new_text = new_text.replace(wrong, correct)
     return new_text
 
-def process_data():
-    print("📂 讀取 data.json 中...")
-    try:
-        with open(JSON_FILE_PATH, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        print(f"❌ 找不到 {JSON_FILE_PATH}，請確認檔案位置。")
+def fix_translation_files():
+    if not os.path.exists(SETS_DIR):
+        print(f"❌ 找不到目錄: {SETS_DIR}")
         return
 
-    print("🔧 開始修正翻譯與異體字...")
+    print("🔧 開始修正異體字與翻譯...")
     
-    count = 0
-    
-    # 遍歷資料結構
-    for set_code, set_data in data.items():
-        # 1. 修正系列名稱
-        original_set_name = set_data.get('name', '')
-        fixed_set_name = fix_text(original_set_name)
-        if original_set_name != fixed_set_name:
-            set_data['name'] = fixed_set_name
-            print(f"  [系列] {original_set_name} -> {fixed_set_name}")
-            count += 1
+    files = [f for f in os.listdir(SETS_DIR) if f.endswith('.json')]
+    total_fixed_count = 0
 
-        # 2. 修正卡片資料
-        if 'cards' in set_data:
-            for card_id, card_info in set_data['cards'].items():
-                # 修正卡名
-                original_name = card_info.get('name', '')
-                fixed_name = fix_text(original_name)
+    for filename in files:
+        file_path = os.path.join(SETS_DIR, filename)
+        is_modified = False
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+
+            # 遍歷該檔案中的系列 (通常只有一個 key，但也支援多個)
+            for set_code, set_data in data.items():
                 
-                if original_name != fixed_name:
-                    card_info['name'] = fixed_name
-                    count += 1
-                
-                # (選用) 修正稀有度，如果有中文字的話
-                if 'rarity' in card_info:
-                    card_info['rarity'] = fix_text(card_info['rarity'])
-                    if card_info['rarity'] == '全':
-                        card_info['rarity'] = 'SR'
+                # 1. 修正系列名稱
+                if 'name' in set_data:
+                    new_name = fix_text(set_data['name'])
+                    if new_name != set_data['name']:
+                        set_data['name'] = new_name
+                        is_modified = True
 
-    print(f"✅ 修正完成！共修正了 {count} 處。")
-    
-    # 輸出檔案至assets資料夾
-    print(f"💾 儲存至 {JSON_FILE_PATH} ...")
-    with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
+                # 2. 修正卡片資料
+                if 'cards' in set_data:
+                    for card_id, card_info in set_data['cards'].items():
+                        # 修正卡名
+                        if 'name' in card_info:
+                            new_card_name = fix_text(card_info['name'])
+                            if new_card_name != card_info['name']:
+                                card_info['name'] = new_card_name
+                                is_modified = True
+                        
+                        # 修正稀有度
+                        if 'rarity' in card_info:
+                            new_rarity = fix_text(card_info['rarity'])
+                            if new_rarity != card_info['rarity']:
+                                card_info['rarity'] = new_rarity
+                                is_modified = True
 
-    print("🎉 完成！ data.json 已放入您的 Flutter 專案。")
+            # 如果有修改才寫回檔案
+            if is_modified:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+                total_fixed_count += 1
+
+        except Exception as e:
+            print(f"   ❌ {filename} 處理失敗: {e}")
+
+    print(f"✅ 修正完成！共更新了 {total_fixed_count} 個檔案。")
 
 if __name__ == "__main__":
-    process_data()
+    fix_translation_files()

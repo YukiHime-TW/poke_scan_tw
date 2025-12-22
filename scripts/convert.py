@@ -1,26 +1,47 @@
 import json
-from opencc import OpenCC
+import os
+try:
+    import opencc
+except ImportError:
+    print("❌ 錯誤：找不到 opencc 套件。請執行 pip install opencc-python-reimplemented")
+    exit()
 
-cc = OpenCC('s2t')  # 簡體轉繁體
+# 設定目錄
+SETS_DIR = '../assets/sets'
 
-JSON_FILE_PATH = '../assets/data.json'
+def convert_json_files():
+    if not os.path.exists(SETS_DIR):
+        print(f"❌ 找不到目錄: {SETS_DIR}")
+        return
 
-with open(JSON_FILE_PATH, 'r', encoding='utf-8') as f:
-    data = json.load(f)
+    # 初始化轉換器 (簡體 -> 繁體)
+    converter = opencc.OpenCC('s2t')
+    
+    print("🚀 開始執行簡繁轉換...")
+    
+    files = [f for f in os.listdir(SETS_DIR) if f.endswith('.json')]
+    count = 0
 
-def convert_dict(d):
-    if isinstance(d, dict):
-        return {k: convert_dict(v) for k, v in d.items()}
-    elif isinstance(d, list):
-        return [convert_dict(i) for i in d]
-    elif isinstance(d, str):
-        return cc.convert(d)
-    else:
-        return d
+    for filename in files:
+        file_path = os.path.join(SETS_DIR, filename)
+        
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            
+            # 直接對整個字串做轉換
+            converted_content = converter.convert(content)
+            
+            # 檢查是否有變更，有變更才寫入
+            if content != converted_content:
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(converted_content)
+                count += 1
+                
+        except Exception as e:
+            print(f"   ❌ {filename} 轉換失敗: {e}")
 
-data_traditional = convert_dict(data)
+    print(f"✅ 簡繁轉換完成！共掃描 {len(files)} 個檔案，更新了 {count} 個檔案。")
 
-with open(JSON_FILE_PATH, 'w', encoding='utf-8') as f:
-    json.dump(data_traditional, f, ensure_ascii=False, indent=2)
-
-print("轉換完成，請查看 data.json")
+if __name__ == "__main__":
+    convert_json_files()
