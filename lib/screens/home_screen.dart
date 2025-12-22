@@ -580,7 +580,8 @@ class _CardGridItemState extends State<CardGridItem> {
           fit: StackFit.expand,
           children: [
             // --- 層級 1: 內容 (圖片 或 文字) ---
-            if (imgUrl != null && imgUrl.isNotEmpty)
+            // 有圖片且不是特殊標記 "X"
+            if (imgUrl != null && imgUrl.isNotEmpty && imgUrl != "X")
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
                 child: isOwned
