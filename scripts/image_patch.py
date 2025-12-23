@@ -3,7 +3,7 @@ import os
 import re
 import time
 from tcgdexsdk import TCGdex
-from tqdm import tqdm # 如果沒安裝 tqdm，請執行 pip install tqdm
+from tqdm import tqdm
 
 # ==========================================
 # 設定區
