@@ -2,6 +2,8 @@
 
 beta測試中
 
+pip install -r requirements.txt
+
 flutter run -d web-server
 
 (on cmd)
