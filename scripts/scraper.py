@@ -48,7 +48,6 @@ def run_scraper():
         return
 
     print("🚀 開始執行智慧爬蟲...")
-    start_time = time.time()
 
     headers = {'User-Agent': 'Mozilla/5.0'}
 
@@ -193,11 +192,9 @@ def run_scraper():
     with open(INDEX_FILE, 'w', encoding='utf-8') as f:
         json.dump(actual_files, f, ensure_ascii=False, indent=2)
 
-    elapsed_time = time.time() - start_time
-    print(f"\n🎉 全部完成！")
-    print(f"⏱️ 總共花費 {elapsed_time:.2f} 秒。")
-
 if __name__ == "__main__":
+    start_time = time.time()
+
     run_scraper()
 
     print("\n🚦 開始簡體轉繁體...")
@@ -211,5 +208,9 @@ if __name__ == "__main__":
 
     # print("\n🚦 開始補圖...")
     # subprocess.run(["python", "image_patch.py"], check=True)
+    
+    elapsed_time = time.time() - start_time
+    print(f"\n🎉 全部完成！")
+    print(f"⏱️ 總共花費 {elapsed_time:.2f} 秒。")
 
     print("\n✅ 全部完成！")
