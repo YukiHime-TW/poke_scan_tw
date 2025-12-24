@@ -17,6 +17,9 @@ tcgdex = TCGdex("zh-tw")
 # 用來收集缺少基準卡片的系列
 sets_missing_base_report = []
 
+# 用來收集有哪些缺少圖片的系列
+sets_missing_image_report = []
+
 def fill_images_for_file(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as f:
@@ -93,14 +96,22 @@ def fill_images_for_file(file_path):
             if not v.get('image'):
                 remaining_missing += 1
         
-        # 如果還有缺圖，且原因是沒有 base_card，就加入報告
-        if remaining_missing > 0 and base_card is None:
-            sets_missing_base_report.append({
+        # 如果還有缺圖，就加入報告
+        if remaining_missing > 0:
+            sets_missing_image_report.append({
                 "code": set_code,
                 "name": set_name,
                 "missing_count": remaining_missing,
                 "total": total_cards
             })
+            # 如果是因為缺少基準卡片導致無法補圖，加入另一個報告
+            if not base_card:
+                sets_missing_base_report.append({
+                    "code": set_code,
+                    "name": set_name,
+                    "missing_count": remaining_missing,
+                    "total": total_cards
+                })
 
         # 4. 如果有更新，寫回檔案
         if updated_count > 0:
@@ -135,15 +146,31 @@ def main():
     print("-" * 60)
     
     # --- 顯示報告 ---
-    if sets_missing_base_report:
-        print(f"⚠️ 以下系列【還有缺圖】且【找不到 001 號基準卡片】：")
+    if sets_missing_image_report:
+        print(f"⚠️ 以下系列【還有缺圖】：")
         print("-" * 60)
         print(f"{'代號':<10} {'缺圖數':<10} {'系列名稱'}")
         print("-" * 60)
         
-        # 依照缺圖數量排序
-        sets_missing_base_report.sort(key=lambda x: x['missing_count'], reverse=True)
+        # 依照缺圖數量排序，從少到多
+        sets_missing_image_report.sort(key=lambda x: x['missing_count'], reverse=False)
+
+        for item in sets_missing_image_report:
+            print(f"{item['code']:<10} {item['missing_count']}/{item['total']:<9} {item['name']}")
+            
+        print("-" * 60)
+    else:
+        print("🎉 沒有發現還有缺圖的系列。")
+
+    if sets_missing_base_report:
+        print(f"⚠️ 以下系列因為【缺少基準卡片】而無法補圖：")
+        print("-" * 60)
+        print(f"{'代號':<10} {'缺圖數':<10} {'系列名稱'}")
+        print("-" * 60)
         
+        # 依照缺圖數量排序，從少到多
+        sets_missing_base_report.sort(key=lambda x: x['missing_count'], reverse=False)
+
         for item in sets_missing_base_report:
             print(f"{item['code']:<10} {item['missing_count']}/{item['total']:<9} {item['name']}")
             
