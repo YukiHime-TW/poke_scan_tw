@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
-// 匯入自定義組件與 Provider (請確保路徑正確)
+// 匯入自定義組件與 Provider
 import '../providers/collection_provider.dart';
 import '../widgets/card_grid_item.dart';
 import '../widgets/set_header.dart';
@@ -11,8 +12,8 @@ import '../widgets/set_header.dart';
 // 如果要編譯手機版並使用掃描功能，請取消下面這行的註解
 // import 'scanner_screen.dart';
 
-// 狀態過濾：全部、已擁有、未擁有
-enum StatusFilter { all, owned, missing }
+// 狀態過濾：全部、已擁有、未擁有、重複(>1)、多餘(>4)
+enum StatusFilter { all, owned, missing, duplicates, competitive }
 
 // 賽制過濾：不限、標準賽制、開放賽制
 enum FormatFilter { all, standard, expanded }
@@ -51,7 +52,7 @@ class _HomeScreenState extends State<HomeScreen> {
     String regMark = (cardData['reg'] ?? "").toString().toUpperCase();
 
     if (_formatFilter == FormatFilter.standard) {
-      // 目前標準賽制包含 H、I、J 標記， None為通用
+      // 目前標準賽制包含 H、I、J 標記， NONE 為通用
       return ["H", "I", "J", "NONE"].contains(regMark);
     }
 
@@ -61,10 +62,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   // --- 輔助：根據過濾狀態切換主題顏色 ---
   Color _getThemeColor() {
+    // 優先判斷重複/多餘模式
+    if (_statusFilter == StatusFilter.duplicates ||
+        _statusFilter == StatusFilter.competitive) {
+      return Colors.deepPurple.shade700;
+    }
     if (_statusFilter == StatusFilter.owned) return Colors.green.shade700;
     if (_statusFilter == StatusFilter.missing) return Colors.orange.shade800;
+
+    // 賽制主題
     if (_formatFilter == FormatFilter.standard) return Colors.blue.shade700;
     if (_formatFilter == FormatFilter.expanded) return Colors.purple.shade700;
+
     return Colors.redAccent;
   }
 
@@ -72,8 +81,24 @@ class _HomeScreenState extends State<HomeScreen> {
   String _getAppBarTitle() {
     if (_isSearching) return "";
     String title = "PokeScan TW";
-    if (_statusFilter == StatusFilter.owned) title = "我的收藏";
-    if (_statusFilter == StatusFilter.missing) title = "缺卡清單";
+
+    switch (_statusFilter) {
+      case StatusFilter.owned:
+        title = "我的收藏";
+        break;
+      case StatusFilter.missing:
+        title = "缺卡清單";
+        break;
+      case StatusFilter.duplicates:
+        title = "重複卡片 (>1)";
+        break;
+      case StatusFilter.competitive:
+        title = "多餘物資 (>4)";
+        break;
+      default:
+        break;
+    }
+
     if (_formatFilter == FormatFilter.standard) title += " (標準)";
     if (_formatFilter == FormatFilter.expanded) title += " (開放)";
     return title;
@@ -107,14 +132,17 @@ class _HomeScreenState extends State<HomeScreen> {
       Map allCards = setData['cards'];
       Map filteredCards = {};
 
-      // 2. 應用雙重過濾與搜尋
+      // 2. 應用多重過濾與搜尋
       allCards.forEach((k, v) {
         String fullId = "$setCode-$k";
-        bool isOwned = provider.userCollection.containsKey(fullId);
+        int count = provider.userCollection[fullId] ?? 0;
+        bool isOwned = count > 0;
 
-        // A. 收藏狀態過濾
+        // A. 收藏狀態與數量過濾
         if (_statusFilter == StatusFilter.owned && !isOwned) return;
         if (_statusFilter == StatusFilter.missing && isOwned) return;
+        if (_statusFilter == StatusFilter.duplicates && count <= 1) return;
+        if (_statusFilter == StatusFilter.competitive && count <= 4) return;
 
         // B. 賽制過濾
         if (!_matchesFormat(v)) return;
@@ -136,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (filteredCards.isEmpty) continue;
 
-      // 3. 計算系列原始進度
+      // 3. 計算系列原始進度 (不受過濾影響)
       int ownedInSet = allCards.keys
           .where((k) => provider.userCollection.containsKey("$setCode-$k"))
           .length;
@@ -287,7 +315,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- 構建下拉式過濾選單 (修正類型錯誤) ---
+  // --- 構建下拉式過濾選單 ---
   Widget _buildFilterMenu() {
     return PopupMenuButton<dynamic>(
       icon: const Icon(Icons.filter_list),
@@ -312,6 +340,10 @@ class _HomeScreenState extends State<HomeScreen> {
             _statusFilter == StatusFilter.owned),
         _buildPopupItem(StatusFilter.missing, Icons.radio_button_unchecked,
             "只看未擁有", _statusFilter == StatusFilter.missing),
+        _buildPopupItem(StatusFilter.duplicates, Icons.copy, "重複卡片 (>1)",
+            _statusFilter == StatusFilter.duplicates),
+        _buildPopupItem(StatusFilter.competitive, Icons.layers, "多餘物資 (>4)",
+            _statusFilter == StatusFilter.competitive),
         const PopupMenuDivider(),
         const PopupMenuItem(
             enabled: false,
@@ -330,7 +362,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 返回 PopupMenuEntry 以避免類型不匹配
   PopupMenuEntry<dynamic> _buildPopupItem(
       dynamic value, IconData icon, String title, bool isSelected) {
     Color activeColor = _getThemeColor();

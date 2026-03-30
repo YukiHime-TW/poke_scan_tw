@@ -1,19 +1,20 @@
-import 'dart:async';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../providers/collection_provider.dart';
+import 'dart:async'; // 必須匯入以使用 Timer
+import 'package:flutter/material.dart'; // 必須匯入以使用所有 UI 元件
+import 'package:provider/provider.dart'; // 必須匯入以使用 Provider
+import 'package:cached_network_image/cached_network_image.dart'; // 必須匯入以使用圖片快取
+import '../providers/collection_provider.dart'; // 必須匯入以認識 CollectionProvider
 
 class CardGridItem extends StatefulWidget {
   final String setCode;
   final String cNum;
   final dynamic cardData;
 
-  const CardGridItem(
-      {super.key,
-      required this.setCode,
-      required this.cNum,
-      required this.cardData});
+  const CardGridItem({
+    super.key,
+    required this.setCode,
+    required this.cNum,
+    required this.cardData,
+  });
 
   @override
   State<CardGridItem> createState() => _CardGridItemState();
@@ -22,6 +23,13 @@ class CardGridItem extends StatefulWidget {
 class _CardGridItemState extends State<CardGridItem> {
   Timer? _timer;
   int _interval = 500;
+
+  // 組件銷毀時必須關閉計時器
+  @override
+  void dispose() {
+    _stopDecreasing();
+    super.dispose();
+  }
 
   String _getOptimizedUrl(String? rawUrl, double screenWidth) {
     if (rawUrl == null || rawUrl.isEmpty || rawUrl == "X") return "";
@@ -41,22 +49,59 @@ class _CardGridItemState extends State<CardGridItem> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(shortNum,
-                  style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 26,
-                      color: isOwned ? Colors.black87 : Colors.grey[500]))),
+            fit: BoxFit.scaleDown,
+            child: Text(
+              shortNum,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 26,
+                color: isOwned ? Colors.black87 : Colors.grey[500],
+              ),
+            ),
+          ),
           const SizedBox(height: 2),
           FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(widget.cardData['name'] ?? "",
-                  style: TextStyle(
-                      fontSize: 24,
-                      color: isOwned ? Colors.black87 : Colors.grey[500]))),
+            fit: BoxFit.scaleDown,
+            child: Text(
+              widget.cardData['name'] ?? "",
+              style: TextStyle(
+                fontSize: 24,
+                color: isOwned ? Colors.black87 : Colors.grey[500],
+              ),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  void _startDecreasing(CollectionProvider p) {
+    _interval = 500;
+    _loop(p);
+  }
+
+  void _loop(CollectionProvider p) {
+    String fullId = "${widget.setCode}-${widget.cNum}";
+    int currentCount = p.userCollection[fullId] ?? 0;
+
+    // 安全檢查：若組件不在了或數量到底了就停止
+    if (!mounted || currentCount <= 0) {
+      _stopDecreasing();
+      return;
+    }
+
+    p.removeCard(widget.setCode, widget.cNum);
+    _interval = (_interval * 0.8).toInt();
+    if (_interval < 50) _interval = 50;
+
+    _timer = Timer(Duration(milliseconds: _interval), () => _loop(p));
+  }
+
+  void _stopDecreasing() {
+    if (_timer != null && _timer!.isActive) {
+      _timer!.cancel();
+      _timer = null;
+    }
   }
 
   @override
@@ -88,9 +133,10 @@ class _CardGridItemState extends State<CardGridItem> {
           boxShadow: [
             if (isOwned)
               BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2))
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              )
           ],
         ),
         child: ClipRRect(
@@ -112,9 +158,10 @@ class _CardGridItemState extends State<CardGridItem> {
                           colorFilter: const ColorFilter.mode(
                               Colors.grey, BlendMode.saturation),
                           child: Opacity(
-                              opacity: 0.4,
-                              child: Image(
-                                  image: imageProvider, fit: BoxFit.cover)),
+                            opacity: 0.4,
+                            child:
+                                Image(image: imageProvider, fit: BoxFit.cover),
+                          ),
                         ),
                 )
               else
@@ -130,57 +177,51 @@ class _CardGridItemState extends State<CardGridItem> {
 
   Widget _buildCardBadge(String label) {
     return Positioned(
-        right: 0,
-        bottom: 0,
-        child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-            decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.8),
-                borderRadius:
-                    const BorderRadius.only(topLeft: Radius.circular(6))),
-            child: Text(label,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    fontFamily: "Monospace"))));
+      right: 0,
+      bottom: 0,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.8),
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(6)),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            fontFamily: "Monospace",
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildCountBadge(int count) {
     return Positioned(
-        left: 2,
-        top: 2,
-        child: Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-                color: Colors.redAccent,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 2),
-                boxShadow: const [
-                  BoxShadow(color: Colors.black26, blurRadius: 2)
-                ]),
-            child: Center(
-                child: Text("x$count",
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900)))));
-  }
-
-  void _startDecreasing(CollectionProvider p) {
-    _interval = 500;
-    _loop(p);
-  }
-
-  void _loop(CollectionProvider p) {
-    p.removeCard(widget.setCode, widget.cNum);
-    _interval = (_interval * 0.8).toInt();
-    if (_interval < 50) _interval = 50;
-    _timer = Timer(Duration(milliseconds: _interval), () => _loop(p));
-  }
-
-  void _stopDecreasing() {
-    _timer?.cancel();
+      left: 2,
+      top: 2,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: Colors.redAccent,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 2),
+          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 2)],
+        ),
+        child: Center(
+          child: Text(
+            "x$count",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
