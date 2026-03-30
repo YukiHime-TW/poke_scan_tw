@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart'; // 新增
 import 'firebase_options.dart'; // 這檔案是 flutterfire configure 自動產生的
 import 'providers/collection_provider.dart';
+import 'providers/deck_provider.dart';
 import 'screens/home_screen.dart';
 
 void main() async {
@@ -17,6 +18,7 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CollectionProvider()),
+        ChangeNotifierProvider(create: (_) => DeckProvider()),
       ],
       child: const MyApp(),
     ),

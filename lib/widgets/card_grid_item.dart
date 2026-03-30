@@ -1,20 +1,20 @@
-import 'dart:async'; // 必須匯入以使用 Timer
-import 'package:flutter/material.dart'; // 必須匯入以使用所有 UI 元件
-import 'package:provider/provider.dart'; // 必須匯入以使用 Provider
-import 'package:cached_network_image/cached_network_image.dart'; // 必須匯入以使用圖片快取
-import '../providers/collection_provider.dart'; // 必須匯入以認識 CollectionProvider
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import '../providers/collection_provider.dart';
+import '../providers/deck_provider.dart';
 
 class CardGridItem extends StatefulWidget {
   final String setCode;
   final String cNum;
   final dynamic cardData;
 
-  const CardGridItem({
-    super.key,
-    required this.setCode,
-    required this.cNum,
-    required this.cardData,
-  });
+  const CardGridItem(
+      {super.key,
+      required this.setCode,
+      required this.cNum,
+      required this.cardData});
 
   @override
   State<CardGridItem> createState() => _CardGridItemState();
@@ -24,77 +24,67 @@ class _CardGridItemState extends State<CardGridItem> {
   Timer? _timer;
   int _interval = 500;
 
-  // 組件銷毀時必須關閉計時器
   @override
   void dispose() {
     _stopDecreasing();
     super.dispose();
   }
 
+  // --- 圖片優化邏輯 ---
   String _getOptimizedUrl(String? rawUrl, double screenWidth) {
     if (rawUrl == null || rawUrl.isEmpty || rawUrl == "X") return "";
     String cleanUrl = rawUrl.replaceFirst(RegExp(r'^https?://'), '');
-    int requestWidth = 300;
-    if (screenWidth > 1200)
-      requestWidth = 600;
-    else if (screenWidth > 600) requestWidth = 450;
-    return "https://wsrv.nl/?url=$cleanUrl&w=$requestWidth&q=80&output=webp&il";
+    int width = screenWidth > 1200 ? 600 : (screenWidth > 600 ? 450 : 300);
+    return "https://wsrv.nl/?url=$cleanUrl&w=$width&q=80&output=webp&il";
   }
 
-  Widget _buildPlaceholder(String shortNum, bool isOwned,
-      {bool isError = false}) {
+  Widget _buildPlaceholder(String shortNum, bool isOwned) {
     return Container(
-      padding: const EdgeInsets.all(2),
+      padding: const EdgeInsets.all(4),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              shortNum,
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 26,
-                color: isOwned ? Colors.black87 : Colors.grey[500],
-              ),
-            ),
-          ),
+              child: Text(shortNum,
+                  style: TextStyle(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 24,
+                      color: isOwned ? Colors.black87 : Colors.grey[500]))),
           const SizedBox(height: 2),
           FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              widget.cardData['name'] ?? "",
-              style: TextStyle(
-                fontSize: 24,
-                color: isOwned ? Colors.black87 : Colors.grey[500],
-              ),
-            ),
-          ),
+              fit: BoxFit.scaleDown,
+              child: Text(widget.cardData['name'] ?? "",
+                  style: TextStyle(
+                      fontSize: 24,
+                      color: isOwned ? Colors.black87 : Colors.grey[500]))),
         ],
       ),
     );
   }
 
-  void _startDecreasing(CollectionProvider p) {
+  // --- 【核心修改】通用連續扣除邏輯 ---
+  // action: 要執行的扣除函數
+  // getCount: 取得目前數量的函數
+  void _startDecreasing(VoidCallback action, int Function() getCount) {
+    _stopDecreasing(); // 確保安全
     _interval = 500;
-    _loop(p);
+    _executeLoop(action, getCount);
   }
 
-  void _loop(CollectionProvider p) {
-    String fullId = "${widget.setCode}-${widget.cNum}";
-    int currentCount = p.userCollection[fullId] ?? 0;
-
-    // 安全檢查：若組件不在了或數量到底了就停止
-    if (!mounted || currentCount <= 0) {
+  void _executeLoop(VoidCallback action, int Function() getCount) {
+    if (!mounted || getCount() <= 0) {
       _stopDecreasing();
       return;
     }
 
-    p.removeCard(widget.setCode, widget.cNum);
+    action(); // 執行扣除動作 (可能是減收藏，也可能是減牌組)
+
+    // 加速邏輯
     _interval = (_interval * 0.8).toInt();
     if (_interval < 50) _interval = 50;
 
-    _timer = Timer(Duration(milliseconds: _interval), () => _loop(p));
+    _timer = Timer(Duration(milliseconds: _interval),
+        () => _executeLoop(action, getCount));
   }
 
   void _stopDecreasing() {
@@ -107,18 +97,47 @@ class _CardGridItemState extends State<CardGridItem> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CollectionProvider>(context);
+    final deckProvider = Provider.of<DeckProvider>(context);
+    final activeDeck = deckProvider.currentDeck;
+
     double screenWidth = MediaQuery.of(context).size.width;
     String fullId = "${widget.setCode}-${widget.cNum}";
+
     int count = provider.userCollection[fullId] ?? 0;
     bool isOwned = count > 0;
     String shortNum = widget.cNum.split('/')[0];
     String optimizedImgUrl =
         _getOptimizedUrl(widget.cardData['image'], screenWidth);
+    int inDeckCount = activeDeck?.cards[fullId] ?? 0;
 
     return GestureDetector(
-      onTap: () => provider.addCard(widget.setCode, widget.cNum),
+      onTap: () {
+        if (activeDeck != null) {
+          final err = deckProvider.addCardToDeck(
+              fullId, widget.cardData['name'], provider.database);
+          if (err != null)
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(err), duration: const Duration(seconds: 1)));
+        } else {
+          provider.addCard(widget.setCode, widget.cNum);
+        }
+      },
+      // --- 【修改點】長按邏輯判斷 ---
       onLongPressStart: (_) {
-        if (count > 0) _startDecreasing(provider);
+        if (activeDeck != null) {
+          // 編輯模式：連續扣除牌組內數量
+          if (inDeckCount > 0) {
+            _startDecreasing(() => deckProvider.removeCardFromDeck(fullId),
+                () => activeDeck.cards[fullId] ?? 0);
+          }
+        } else {
+          // 收藏模式：連續扣除我的收藏
+          if (count > 0) {
+            _startDecreasing(
+                () => provider.removeCard(widget.setCode, widget.cNum),
+                () => provider.userCollection[fullId] ?? 0);
+          }
+        }
       },
       onLongPressEnd: (_) => _stopDecreasing(),
       onLongPressCancel: () => _stopDecreasing(),
@@ -126,21 +145,20 @@ class _CardGridItemState extends State<CardGridItem> {
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           color: isOwned ? Colors.white : Colors.grey[200],
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8),
           border: isOwned
               ? Border.all(color: Colors.amber.shade600, width: 2)
               : Border.all(color: Colors.grey.shade400, width: 1),
           boxShadow: [
             if (isOwned)
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 4,
-                offset: const Offset(0, 2),
-              )
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2))
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(4),
+          borderRadius: BorderRadius.circular(6),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -151,74 +169,95 @@ class _CardGridItemState extends State<CardGridItem> {
                   placeholder: (ctx, url) =>
                       _buildPlaceholder(shortNum, isOwned),
                   errorWidget: (ctx, url, err) =>
-                      _buildPlaceholder(shortNum, isOwned, isError: true),
-                  imageBuilder: (ctx, imageProvider) => isOwned
-                      ? Image(image: imageProvider, fit: BoxFit.cover)
+                      _buildPlaceholder(shortNum, isOwned),
+                  imageBuilder: (ctx, imgProv) => isOwned
+                      ? Image(image: imgProv, fit: BoxFit.cover)
                       : ColorFiltered(
                           colorFilter: const ColorFilter.mode(
                               Colors.grey, BlendMode.saturation),
                           child: Opacity(
-                            opacity: 0.4,
-                            child:
-                                Image(image: imageProvider, fit: BoxFit.cover),
-                          ),
+                              opacity: 0.4,
+                              child: Image(image: imgProv, fit: BoxFit.cover)),
                         ),
                 )
               else
                 _buildPlaceholder(shortNum, isOwned),
-              _buildCardBadge("${widget.setCode}-$shortNum"),
-              if (isOwned) _buildCountBadge(count),
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                  decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.8),
+                      borderRadius:
+                          const BorderRadius.only(topLeft: Radius.circular(6))),
+                  child: Text("${widget.setCode}-$shortNum",
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          fontFamily: "Monospace")),
+                ),
+              ),
+              if (isOwned)
+                Positioned(
+                  left: 2,
+                  top: 2,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                        color: Colors.redAccent,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5)),
+                    constraints:
+                        const BoxConstraints(minWidth: 24, minHeight: 24),
+                    child: Center(
+                        child: Text("x$count",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900))),
+                  ),
+                ),
+              if (activeDeck != null && inDeckCount > 0)
+                Positioned(
+                  right: 2,
+                  top: 2,
+                  child: Builder(builder: (context) {
+                    bool isShortage = inDeckCount > count;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isShortage
+                            ? Colors.red.shade900
+                            : Colors.teal.shade600,
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: Colors.white, width: 1.5),
+                        boxShadow: const [
+                          BoxShadow(color: Colors.black26, blurRadius: 2)
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (isShortage)
+                            const Padding(
+                                padding: EdgeInsets.only(right: 2),
+                                child: Icon(Icons.warning_amber_rounded,
+                                    color: Colors.white, size: 12)),
+                          Text("IN: $inDeckCount",
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900)),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCardBadge(String label) {
-    return Positioned(
-      right: 0,
-      bottom: 0,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
-        decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.8),
-          borderRadius: const BorderRadius.only(topLeft: Radius.circular(6)),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            fontFamily: "Monospace",
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCountBadge(int count) {
-    return Positioned(
-      left: 2,
-      top: 2,
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: Colors.redAccent,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white, width: 2),
-          boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 2)],
-        ),
-        child: Center(
-          child: Text(
-            "x$count",
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w900,
-            ),
           ),
         ),
       ),

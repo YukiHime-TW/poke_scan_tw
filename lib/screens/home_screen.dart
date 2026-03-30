@@ -1,21 +1,17 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:provider/provider.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
-// 匯入自定義組件與 Provider
+// 匯入 Provider 與 組件
 import '../providers/collection_provider.dart';
+import '../providers/deck_provider.dart';
 import '../widgets/card_grid_item.dart';
 import '../widgets/set_header.dart';
+import 'deck_list_screen.dart';
 
-// 如果要編譯手機版並使用掃描功能，請取消下面這行的註解
-// import 'scanner_screen.dart';
-
-// 狀態過濾：全部、已擁有、未擁有、重複(>1)、多餘(>4)
 enum StatusFilter { all, owned, missing, duplicates, competitive }
 
-// 賽制過濾：不限、標準賽制、開放賽制
 enum FormatFilter { all, standard, expanded }
 
 class HomeScreen extends StatefulWidget {
@@ -26,15 +22,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // 記錄每個系列的展開/收合狀態
   final Map<String, bool> _expandedState = {};
-
-  // 搜尋控制
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchText = "";
 
-  // 過濾條件初始化
   StatusFilter _statusFilter = StatusFilter.all;
   FormatFilter _formatFilter = FormatFilter.standard;
 
@@ -44,25 +36,20 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // --- 核心邏輯：判斷卡片是否符合賽制 ---
   bool _matchesFormat(dynamic cardData) {
     if (_formatFilter == FormatFilter.all) return true;
-
-    // 取得卡片上的賽制標記 (例如 F, G, H)
     String regMark = (cardData['reg'] ?? "").toString().toUpperCase();
-
     if (_formatFilter == FormatFilter.standard) {
-      // 目前標準賽制包含 H、I、J 標記， NONE 為通用
       return ["H", "I", "J", "NONE"].contains(regMark);
     }
-
-    // 開放賽制通常包含所有卡片
     return true;
   }
 
-  // --- 輔助：根據過濾狀態切換主題顏色 ---
-  Color _getThemeColor() {
-    // 優先判斷重複/多餘模式
+  // --- 輔助：更新後的主題顏色邏輯 ---
+  Color _getThemeColor(bool isDeckMode) {
+    // 如果正在編輯牌組，AppBar 顏色也跟著切換，強化「模式切換」的視覺感
+    if (isDeckMode) return Colors.teal.shade800;
+
     if (_statusFilter == StatusFilter.duplicates ||
         _statusFilter == StatusFilter.competitive) {
       return Colors.deepPurple.shade700;
@@ -70,18 +57,17 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_statusFilter == StatusFilter.owned) return Colors.green.shade700;
     if (_statusFilter == StatusFilter.missing) return Colors.orange.shade800;
 
-    // 賽制主題
     if (_formatFilter == FormatFilter.standard) return Colors.blue.shade700;
     if (_formatFilter == FormatFilter.expanded) return Colors.purple.shade700;
 
     return Colors.redAccent;
   }
 
-  // --- 輔助：動態 AppBar 標題 ---
-  String _getAppBarTitle() {
+  String _getAppBarTitle(bool isDeckMode) {
     if (_isSearching) return "";
-    String title = "PokeScan TW";
+    if (isDeckMode) return "正在編輯牌組"; // 編輯時標題更換
 
+    String title = "PokeScan TW";
     switch (_statusFilter) {
       case StatusFilter.owned:
         title = "我的收藏";
@@ -98,31 +84,32 @@ class _HomeScreenState extends State<HomeScreen> {
       default:
         break;
     }
-
-    if (_formatFilter == FormatFilter.standard) title += " (標準)";
-    if (_formatFilter == FormatFilter.expanded) title += " (開放)";
+    if (_formatFilter == FormatFilter.standard)
+      title += " (標準)";
+    else if (_formatFilter == FormatFilter.expanded) title += " (開放)";
     return title;
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<CollectionProvider>(context);
-    final themeColor = _getThemeColor();
-    double screenWidth = MediaQuery.of(context).size.width;
+    final deckProvider = Provider.of<DeckProvider>(context);
 
-    // 響應式列數計算
+    final activeDeck = deckProvider.currentDeck;
+    final bool isDeckMode = activeDeck != null;
+    final themeColor = _getThemeColor(isDeckMode);
+
+    double screenWidth = MediaQuery.of(context).size.width;
     int crossAxisCount = screenWidth < 600 ? 3 : (screenWidth < 1000 ? 5 : 8);
 
     if (provider.isLoading) {
       return Scaffold(
-        body: Center(child: CircularProgressIndicator(color: themeColor)),
-      );
+          body: Center(child: CircularProgressIndicator(color: themeColor)));
     }
 
     List<Widget> slivers = [];
     String query = _searchText.trim().toLowerCase();
 
-    // 1. 排序系列 (依照日期降冪)
     var sortedKeys = provider.database.keys.toList();
     sortedKeys.sort((a, b) => (provider.database[b]['releaseDate'] ?? "")
         .compareTo(provider.database[a]['releaseDate'] ?? ""));
@@ -132,44 +119,33 @@ class _HomeScreenState extends State<HomeScreen> {
       Map allCards = setData['cards'];
       Map filteredCards = {};
 
-      // 2. 應用多重過濾與搜尋
       allCards.forEach((k, v) {
         String fullId = "$setCode-$k";
         int count = provider.userCollection[fullId] ?? 0;
-        bool isOwned = count > 0;
 
-        // A. 收藏狀態與數量過濾
-        if (_statusFilter == StatusFilter.owned && !isOwned) return;
-        if (_statusFilter == StatusFilter.missing && isOwned) return;
+        if (_statusFilter == StatusFilter.owned && count == 0) return;
+        if (_statusFilter == StatusFilter.missing && count > 0) return;
         if (_statusFilter == StatusFilter.duplicates && count <= 1) return;
         if (_statusFilter == StatusFilter.competitive && count <= 4) return;
-
-        // B. 賽制過濾
         if (!_matchesFormat(v)) return;
 
-        // C. 關鍵字搜尋
         if (query.isNotEmpty) {
           String cardName = v['name'].toString().toLowerCase();
           String rarity = (v['rarity'] ?? "").toString().toLowerCase();
           String setName = setData['name'].toString().toLowerCase();
-          bool matchesText = cardName.contains(query) ||
-              k.contains(query) ||
-              rarity.contains(query) ||
-              setName.contains(query);
-          if (!matchesText) return;
+          if (!cardName.contains(query) &&
+              !k.contains(query) &&
+              !rarity.contains(query) &&
+              !setName.contains(query)) return;
         }
-
         filteredCards[k] = v;
       });
 
       if (filteredCards.isEmpty) continue;
 
-      // 3. 計算系列原始進度 (不受過濾影響)
       int ownedInSet = allCards.keys
           .where((k) => provider.userCollection.containsKey("$setCode-$k"))
           .length;
-
-      // 4. 智慧展開邏輯 (搜尋文字時強制展開)
       bool isExpanded =
           (query.isNotEmpty) ? true : (_expandedState[setCode] ?? false);
 
@@ -188,9 +164,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 isExpanded: isExpanded,
                 themeColor: themeColor,
                 onTap: () {
-                  if (query.isEmpty) {
+                  if (query.isEmpty)
                     setState(() => _expandedState[setCode] = !isExpanded);
-                  }
                 },
               ),
             ),
@@ -208,10 +183,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     (ctx, i) {
                       String cNum = filteredCards.keys.elementAt(i);
                       return CardGridItem(
-                        setCode: setCode,
-                        cNum: cNum,
-                        cardData: filteredCards[cNum],
-                      );
+                          setCode: setCode,
+                          cNum: cNum,
+                          cardData: filteredCards[cNum]);
                     },
                     childCount: filteredCards.length,
                   ),
@@ -238,12 +212,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 autofocus: true,
                 style: const TextStyle(color: Colors.white),
                 decoration: const InputDecoration(
-                    hintText: "搜尋名稱/編號/系列...",
+                    hintText: "搜尋...",
                     border: InputBorder.none,
                     hintStyle: TextStyle(color: Colors.white70)),
                 onChanged: (val) => setState(() => _searchText = val),
               )
-            : Text(_getAppBarTitle(),
+            : Text(_getAppBarTitle(isDeckMode),
                 style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
@@ -257,53 +231,65 @@ class _HomeScreenState extends State<HomeScreen> {
             }),
           ),
           _buildFilterMenu(),
+          IconButton(
+            icon: const Icon(Icons.style),
+            onPressed: () => Navigator.push(context,
+                MaterialPageRoute(builder: (_) => const DeckListScreen())),
+          ),
           Consumer<CollectionProvider>(
-            builder: (context, prov, _) {
-              if (prov.user == null) {
-                return TextButton.icon(
-                  onPressed: () => prov.signInWithGoogle(),
-                  icon: const Icon(Icons.login, color: Colors.white),
-                  label:
-                      const Text("登入", style: TextStyle(color: Colors.white)),
-                );
-              } else {
-                return InkWell(
-                  onTap: () => _showLogoutDialog(context, prov),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
+            builder: (context, prov, _) => prov.user == null
+                ? IconButton(
+                    icon: const Icon(Icons.login),
+                    onPressed: () => prov.signInWithGoogle())
+                : InkWell(
+                    onTap: () => _showLogoutDialog(context, prov),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                      child: CircleAvatar(
                           radius: 14,
                           backgroundImage: prov.user!.photoURL != null
                               ? NetworkImage(prov.user!.photoURL!)
-                              : null,
-                          child: prov.user!.photoURL == null
-                              ? const Icon(Icons.person, size: 16)
-                              : null,
-                        ),
-                        const SizedBox(width: 8),
-                        const Icon(Icons.logout, color: Colors.white, size: 20),
-                      ],
+                              : null),
                     ),
                   ),
-                );
-              }
-            },
           ),
         ],
+        // --- 修正後的編輯狀態列顏色 (Teal) ---
+        bottom: activeDeck == null
+            ? null
+            : PreferredSize(
+                preferredSize: const Size.fromHeight(40),
+                child: Container(
+                  color: Colors.teal.shade900, // 比 AppBar 再深一點的青色
+                  height: 40,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit_note,
+                          color: Colors.white, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          "編輯：${activeDeck.name} (${activeDeck.cards.values.fold(0, (sum, c) => sum + c)}/60)",
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () => deckProvider.selectDeck(null),
+                        child: const Text("完成離開",
+                            style: TextStyle(
+                                color: Colors.cyanAccent,
+                                fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
       ),
-      body: CustomScrollView(
-        cacheExtent: 1000,
-        slivers: slivers.isNotEmpty
-            ? slivers
-            : [
-                const SliverFillRemaining(
-                    child: Center(
-                        child: Text("沒有符合條件的卡片",
-                            style: TextStyle(color: Colors.grey)))),
-              ],
-      ),
+      body: CustomScrollView(cacheExtent: 1000, slivers: slivers),
       floatingActionButton: kIsWeb
           ? null
           : FloatingActionButton(
@@ -315,11 +301,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // --- 構建下拉式過濾選單 ---
   Widget _buildFilterMenu() {
     return PopupMenuButton<dynamic>(
       icon: const Icon(Icons.filter_list),
-      tooltip: "進階過濾",
       onSelected: (value) {
         setState(() {
           if (value is StatusFilter) _statusFilter = value;
@@ -340,9 +324,9 @@ class _HomeScreenState extends State<HomeScreen> {
             _statusFilter == StatusFilter.owned),
         _buildPopupItem(StatusFilter.missing, Icons.radio_button_unchecked,
             "只看未擁有", _statusFilter == StatusFilter.missing),
-        _buildPopupItem(StatusFilter.duplicates, Icons.copy, "重複卡片 (>1)",
+        _buildPopupItem(StatusFilter.duplicates, Icons.copy, "重複 (>1)",
             _statusFilter == StatusFilter.duplicates),
-        _buildPopupItem(StatusFilter.competitive, Icons.layers, "多餘物資 (>4)",
+        _buildPopupItem(StatusFilter.competitive, Icons.layers, "多餘 (>4)",
             _statusFilter == StatusFilter.competitive),
         const PopupMenuDivider(),
         const PopupMenuItem(
@@ -364,7 +348,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   PopupMenuEntry<dynamic> _buildPopupItem(
       dynamic value, IconData icon, String title, bool isSelected) {
-    Color activeColor = _getThemeColor();
+    // 這裡我們傳入 false 給 _getThemeColor，讓選單內的預覽色維持原本的邏輯
+    Color activeColor = _getThemeColor(false);
     return PopupMenuItem<dynamic>(
       value: value,
       child: Row(
@@ -408,10 +393,8 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("使用說明"),
-        content: const Text("• 點擊卡片：數量 +1\n"
-            "• 長按卡片：數量 -1 (長按可加速)\n"
-            "• 智慧搜尋：搜尋文字時會自動展開系列\n"
-            "• 進階過濾：右上角漏斗可切換「狀態」與「賽制」"),
+        content:
+            const Text("• 點擊卡片：加數量\n• 長按卡片：減數量\n• 牌組編輯：點擊右上角卡片圖示進入「我的牌組」選取"),
         actions: [
           TextButton(
               onPressed: () => Navigator.pop(ctx), child: const Text("我知道了"))
