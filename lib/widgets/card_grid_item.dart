@@ -45,18 +45,39 @@ class _CardGridItemState extends State<CardGridItem> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           FittedBox(
-              child: Text(shortNum,
-                  style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 24,
-                      color: isOwned ? Colors.black87 : Colors.grey[500]))),
+            fit: BoxFit.scaleDown,
+            child: Text(
+              shortNum,
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 26,
+                color: isOwned ? Colors.black87 : Colors.grey[500],
+              ),
+            ),
+          ),
           const SizedBox(height: 2),
           FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(widget.cardData['name'] ?? "",
-                  style: TextStyle(
+            fit: BoxFit.scaleDown,
+            child: Builder(
+              builder: (context) {
+                String name = widget.cardData['name'];
+                String rarity = widget.cardData['rarity'];
+                // 稀有度顯示邏輯
+                String displayText = (rarity == '—' ||
+                        rarity == 'C' ||
+                        rarity == 'U' ||
+                        rarity == 'R')
+                    ? name
+                    : "$name $rarity";
+
+                return Text(displayText,
+                    style: TextStyle(
                       fontSize: 24,
-                      color: isOwned ? Colors.black87 : Colors.grey[500]))),
+                      color: isOwned ? Colors.black87 : Colors.grey[500],
+                    ));
+              },
+            ),
+          ),
         ],
       ),
     );
