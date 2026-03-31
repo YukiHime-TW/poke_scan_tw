@@ -1,11 +1,14 @@
 import 'dart:convert';
+import 'dart:async'; // 新增
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:firebase_auth/firebase_auth.dart'; // 新增
+import 'package:cloud_firestore/cloud_firestore.dart'; // 新增
 
 class Deck {
   String id;
   String name;
-  Map<String, int> cards; // Key: "setCode-cNum", Value: 數量
+  Map<String, int> cards;
   DateTime lastUpdated;
 
   Deck({
@@ -15,7 +18,6 @@ class Deck {
     required this.lastUpdated,
   });
 
-  // 轉換為 JSON 儲存
   Map<String, dynamic> toJson() => {
         'id': id,
         'name': name,
@@ -23,30 +25,124 @@ class Deck {
         'lastUpdated': lastUpdated.toIso8601String(),
       };
 
-  factory Deck.fromJson(Map<String, dynamic> json) => Deck(
-        id: json['id'],
-        name: json['name'],
-        cards: Map<String, int>.from(json['cards']),
-        lastUpdated: DateTime.parse(json['lastUpdated']),
-      );
+  factory Deck.fromJson(Map<String, dynamic> json) {
+    // 處理 Firestore 的 Timestamp 或 JSON 的 String 轉 DateTime
+    DateTime parseDate;
+    if (json['lastUpdated'] is Timestamp) {
+      parseDate = (json['lastUpdated'] as Timestamp).toDate();
+    } else {
+      parseDate = DateTime.parse(
+          json['lastUpdated'] ?? DateTime.now().toIso8601String());
+    }
+
+    return Deck(
+      id: json['id'],
+      name: json['name'],
+      cards: Map<String, int>.from(json['cards'] ?? {}),
+      lastUpdated: parseDate,
+    );
+  }
 }
 
 class DeckProvider with ChangeNotifier {
   List<Deck> _decks = [];
   String? _currentEditingDeckId;
 
+  // Firebase 相關變數
+  User? _user;
+  StreamSubscription? _authSubscription;
+
   List<Deck> get decks => _decks;
 
-  // 取得目前正在編輯的牌組
   Deck? get currentDeck => _currentEditingDeckId == null
       ? null
-      : _decks.firstWhere((d) => d.id == _currentEditingDeckId);
+      : _decks.firstWhere((d) => d.id == _currentEditingDeckId,
+          orElse: () => _decks.first);
 
   DeckProvider() {
-    _loadDecks();
+    _init();
   }
 
-  // --- 基礎操作 ---
+  // 初始化：監聽登入狀態切換
+  void _init() {
+    _authSubscription =
+        FirebaseAuth.instance.authStateChanges().listen((firebaseUser) {
+      _user = firebaseUser;
+      if (firebaseUser != null) {
+        // 登入狀態：從雲端讀取
+        _loadDecksFromCloud();
+      } else {
+        // 登出狀態：從本地讀取
+        _loadDecksFromLocal();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _authSubscription?.cancel();
+    super.dispose();
+  }
+
+  // --- 核心同步邏輯 ---
+
+  // 從本地載入 (離線模式)
+  Future<void> _loadDecksFromLocal() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? data = prefs.getString('user_decks');
+    if (data != null) {
+      final List<dynamic> decoded = json.decode(data);
+      _decks = decoded.map((d) => Deck.fromJson(d)).toList();
+    } else {
+      _decks = [];
+    }
+    notifyListeners();
+  }
+
+  // 從雲端載入並同步到本地
+  Future<void> _loadDecksFromCloud() async {
+    if (_user == null) return;
+
+    try {
+      final snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user!.uid)
+          .collection('decks')
+          .get();
+
+      if (snapshot.docs.isNotEmpty) {
+        _decks = snapshot.docs.map((doc) => Deck.fromJson(doc.data())).toList();
+        _saveDecksToLocal(); // 更新本地暫存
+      } else {
+        // 如果雲端沒資料但本地有，可以考慮做第一次上傳同步
+        await _loadDecksFromLocal();
+        for (var deck in _decks) {
+          _syncSingleDeckToCloud(deck);
+        }
+      }
+      notifyListeners();
+    } catch (e) {
+      print("❌ 雲端牌組加載失敗: $e");
+      _loadDecksFromLocal(); // 失敗時降級使用本地
+    }
+  }
+
+  // 將單一牌組同步到雲端
+  Future<void> _syncSingleDeckToCloud(Deck deck) async {
+    if (_user == null) return;
+    try {
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user!.uid)
+          .collection('decks')
+          .doc(deck.id)
+          .set(deck.toJson());
+    } catch (e) {
+      print("❌ 雲端牌組同步失敗: $e");
+    }
+  }
+
+  // --- 基礎操作 (修改為同時觸發雲端同步) ---
 
   void createDeck(String name) {
     final newDeck = Deck(
@@ -57,14 +153,25 @@ class DeckProvider with ChangeNotifier {
     );
     _decks.add(newDeck);
     _currentEditingDeckId = newDeck.id;
-    _saveDecks();
+
+    _saveDecksToLocal();
+    _syncSingleDeckToCloud(newDeck);
     notifyListeners();
   }
 
   void deleteDeck(String id) {
     _decks.removeWhere((d) => d.id == id);
     if (_currentEditingDeckId == id) _currentEditingDeckId = null;
-    _saveDecks();
+
+    _saveDecksToLocal();
+    if (_user != null) {
+      FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user!.uid)
+          .collection('decks')
+          .doc(id)
+          .delete();
+    }
     notifyListeners();
   }
 
@@ -75,38 +182,30 @@ class DeckProvider with ChangeNotifier {
 
   // --- 牌組編輯邏輯 ---
 
-  // 加入卡片到牌組
-  // 需要傳入卡片名稱，因為同名卡限制 4 張是看名稱，不看 ID
   String? addCardToDeck(
       String fullId, String cardName, Map<String, dynamic> database) {
     final deck = currentDeck;
     if (deck == null) return "請先選擇牌組";
 
-    // 1. 計算總張數
     int totalCount = deck.cards.values.fold(0, (sum, count) => sum + count);
     if (totalCount >= 60) return "牌組已滿 60 張";
 
-    // 2. 檢查同名卡限制 (4張)
-    // 我們需要計算牌組中所有「名稱相同」但「ID不同」的卡片總數
     int nameCount = 0;
     deck.cards.forEach((id, count) {
-      // 拆解 ID 取得 setCode 和 cNum 來從 database 找名稱
       List<String> parts = id.split('-');
       String sCode = parts[0];
       String cNum = parts[1];
       String? existingName = database[sCode]?['cards']?[cNum]?['name'];
-
-      if (existingName == cardName) {
-        nameCount += count;
-      }
+      if (existingName == cardName) nameCount += count;
     });
 
     if (nameCount >= 4) return "同名卡片「$cardName」最多只能放 4 張";
 
-    // 3. 執行加入
     deck.cards[fullId] = (deck.cards[fullId] ?? 0) + 1;
     deck.lastUpdated = DateTime.now();
-    _saveDecks();
+
+    _saveDecksToLocal();
+    _syncSingleDeckToCloud(deck);
     notifyListeners();
     return null;
   }
@@ -121,25 +220,17 @@ class DeckProvider with ChangeNotifier {
       deck.cards.remove(fullId);
     }
     deck.lastUpdated = DateTime.now();
-    _saveDecks();
+
+    _saveDecksToLocal();
+    _syncSingleDeckToCloud(deck);
     notifyListeners();
   }
 
-  // --- 持久化 ---
+  // --- 持久化工具 ---
 
-  Future<void> _saveDecks() async {
+  Future<void> _saveDecksToLocal() async {
     final prefs = await SharedPreferences.getInstance();
     final String data = json.encode(_decks.map((d) => d.toJson()).toList());
     prefs.setString('user_decks', data);
-  }
-
-  Future<void> _loadDecks() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? data = prefs.getString('user_decks');
-    if (data != null) {
-      final List<dynamic> decoded = json.decode(data);
-      _decks = decoded.map((d) => Deck.fromJson(d)).toList();
-      notifyListeners();
-    }
   }
 }
