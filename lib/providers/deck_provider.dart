@@ -145,7 +145,12 @@ class DeckProvider with ChangeNotifier {
 
     // 將排序後的資料放入對應分類
     for (var item in allSortedData) {
-      String line = "• [${item['sCode']}] ${item['name']} (${item['rarity']}) x${item['count']}";
+      String line = "";
+      if(item['rarity'] == 'C' || item['rarity'] == 'U' || item['rarity'] == 'R' || item['rarity'] == 'RR' || item['rarity'] == 'RRR' || item['rarity'] == ''){
+        line = "• [${item['sCode']}] ${item['name']} x${item['count']}";
+      }else{
+        line = "• [${item['sCode']}] ${item['name']} (${item['rarity']}) x${item['count']}";
+      }
       String type = item['type'];
 
       switch (type) {
@@ -184,7 +189,8 @@ class DeckProvider with ChangeNotifier {
       buffer.writeln("▼ 物品 (${goods.length} 種)\n${goods.join('\n')}\n");
     }
     if (supporter.isNotEmpty) {
-      buffer.writeln("▼ 支援者 (${supporter.length} 種)\n${supporter.join('\n')}\n");
+      buffer
+          .writeln("▼ 支援者 (${supporter.length} 種)\n${supporter.join('\n')}\n");
     }
     if (stadium.isNotEmpty) {
       buffer.writeln("▼ 競技場 (${stadium.length} 種)\n${stadium.join('\n')}\n");
@@ -193,10 +199,12 @@ class DeckProvider with ChangeNotifier {
       buffer.writeln("▼ 道具 (${equipment.length} 種)\n${equipment.join('\n')}\n");
     }
     if (specialEnergies.isNotEmpty) {
-      buffer.writeln("▼ 特殊能量 (${specialEnergies.length} 種)\n${specialEnergies.join('\n')}\n");
+      buffer.writeln(
+          "▼ 特殊能量 (${specialEnergies.length} 種)\n${specialEnergies.join('\n')}\n");
     }
     if (basicEnergies.isNotEmpty) {
-      buffer.writeln("▼ 基本能量 (${basicEnergies.length} 種)\n${basicEnergies.join('\n')}\n");
+      buffer.writeln(
+          "▼ 基本能量 (${basicEnergies.length} 種)\n${basicEnergies.join('\n')}\n");
     }
     if (others.isNotEmpty) {
       buffer.writeln("▼ 其他\n${others.join('\n')}\n");
