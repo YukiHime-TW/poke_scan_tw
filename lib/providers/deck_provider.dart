@@ -104,8 +104,12 @@ class DeckProvider with ChangeNotifier {
     buffer.writeln("📋 總張數：$total / 60\n");
 
     List<String> pokemons = [];
-    List<String> trainers = [];
-    List<String> energies = [];
+    List<String> goods = [];
+    List<String> supporter = [];
+    List<String> stadium = [];
+    List<String> equipment = [];
+    List<String> specialEnergies = [];
+    List<String> basicEnergies = [];
     List<String> others = [];
 
     deck.cards.forEach((fullId, count) {
@@ -122,17 +126,31 @@ class DeckProvider with ChangeNotifier {
         String type = (cardData['type'] ?? "").toString();
         String line = "• [$sCode] $name ($rarity) x$count";
 
-        if (type == "寶可夢")
-          pokemons.add(line);
-        else if (type == "訓練家")
-          trainers.add(line);
-        else if (type == "能量")
-          energies.add(line);
-        else {
-          if (name.contains("能量"))
-            energies.add(line);
-          else
+        switch (type) {
+          case "寶可夢":
+            pokemons.add(line);
+            break;
+          case "訓練家|物品":
+            goods.add(line);
+            break;
+          case "訓練家|支援者":
+            supporter.add(line);
+            break;
+          case "訓練家|競技場":
+            stadium.add(line);
+            break;
+          case "訓練家|道具":
+            equipment.add(line);
+            break;
+          case "特殊能量":
+            specialEnergies.add(line);
+            break;
+          case "基本能量":
+            basicEnergies.add(line);
+            break;
+          default:
             others.add(line);
+            break;
         }
       }
     });
@@ -140,11 +158,23 @@ class DeckProvider with ChangeNotifier {
     if (pokemons.isNotEmpty) {
       buffer.writeln("▼ 寶可夢 (${pokemons.length} 種)\n${pokemons.join('\n')}\n");
     }
-    if (trainers.isNotEmpty) {
-      buffer.writeln("▼ 訓練家 (${trainers.length} 種)\n${trainers.join('\n')}\n");
+    if (goods.isNotEmpty) {
+      buffer.writeln("▼ 物品 (${goods.length} 種)\n${goods.join('\n')}\n");
     }
-    if (energies.isNotEmpty) {
-      buffer.writeln("▼ 能量 (${energies.length} 種)\n${energies.join('\n')}\n");
+    if (supporter.isNotEmpty) {
+      buffer.writeln("▼ 支援者 (${supporter.length} 種)\n${supporter.join('\n')}\n");
+    }
+    if (stadium.isNotEmpty) {
+      buffer.writeln("▼ 競技場 (${stadium.length} 種)\n${stadium.join('\n')}\n");
+    }
+    if (equipment.isNotEmpty) {
+      buffer.writeln("▼ 道具 (${equipment.length} 種)\n${equipment.join('\n')}\n");
+    }
+    if (specialEnergies.isNotEmpty) {
+      buffer.writeln("▼ 特殊能量 (${specialEnergies.length} 種)\n${specialEnergies.join('\n')}\n");
+    }
+    if (basicEnergies.isNotEmpty) {
+      buffer.writeln("▼ 基本能量 (${basicEnergies.length} 種)\n${basicEnergies.join('\n')}\n");
     }
     if (others.isNotEmpty) {
       buffer.writeln("▼ 其他\n${others.join('\n')}\n");
