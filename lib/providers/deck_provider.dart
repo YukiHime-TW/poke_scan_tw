@@ -99,10 +99,41 @@ class DeckProvider with ChangeNotifier {
   // --- 導出功能 ---
   String generateExportText(Deck deck, Map<String, dynamic> database) {
     StringBuffer buffer = StringBuffer();
+
     buffer.writeln("【PTCG 牌組：${deck.name}】");
     int total = deck.cards.values.fold(0, (sum, c) => sum + c);
     buffer.writeln("📋 總張數：$total / 60\n");
 
+    // 建立一個臨時列表來存放所有待處理的卡片資料
+    List<Map<String, dynamic>> allSortedData = [];
+
+    deck.cards.forEach((fullId, count) {
+      final parts = _smartSplit(fullId, database);
+      final sCode = parts[0];
+      final cNum = parts[1];
+      final cardData = database[sCode]?['cards']?[cNum];
+
+      if (cardData != null) {
+        allSortedData.add({
+          'sCode': sCode,
+          'cNum': cNum,
+          'name': cardData['name'] ?? "未知",
+          'rarity': cardData['rarity'] ?? "",
+          'type': (cardData['type'] ?? "").toString(),
+          'count': count,
+        });
+      }
+    });
+
+    // --- 核心排序邏輯 ---
+    // 優先按擴充包編號 (sCode) 排序，若相同則按卡號 (cNum) 排序
+    allSortedData.sort((a, b) {
+      int setCompare = a['sCode'].compareTo(b['sCode']);
+      if (setCompare != 0) return setCompare;
+      return a['cNum'].compareTo(b['cNum']);
+    });
+
+    // 分類容器
     List<String> pokemons = [];
     List<String> goods = [];
     List<String> supporter = [];
@@ -112,49 +143,40 @@ class DeckProvider with ChangeNotifier {
     List<String> basicEnergies = [];
     List<String> others = [];
 
-    deck.cards.forEach((fullId, count) {
-      // 使用智慧切分
-      final parts = _smartSplit(fullId, database);
-      final sCode = parts[0];
-      final cNum = parts[1];
+    // 將排序後的資料放入對應分類
+    for (var item in allSortedData) {
+      String line = "• [${item['sCode']}] ${item['name']} (${item['rarity']}) x${item['count']}";
+      String type = item['type'];
 
-      final cardData = database[sCode]?['cards']?[cNum];
-
-      if (cardData != null) {
-        String name = cardData['name'] ?? "未知";
-        String rarity = cardData['rarity'] ?? "";
-        String type = (cardData['type'] ?? "").toString();
-        String line = "• [$sCode] $name ($rarity) x$count";
-
-        switch (type) {
-          case "寶可夢":
-            pokemons.add(line);
-            break;
-          case "訓練家|物品":
-            goods.add(line);
-            break;
-          case "訓練家|支援者":
-            supporter.add(line);
-            break;
-          case "訓練家|競技場":
-            stadium.add(line);
-            break;
-          case "訓練家|道具":
-            equipment.add(line);
-            break;
-          case "特殊能量":
-            specialEnergies.add(line);
-            break;
-          case "基本能量":
-            basicEnergies.add(line);
-            break;
-          default:
-            others.add(line);
-            break;
-        }
+      switch (type) {
+        case "寶可夢":
+          pokemons.add(line);
+          break;
+        case "訓練家|物品":
+          goods.add(line);
+          break;
+        case "訓練家|支援者":
+          supporter.add(line);
+          break;
+        case "訓練家|競技場":
+          stadium.add(line);
+          break;
+        case "訓練家|道具":
+          equipment.add(line);
+          break;
+        case "特殊能量":
+          specialEnergies.add(line);
+          break;
+        case "基本能量":
+          basicEnergies.add(line);
+          break;
+        default:
+          others.add(line);
+          break;
       }
-    });
+    }
 
+    // 依序組合文字輸出
     if (pokemons.isNotEmpty) {
       buffer.writeln("▼ 寶可夢 (${pokemons.length} 種)\n${pokemons.join('\n')}\n");
     }
