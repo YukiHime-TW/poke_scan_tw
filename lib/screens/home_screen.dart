@@ -9,7 +9,6 @@ import '../widgets/card_grid_item.dart';
 import '../widgets/set_header.dart';
 import 'deck_list_screen.dart';
 
-// 擴充狀態過濾：新增 inDeck
 enum StatusFilter { all, owned, missing, duplicates, competitive, inDeck }
 
 enum FormatFilter { all, standard, expanded }
@@ -48,7 +47,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Color _getThemeColor(bool isDeckMode) {
     if (_statusFilter == StatusFilter.inDeck) return Colors.teal.shade400;
     if (isDeckMode) return Colors.teal.shade800;
-
     if (_statusFilter == StatusFilter.duplicates ||
         _statusFilter == StatusFilter.competitive) {
       return Colors.deepPurple.shade700;
@@ -64,7 +62,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isSearching) return "";
     if (_statusFilter == StatusFilter.inDeck) return "當前牌組內容";
     if (isDeckMode) return "正在編輯牌組";
-
     String title = "PokeScan TW";
     switch (_statusFilter) {
       case StatusFilter.owned:
@@ -92,7 +89,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<CollectionProvider>(context);
     final deckProvider = Provider.of<DeckProvider>(context);
-
     final activeDeck = deckProvider.currentDeck;
     final bool isDeckMode = activeDeck != null;
     final themeColor = _getThemeColor(isDeckMode);
@@ -121,7 +117,6 @@ class _HomeScreenState extends State<HomeScreen> {
         String fullId = "$setCode-$k";
         int count = provider.userCollection[fullId] ?? 0;
 
-        // --- 核心過濾邏輯 ---
         if (_statusFilter == StatusFilter.inDeck) {
           if (!isDeckMode || !activeDeck.cards.containsKey(fullId)) return;
         } else {
@@ -133,9 +128,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (!_matchesFormat(v)) return;
 
+        // --- 多維度智慧搜尋邏輯 ---
         if (query.isNotEmpty) {
           String cardName = v['name'].toString().toLowerCase();
-          if (!cardName.contains(query) && !k.contains(query)) return;
+          String rarity = (v['rarity'] ?? "").toString().toLowerCase();
+          String cardNumber = k.toLowerCase();
+          String setCodeLower = setCode.toLowerCase();
+          String setName = setData['name'].toString().toLowerCase();
+
+          bool matchesText = cardName.contains(query) ||
+              rarity.contains(query) ||
+              cardNumber.contains(query) ||
+              setCodeLower.contains(query) ||
+              setName.contains(query);
+          if (!matchesText) return;
         }
         filteredCards[k] = v;
       });
@@ -145,7 +151,6 @@ class _HomeScreenState extends State<HomeScreen> {
       int ownedInSet = allCards.keys
           .where((k) => provider.userCollection.containsKey("$setCode-$k"))
           .length;
-      // 搜尋或檢視牌組清單時強制展開
       bool isExpanded =
           (query.isNotEmpty || _statusFilter == StatusFilter.inDeck)
               ? true
@@ -206,11 +211,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: _searchController,
                 autofocus: true,
                 style: const TextStyle(color: Colors.white),
+                textInputAction: TextInputAction.search, // 讓鍵盤顯示「搜尋」按鈕
                 decoration: const InputDecoration(
-                    hintText: "搜尋...",
+                    hintText: "搜尋名稱 / 編號 / 稀有度 / 系列...",
                     border: InputBorder.none,
                     hintStyle: TextStyle(color: Colors.white70)),
-                onChanged: (val) => setState(() => _searchText = val),
+                onChanged: (val) =>
+                    setState(() => _searchText = val), // 保持即時搜尋感
+                onSubmitted: (val) {
+                  // 按下 Enter 時執行的動作
+                  setState(() => _searchText = val);
+                  FocusScope.of(context).unfocus(); // 收起鍵盤
+                },
               )
             : Text(_getAppBarTitle(isDeckMode),
                 style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -257,12 +269,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
                     children: [
-                      const Icon(Icons.edit_note,
-                          color: Colors.white, size: 20),
+                      Icon(
+                          activeDeck.isBinder
+                              ? Icons.menu_book
+                              : Icons.edit_note,
+                          color: Colors.white,
+                          size: 20),
                       const SizedBox(width: 8),
                       Expanded(
                           child: Text(
-                              "編輯：${activeDeck.name} (${activeDeck.cards.values.fold(0, (sum, c) => sum + c)}/60)",
+                              "編輯：${activeDeck.name} (${activeDeck.cards.values.fold(0, (sum, c) => sum + c)}${activeDeck.isBinder ? '' : '/60'})",
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -270,8 +286,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       TextButton(
                           onPressed: () {
                             deckProvider.selectDeck(null);
-                            setState(() =>
-                                _statusFilter = StatusFilter.all); // 退出時重設過濾
+                            setState(() => _statusFilter = StatusFilter.all);
                           },
                           child: const Text("完成",
                               style: TextStyle(
@@ -303,12 +318,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.grey))),
         _buildPopupItem(StatusFilter.all, Icons.apps, "顯示全部",
             _statusFilter == StatusFilter.all),
-
-        // --- 智慧選項：僅編輯模式顯示 ---
         if (isDeckMode)
           _buildPopupItem(StatusFilter.inDeck, Icons.fact_check, "這副牌的卡片",
               _statusFilter == StatusFilter.inDeck),
-
         _buildPopupItem(StatusFilter.owned, Icons.check_circle, "只看已擁有",
             _statusFilter == StatusFilter.owned),
         _buildPopupItem(StatusFilter.missing, Icons.radio_button_unchecked,
@@ -381,8 +393,8 @@ class _HomeScreenState extends State<HomeScreen> {
         context: context,
         builder: (ctx) => AlertDialog(
                 title: const Text("使用說明"),
-                content:
-                    const Text("• 點擊板手進入編輯模式\n• 編輯時可過濾「這副牌的卡片」\n• 長按卡片可快速連續減量"),
+                content: const Text(
+                    "• 搜尋支援：名稱、編號、稀有度、系列名\n• 按下 Enter 鍵可快速執行搜尋並收起鍵盤\n• 點擊板手可進入編輯牌組模式"),
                 actions: [
                   TextButton(
                       onPressed: () => Navigator.pop(ctx),

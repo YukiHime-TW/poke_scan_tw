@@ -114,6 +114,7 @@ class _CardGridItemState extends State<CardGridItem> {
   // 顯示卡片在哪些牌組中被使用的彈窗
   void _showUsageDialog(
       BuildContext context, String cardName, Map<String, int> usages) {
+    final deckProvider = Provider.of<DeckProvider>(context, listen: false);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -121,21 +122,24 @@ class _CardGridItemState extends State<CardGridItem> {
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: usages.entries
-              .map((e) => ListTile(
-                    leading:
-                        const Icon(Icons.style, size: 20, color: Colors.teal),
-                    title: Text(e.key, style: const TextStyle(fontSize: 14)),
-                    trailing: Text("x${e.value}",
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16)),
-                    dense: true,
-                  ))
-              .toList(),
+          children: usages.entries.map((e) {
+            // 從清單中找出該牌組/收藏本的屬性
+            final deck = deckProvider.decks.firstWhere((d) => d.name == e.key,
+                orElse: () => Deck(
+                    id: '', name: '', cards: {}, lastUpdated: DateTime.now()));
+            return ListTile(
+              leading: Icon(deck.isBinder ? Icons.menu_book : Icons.style,
+                  color: deck.isBinder ? Colors.orange : Colors.teal, size: 20),
+              title: Text(e.key, style: const TextStyle(fontSize: 14)),
+              trailing: Text("x${e.value}",
+                  style: const TextStyle(fontWeight: FontWeight.bold)),
+              dense: true,
+            );
+          }).toList(),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: const Text("關閉")),
+              onPressed: () => Navigator.pop(ctx), child: const Text("關閉"))
         ],
       ),
     );
@@ -157,7 +161,7 @@ class _CardGridItemState extends State<CardGridItem> {
         _getOptimizedUrl(widget.cardData['image'], screenWidth);
     int inDeckCount = activeDeck?.cards[fullId] ?? 0;
 
-    // 取得該卡片在所有牌組中的使用狀況
+    // 取得該卡片在所有牌組/收藏本中的使用狀況
     final Map<String, int> usages = deckProvider.getCardUsages(fullId);
 
     return GestureDetector(
@@ -273,20 +277,30 @@ class _CardGridItemState extends State<CardGridItem> {
                   ),
                 ),
 
-              // 3. 牌組編輯數量 (右上 - 僅編輯模式出現)
+              // 3. 牌組/收藏本 編輯數量 (右上)
               if (activeDeck != null && inDeckCount > 0)
                 Positioned(
                   right: 2,
                   top: 2,
                   child: Builder(builder: (context) {
                     bool isShortage = inDeckCount > count;
+
+                    // --- 顏色判斷邏輯 ---
+                    Color badgeColor;
+                    if (activeDeck.isBinder) {
+                      badgeColor = Colors.orange.shade700; // 收藏本模式：一律琥珀橘
+                    } else {
+                      // 牌組模式：庫存不足顯示深紅，充足顯示青綠
+                      badgeColor = isShortage
+                          ? Colors.red.shade900
+                          : Colors.teal.shade600;
+                    }
+
                     return Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: isShortage
-                            ? Colors.red.shade900
-                            : Colors.teal.shade600,
+                        color: badgeColor,
                         borderRadius: BorderRadius.circular(4),
                         border: Border.all(color: Colors.white, width: 1.5),
                         boxShadow: const [
@@ -296,7 +310,8 @@ class _CardGridItemState extends State<CardGridItem> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          if (isShortage)
+                          // 只有在「牌組模式」且「庫存不足」時才顯示警告圖示
+                          if (!activeDeck.isBinder && isShortage)
                             const Padding(
                                 padding: EdgeInsets.only(right: 2),
                                 child: Icon(Icons.warning_amber_rounded,
@@ -335,7 +350,7 @@ class _CardGridItemState extends State<CardGridItem> {
                               color: Colors.white, size: 10),
                           const SizedBox(width: 4),
                           Text(
-                            "用於 ${usages.length} 副牌",
+                            "用於 ${usages.length} 個收藏區",
                             style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 9,
