@@ -77,171 +77,133 @@ class DeckProvider with ChangeNotifier {
   }
 
   // --- 【核心：智慧切分邏輯】 ---
-  // 用來處理像 S-P-098/M-P 這種擴充包與卡號都帶橫線的情況
   List<String> _smartSplit(String fullId, Map<String, dynamic> database) {
     List<String> allParts = fullId.split('-');
-
-    // 從左往右嘗試組合橫線，直到在資料庫中找到匹配的 SetCode
     for (int i = 1; i < allParts.length; i++) {
       String potentialSet = allParts.sublist(0, i).join('-');
       if (database.containsKey(potentialSet)) {
-        String cNum = allParts.sublist(i).join('-'); // 剩下的就是卡號
-        return [potentialSet, cNum];
+        return [potentialSet, allParts.sublist(i).join('-')];
       }
     }
-
-    // 如果找不到匹配（防呆），則退回第一個橫線切分
     int firstDash = fullId.indexOf('-');
     if (firstDash == -1) return [fullId, ""];
     return [fullId.substring(0, firstDash), fullId.substring(firstDash + 1)];
   }
 
-  // --- 導出功能 ---
+  // --- 【新增：查詢卡片在哪些牌組中被使用】 ---
+  // 回傳：Map<牌組名稱, 使用張數>
+  Map<String, int> getCardUsages(String fullId) {
+    Map<String, int> usages = {};
+    for (var deck in _decks) {
+      if (deck.cards.containsKey(fullId)) {
+        usages[deck.name] = deck.cards[fullId]!;
+      }
+    }
+    return usages;
+  }
+
+  // --- 導出功能 (含排序與分類) ---
   String generateExportText(Deck deck, Map<String, dynamic> database) {
     StringBuffer buffer = StringBuffer();
-
     buffer.writeln("【PTCG 牌組：${deck.name}】");
     int total = deck.cards.values.fold(0, (sum, c) => sum + c);
     buffer.writeln("📋 總張數：$total / 60\n");
 
-    // 建立一個臨時列表來存放所有待處理的卡片資料
-    List<Map<String, dynamic>> allSortedData = [];
-
-    deck.cards.forEach((fullId, count) {
-      final parts = _smartSplit(fullId, database);
-      final sCode = parts[0];
-      final cNum = parts[1];
-      final cardData = database[sCode]?['cards']?[cNum];
-
-      if (cardData != null) {
-        allSortedData.add({
-          'sCode': sCode,
-          'cNum': cNum,
-          'name': cardData['name'] ?? "未知",
-          'rarity': cardData['rarity'] ?? "",
-          'type': (cardData['type'] ?? "").toString(),
-          'count': count,
+    List<Map<String, dynamic>> sortedCards = [];
+    deck.cards.forEach((id, count) {
+      final parts = _smartSplit(id, database);
+      final card = database[parts[0]]?['cards']?[parts[1]];
+      if (card != null) {
+        sortedCards.add({
+          'id': id,
+          'sCode': parts[0],
+          'cNum': parts[1],
+          'name': card['name'],
+          'rarity': card['rarity'],
+          'type': card['type'],
+          'count': count
         });
       }
     });
 
-    // --- 核心排序邏輯 ---
-    // 優先按擴充包編號 (sCode) 排序，若相同則按卡號 (cNum) 排序
-    allSortedData.sort((a, b) {
-      int setCompare = a['sCode'].compareTo(b['sCode']);
-      if (setCompare != 0) return setCompare;
-      return a['cNum'].compareTo(b['cNum']);
+    sortedCards.sort((a, b) {
+      int s = a['sCode'].compareTo(b['sCode']);
+      return s != 0 ? s : a['cNum'].compareTo(b['cNum']);
     });
 
-    // 分類容器
-    List<String> pokemons = [];
-    List<String> goods = [];
-    List<String> supporter = [];
-    List<String> stadium = [];
-    List<String> equipment = [];
-    List<String> specialEnergies = [];
-    List<String> basicEnergies = [];
-    List<String> others = [];
+    Map<String, List<String>> categories = {
+      "▼ 寶可夢": [],
+      "▼ 物品": [],
+      "▼ 支援者": [],
+      "▼ 競技場": [],
+      "▼ 道具": [],
+      "▼ 特殊能量": [],
+      "▼ 基本能量": [],
+      "▼ 其他": []
+    };
 
-    // 將排序後的資料放入對應分類
-    for (var item in allSortedData) {
-      String line = "";
-      if(item['rarity'] == 'C' || item['rarity'] == 'U' || item['rarity'] == 'R' || item['rarity'] == 'RR' || item['rarity'] == 'RRR' || item['rarity'] == ''){
-        line = "• [${item['sCode']}] ${item['name']} x${item['count']}";
-      }else{
-        line = "• [${item['sCode']}] ${item['name']} (${item['rarity']}) x${item['count']}";
-      }
-      String type = item['type'];
-
-      switch (type) {
+    for (var c in sortedCards) {
+      String line =
+          "• [${c['sCode']}] ${c['name']} (${c['rarity']}) x${c['count']}";
+      switch (c['type']) {
         case "寶可夢":
-          pokemons.add(line);
+          categories["▼ 寶可夢"]!.add(line);
           break;
         case "訓練家|物品":
-          goods.add(line);
+          categories["▼ 物品"]!.add(line);
           break;
         case "訓練家|支援者":
-          supporter.add(line);
+          categories["▼ 支援者"]!.add(line);
           break;
         case "訓練家|競技場":
-          stadium.add(line);
+          categories["▼ 競技場"]!.add(line);
           break;
         case "訓練家|道具":
-          equipment.add(line);
+          categories["▼ 道具"]!.add(line);
           break;
         case "特殊能量":
-          specialEnergies.add(line);
+          categories["▼ 特殊能量"]!.add(line);
           break;
         case "基本能量":
-          basicEnergies.add(line);
+          categories["▼ 基本能量"]!.add(line);
           break;
         default:
-          others.add(line);
+          categories["▼ 其他"]!.add(line);
           break;
       }
     }
 
-    // 依序組合文字輸出
-    if (pokemons.isNotEmpty) {
-      buffer.writeln("▼ 寶可夢 (${pokemons.length} 種)\n${pokemons.join('\n')}\n");
-    }
-    if (goods.isNotEmpty) {
-      buffer.writeln("▼ 物品 (${goods.length} 種)\n${goods.join('\n')}\n");
-    }
-    if (supporter.isNotEmpty) {
-      buffer
-          .writeln("▼ 支援者 (${supporter.length} 種)\n${supporter.join('\n')}\n");
-    }
-    if (stadium.isNotEmpty) {
-      buffer.writeln("▼ 競技場 (${stadium.length} 種)\n${stadium.join('\n')}\n");
-    }
-    if (equipment.isNotEmpty) {
-      buffer.writeln("▼ 道具 (${equipment.length} 種)\n${equipment.join('\n')}\n");
-    }
-    if (specialEnergies.isNotEmpty) {
-      buffer.writeln(
-          "▼ 特殊能量 (${specialEnergies.length} 種)\n${specialEnergies.join('\n')}\n");
-    }
-    if (basicEnergies.isNotEmpty) {
-      buffer.writeln(
-          "▼ 基本能量 (${basicEnergies.length} 種)\n${basicEnergies.join('\n')}\n");
-    }
-    if (others.isNotEmpty) {
-      buffer.writeln("▼ 其他\n${others.join('\n')}\n");
-    }
+    categories.forEach((title, list) {
+      if (list.isNotEmpty)
+        buffer.writeln("$title (${list.length} 種)\n${list.join('\n')}\n");
+    });
 
     buffer.writeln("---\nGenerated by PokeScan TW");
     return buffer.toString();
   }
 
-  // --- 編輯功能 ---
+  // --- 牌組操作邏輯 ---
   String? addCardToDeck(
       String fullId, String cardName, Map<String, dynamic> database) {
     final deck = currentDeck;
     if (deck == null) return "請先選擇牌組";
-
     int totalCount = deck.cards.values.fold(0, (sum, count) => sum + count);
     if (totalCount >= 60) return "牌組已滿 60 張";
 
-    // 1. 使用智慧切分取得目前的卡片資訊
     final parts = _smartSplit(fullId, database);
     var cardData = database[parts[0]]?['cards']?[parts[1]];
     String regMark = (cardData?['reg'] ?? "").toString().toUpperCase();
 
-    // 2. 判斷是否為基本能量 (不限 4 張)
     bool isBasicEnergy = (regMark == "NONE") ||
         (cardName.startsWith("基本") && cardName.endsWith("能量"));
 
     if (!isBasicEnergy) {
       int nameCount = 0;
       deck.cards.forEach((existingId, count) {
-        // 3. 重要：檢查牌組內已有卡片時，也要用智慧切分來對比名稱
         final eParts = _smartSplit(existingId, database);
-        String? existingName =
-            database[eParts[0]]?['cards']?[eParts[1]]?['name'];
-        if (existingName == cardName) nameCount += count;
+        if (database[eParts[0]]?['cards']?[eParts[1]]?['name'] == cardName)
+          nameCount += count;
       });
-
       if (nameCount >= 4) return "同名卡片「$cardName」最多只能放 4 張";
     }
 
@@ -256,18 +218,21 @@ class DeckProvider with ChangeNotifier {
   void removeCardFromDeck(String fullId) {
     final deck = currentDeck;
     if (deck == null || !deck.cards.containsKey(fullId)) return;
-    if (deck.cards[fullId]! > 1) {
+    if (deck.cards[fullId]! > 1)
       deck.cards[fullId] = deck.cards[fullId]! - 1;
-    } else {
+    else
       deck.cards.remove(fullId);
-    }
     deck.lastUpdated = DateTime.now();
     _saveDecksToLocal();
     _syncSingleDeckToCloud(deck);
     notifyListeners();
   }
 
-  // --- 同步與持久化 ---
+  void selectDeck(String? id) {
+    _currentEditingDeckId = id;
+    notifyListeners();
+  }
+
   Future<void> _loadDecksFromLocal() async {
     final prefs = await SharedPreferences.getInstance();
     final String? data = prefs.getString('user_decks');
@@ -309,9 +274,7 @@ class DeckProvider with ChangeNotifier {
           .collection('decks')
           .doc(deck.id)
           .set(deck.toJson());
-    } catch (e) {
-      print("❌ 雲端同步失敗");
-    }
+    } catch (e) {}
   }
 
   void createDeck(String name) {
@@ -338,11 +301,6 @@ class DeckProvider with ChangeNotifier {
           .collection('decks')
           .doc(id)
           .delete();
-    notifyListeners();
-  }
-
-  void selectDeck(String? id) {
-    _currentEditingDeckId = id;
     notifyListeners();
   }
 

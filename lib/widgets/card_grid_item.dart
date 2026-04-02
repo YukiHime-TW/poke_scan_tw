@@ -62,7 +62,6 @@ class _CardGridItemState extends State<CardGridItem> {
               builder: (context) {
                 String name = widget.cardData['name'];
                 String rarity = widget.cardData['rarity'];
-                // 稀有度顯示邏輯
                 String displayText = (rarity == '—' ||
                         rarity == 'C' ||
                         rarity == 'U' ||
@@ -83,11 +82,9 @@ class _CardGridItemState extends State<CardGridItem> {
     );
   }
 
-  // --- 【核心修改】通用連續扣除邏輯 ---
-  // action: 要執行的扣除函數
-  // getCount: 取得目前數量的函數
+  // 通用連續扣除邏輯
   void _startDecreasing(VoidCallback action, int Function() getCount) {
-    _stopDecreasing(); // 確保安全
+    _stopDecreasing();
     _interval = 500;
     _executeLoop(action, getCount);
   }
@@ -98,9 +95,8 @@ class _CardGridItemState extends State<CardGridItem> {
       return;
     }
 
-    action(); // 執行扣除動作 (可能是減收藏，也可能是減牌組)
+    action();
 
-    // 加速邏輯
     _interval = (_interval * 0.8).toInt();
     if (_interval < 50) _interval = 50;
 
@@ -113,6 +109,36 @@ class _CardGridItemState extends State<CardGridItem> {
       _timer!.cancel();
       _timer = null;
     }
+  }
+
+  // 顯示卡片在哪些牌組中被使用的彈窗
+  void _showUsageDialog(
+      BuildContext context, String cardName, Map<String, int> usages) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(cardName,
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: usages.entries
+              .map((e) => ListTile(
+                    leading:
+                        const Icon(Icons.style, size: 20, color: Colors.teal),
+                    title: Text(e.key, style: const TextStyle(fontSize: 14)),
+                    trailing: Text("x${e.value}",
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16)),
+                    dense: true,
+                  ))
+              .toList(),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text("關閉")),
+        ],
+      ),
+    );
   }
 
   @override
@@ -131,6 +157,9 @@ class _CardGridItemState extends State<CardGridItem> {
         _getOptimizedUrl(widget.cardData['image'], screenWidth);
     int inDeckCount = activeDeck?.cards[fullId] ?? 0;
 
+    // 取得該卡片在所有牌組中的使用狀況
+    final Map<String, int> usages = deckProvider.getCardUsages(fullId);
+
     return GestureDetector(
       onTap: () {
         if (activeDeck != null) {
@@ -143,16 +172,13 @@ class _CardGridItemState extends State<CardGridItem> {
           provider.addCard(widget.setCode, widget.cNum);
         }
       },
-      // --- 【修改點】長按邏輯判斷 ---
       onLongPressStart: (_) {
         if (activeDeck != null) {
-          // 編輯模式：連續扣除牌組內數量
           if (inDeckCount > 0) {
             _startDecreasing(() => deckProvider.removeCardFromDeck(fullId),
                 () => activeDeck.cards[fullId] ?? 0);
           }
         } else {
-          // 收藏模式：連續扣除我的收藏
           if (count > 0) {
             _startDecreasing(
                 () => provider.removeCard(widget.setCode, widget.cNum),
@@ -191,18 +217,21 @@ class _CardGridItemState extends State<CardGridItem> {
                       _buildPlaceholder(shortNum, isOwned),
                   errorWidget: (ctx, url, err) =>
                       _buildPlaceholder(shortNum, isOwned),
-                  imageBuilder: (ctx, imgProv) => isOwned
-                      ? Image(image: imgProv, fit: BoxFit.cover)
+                  imageBuilder: (ctx, imageProvider) => isOwned
+                      ? Image(image: imageProvider, fit: BoxFit.cover)
                       : ColorFiltered(
                           colorFilter: const ColorFilter.mode(
                               Colors.grey, BlendMode.saturation),
                           child: Opacity(
                               opacity: 0.4,
-                              child: Image(image: imgProv, fit: BoxFit.cover)),
+                              child: Image(
+                                  image: imageProvider, fit: BoxFit.cover)),
                         ),
                 )
               else
                 _buildPlaceholder(shortNum, isOwned),
+
+              // 1. 卡號標籤 (右下)
               Positioned(
                 right: 0,
                 bottom: 0,
@@ -221,6 +250,8 @@ class _CardGridItemState extends State<CardGridItem> {
                           fontFamily: "Monospace")),
                 ),
               ),
+
+              // 2. 收藏數量 (左上)
               if (isOwned)
                 Positioned(
                   left: 2,
@@ -241,6 +272,8 @@ class _CardGridItemState extends State<CardGridItem> {
                                 fontWeight: FontWeight.w900))),
                   ),
                 ),
+
+              // 3. 牌組編輯數量 (右上 - 僅編輯模式出現)
               if (activeDeck != null && inDeckCount > 0)
                 Positioned(
                   right: 2,
@@ -277,6 +310,41 @@ class _CardGridItemState extends State<CardGridItem> {
                       ),
                     );
                   }),
+                ),
+
+              // 4. 使用狀況提示條 (僅非編輯模式且有使用時顯示)
+              if (activeDeck == null && usages.isNotEmpty)
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 20, // 避開最底部的卡號標籤
+                  child: GestureDetector(
+                    onTap: () => _showUsageDialog(
+                        context, widget.cardData['name'], usages),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.6),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(Icons.inventory_2_outlined,
+                              color: Colors.white, size: 10),
+                          const SizedBox(width: 4),
+                          Text(
+                            "用於 ${usages.length} 副牌",
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 9,
+                                fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
             ],
           ),
