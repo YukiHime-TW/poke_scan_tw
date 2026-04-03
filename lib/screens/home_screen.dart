@@ -206,6 +206,11 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         backgroundColor: themeColor,
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.help_outline),
+          tooltip: "使用說明",
+          onPressed: () => _showHelpDialog(context), // 確保這行正確
+        ),
         title: _isSearching
             ? TextField(
                 controller: _searchController,
@@ -388,17 +393,196 @@ class _HomeScreenState extends State<HomeScreen> {
                 ]));
   }
 
-  void _showHelpDialog(BuildContext context) {
+void _showHelpDialog(BuildContext context) {
     showDialog(
-        context: context,
-        builder: (ctx) => AlertDialog(
-                title: const Text("使用說明"),
-                content: const Text(
-                    "• 搜尋支援：名稱、編號、稀有度、系列名\n• 按下 Enter 鍵可快速執行搜尋並收起鍵盤\n• 點擊板手可進入編輯牌組模式"),
-                actions: [
-                  TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: const Text("我知道了"))
-                ]));
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.manage_search, color: Colors.redAccent),
+            SizedBox(width: 10),
+            Text("PokeScan TW 使用手冊"),
+          ],
+        ),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "歡迎使用 PokeScan TW！這是一款專為繁體中文 PTCG 玩家與收藏家設計的工具，支援雲端同步、牌組構建與詳細的收藏管理。",
+                  style: TextStyle(fontSize: 14, color: Colors.black87),
+                ),
+                const Divider(height: 30),
+                _buildHelpHeader("1. 基礎收藏管理", Icons.touch_app),
+                _buildHelpItem("增加數量", "直接點擊卡片，收藏數量 +1。"),
+                _buildHelpItem("減少數量", "長按卡片即可減少數量 -1。\n加速功能：按越久減越快。"),
+                _buildHelpItem(
+                    "視覺辨識", "• 彩色：已擁有該卡片\n• 黑白半透明：尚未收藏\n• 左上角紅圈：持有總數量"),
+                _buildHelpHeader("2. 強大的搜尋與過濾", Icons.search),
+                _buildHelpItem(
+                    "全方位搜尋", "點擊放大鏡輸入 名稱 / 編號 / 稀有度 / 系列名，按 Enter 執行。"),
+                _buildHelpItem("多重過濾", "點擊漏斗切換收藏狀態或賽制環境。"),
+                const Padding(
+                  padding: EdgeInsets.only(left: 12, top: 4),
+                  child: Column(
+                    children: [
+                      _ColorTip(Colors.redAccent, "紅色：一般瀏覽"),
+                      _ColorTip(Colors.green, "綠色：只看已擁有"),
+                      _ColorTip(Colors.orange, "橘色：只看缺卡"),
+                      _ColorTip(Colors.deepPurple, "紫色：資產清點"),
+                      _ColorTip(Colors.blue, "藍色：標準賽制環境"),
+                    ],
+                  ),
+                ),
+                _buildHelpHeader("3. 牌組與收藏本系統", Icons.style),
+                _buildHelpItem("種類區分", "• 牌組：限 60 張、同名 4 張限制\n• 收藏本：無張數與同名限制"),
+                Padding(
+                  padding: const EdgeInsets.only(left: 12, bottom: 10),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("🛠️ 編輯模式",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14)),
+                      const SizedBox(height: 4),
+                      const Text("點擊「板手」進入。上方顯示青色條。",
+                          style:
+                              TextStyle(fontSize: 13, color: Colors.black54)),
+                      const Text("• 點擊卡片改為「放入牌組」",
+                          style:
+                              TextStyle(fontSize: 13, color: Colors.black54)),
+
+                      // 使用自定義小色塊取代 Emoji
+                      _LabelRow(Colors.teal.shade600, "青標籤：庫存充足"),
+                      _LabelRow(Colors.red.shade900, "紅標籤 + ⚠️：實體收藏不足"),
+                    ],
+                  ),
+                ),
+                _buildHelpHeader("4. 進階實戰功能", Icons.bolt),
+                _buildHelpItem("卡片用途查詢", "非編輯模式點擊卡片底部「用於 N 副牌」可查看具體位置。"),
+                _buildHelpItem("一鍵導出", "牌組清單點「複製」可生成對齊的分享文字。"),
+                _buildHelpItem("雲端同步", "登入 Google 帳號後，收藏與牌組將跨裝置自動同步。"),
+                const Divider(height: 30),
+                _buildHelpHeader("💡 小提示", Icons.lightbulb_outline),
+                const Padding(
+                  padding: EdgeInsets.only(left: 12),
+                  child: Text(
+                    "• 基本能量在牌組模式下不受 4 張限制。\n• 點擊系列標題橫條可以收合或展開內容。\n• 內建智慧縮圖，第二次開啟卡片將秒開。",
+                    style: TextStyle(
+                        fontSize: 13, color: Colors.blueGrey, height: 1.6),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("我知道了",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 標題組件
+  Widget _buildHelpHeader(String title, IconData icon) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.blueGrey.shade700),
+          const SizedBox(width: 8),
+          Text(title,
+              style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueGrey)),
+        ],
+      ),
+    );
+  }
+
+  // 項目組件
+  Widget _buildHelpItem(String title, String content) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, bottom: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title,
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+          const SizedBox(height: 2),
+          Text(content,
+              style: const TextStyle(
+                  fontSize: 13, color: Colors.black54, height: 1.4)),
+        ],
+      ),
+    );
+  }
+}
+
+// 顏色提示小組件
+class _ColorTip extends StatelessWidget {
+  final Color color;
+  final String text;
+  const _ColorTip(this.color, this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          const SizedBox(width: 8),
+          Text(text,
+              style: const TextStyle(fontSize: 12, color: Colors.black54)),
+        ],
+      ),
+    );
+  }
+}
+
+// 專門用來顯示說明書裡的「標籤範例」
+class _LabelRow extends StatelessWidget {
+  final Color color;
+  final String text;
+  const _LabelRow(this.color, this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          // 畫出一個跟卡片右上角一模一樣的小標籤
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: const Text("IN: 1",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold)),
+          ),
+          const SizedBox(width: 8),
+          Text(text,
+              style: const TextStyle(fontSize: 13, color: Colors.black54)),
+        ],
+      ),
+    );
   }
 }
