@@ -133,8 +133,17 @@ class DeckProvider with ChangeNotifier {
       "▼ 其他": []
     };
     for (var c in sortedCards) {
-      String line =
-          "• [${c['sCode']}] ${c['name']} (${c['rarity']}) x${c['count']}";
+      String line = "";
+      if (c['rarity'] == 'C' ||
+          c['rarity'] == 'U' ||
+          c['rarity'] == 'R' ||
+          c['rarity'] == 'RR' ||
+          c['rarity'] == 'RRR' ||
+          c['rarity'] == '') {
+            line = "• [${c['sCode']}] ${c['name']} x${c['count']}";
+      }else{
+        line = "• [${c['sCode']}] ${c['name']} (${c['rarity']}) x${c['count']}";
+      }
       switch (c['type']) {
         case "寶可夢":
           categories["▼ 寶可夢"]!.add(line);
