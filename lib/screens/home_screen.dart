@@ -9,7 +9,8 @@ import '../widgets/card_grid_item.dart';
 import '../widgets/set_header.dart';
 import 'deck_list_screen.dart';
 
-enum StatusFilter { all, owned, missing, duplicates, competitive, inDeck }
+// 擴充狀態過濾：新增 used (正在使用中)
+enum StatusFilter { all, owned, missing, duplicates, competitive, inDeck, used }
 
 enum FormatFilter { all, standard, expanded }
 
@@ -46,7 +47,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Color _getThemeColor(bool isDeckMode) {
     if (_statusFilter == StatusFilter.inDeck) return Colors.teal.shade400;
+    if (_statusFilter == StatusFilter.used)
+      return Colors.blueGrey.shade600; // 使用中的卡片用藍灰色
     if (isDeckMode) return Colors.teal.shade800;
+
     if (_statusFilter == StatusFilter.duplicates ||
         _statusFilter == StatusFilter.competitive) {
       return Colors.deepPurple.shade700;
@@ -61,7 +65,9 @@ class _HomeScreenState extends State<HomeScreen> {
   String _getAppBarTitle(bool isDeckMode) {
     if (_isSearching) return "";
     if (_statusFilter == StatusFilter.inDeck) return "當前牌組內容";
+    if (_statusFilter == StatusFilter.used) return "已使用的卡片";
     if (isDeckMode) return "正在編輯牌組";
+
     String title = "PokeScan TW";
     switch (_statusFilter) {
       case StatusFilter.owned:
@@ -89,6 +95,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final provider = Provider.of<CollectionProvider>(context);
     final deckProvider = Provider.of<DeckProvider>(context);
+
     final activeDeck = deckProvider.currentDeck;
     final bool isDeckMode = activeDeck != null;
     final themeColor = _getThemeColor(isDeckMode);
@@ -117,8 +124,13 @@ class _HomeScreenState extends State<HomeScreen> {
         String fullId = "$setCode-$k";
         int count = provider.userCollection[fullId] ?? 0;
 
+        // --- 核心過濾邏輯 ---
         if (_statusFilter == StatusFilter.inDeck) {
           if (!isDeckMode || !activeDeck.cards.containsKey(fullId)) return;
+        } else if (_statusFilter == StatusFilter.used) {
+          // 【新增】過濾正在被任何牌組或收藏本使用的卡片
+          final usages = deckProvider.getCardUsages(fullId);
+          if (usages.isEmpty) return;
         } else {
           if (_statusFilter == StatusFilter.owned && count == 0) return;
           if (_statusFilter == StatusFilter.missing && count > 0) return;
@@ -128,7 +140,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (!_matchesFormat(v)) return;
 
-        // --- 多維度智慧搜尋邏輯 ---
         if (query.isNotEmpty) {
           String cardName = v['name'].toString().toLowerCase();
           String rarity = (v['rarity'] ?? "").toString().toLowerCase();
@@ -151,10 +162,12 @@ class _HomeScreenState extends State<HomeScreen> {
       int ownedInSet = allCards.keys
           .where((k) => provider.userCollection.containsKey("$setCode-$k"))
           .length;
-      bool isExpanded =
-          (query.isNotEmpty || _statusFilter == StatusFilter.inDeck)
-              ? true
-              : (_expandedState[setCode] ?? false);
+      // 搜尋、檢視牌組內、或是檢視使用中卡片時，強制展開
+      bool isExpanded = (query.isNotEmpty ||
+              _statusFilter == StatusFilter.inDeck ||
+              _statusFilter == StatusFilter.used)
+          ? true
+          : (_expandedState[setCode] ?? false);
 
       slivers.add(
         MultiSliver(
@@ -171,8 +184,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 isExpanded: isExpanded,
                 themeColor: themeColor,
                 onTap: () {
-                  if (query.isEmpty && _statusFilter != StatusFilter.inDeck)
+                  if (query.isEmpty &&
+                      _statusFilter != StatusFilter.inDeck &&
+                      _statusFilter != StatusFilter.used) {
                     setState(() => _expandedState[setCode] = !isExpanded);
+                  }
                 },
               ),
             ),
@@ -216,17 +232,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 controller: _searchController,
                 autofocus: true,
                 style: const TextStyle(color: Colors.white),
-                textInputAction: TextInputAction.search, // 讓鍵盤顯示「搜尋」按鈕
+                textInputAction: TextInputAction.search,
                 decoration: const InputDecoration(
                     hintText: "搜尋名稱 / 編號 / 稀有度 / 系列...",
                     border: InputBorder.none,
                     hintStyle: TextStyle(color: Colors.white70)),
-                onChanged: (val) =>
-                    setState(() => _searchText = val), // 保持即時搜尋感
+                onChanged: (val) => setState(() => _searchText = val),
                 onSubmitted: (val) {
-                  // 按下 Enter 時執行的動作
                   setState(() => _searchText = val);
-                  FocusScope.of(context).unfocus(); // 收起鍵盤
+                  FocusScope.of(context).unfocus();
                 },
               )
             : Text(_getAppBarTitle(isDeckMode),
@@ -303,6 +317,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
       ),
       body: CustomScrollView(cacheExtent: 1000, slivers: slivers),
+      floatingActionButton: IconButton(
+        icon: const Icon(Icons.help_outline),
+        onPressed: () => _showHelpDialog(context),
+      ),
     );
   }
 
@@ -323,17 +341,24 @@ class _HomeScreenState extends State<HomeScreen> {
                     color: Colors.grey))),
         _buildPopupItem(StatusFilter.all, Icons.apps, "顯示全部",
             _statusFilter == StatusFilter.all),
+
+        // --- 智慧過濾選項 ---
         if (isDeckMode)
           _buildPopupItem(StatusFilter.inDeck, Icons.fact_check, "這副牌的卡片",
               _statusFilter == StatusFilter.inDeck),
+
+        _buildPopupItem(StatusFilter.used, Icons.inventory, "已使用的卡片",
+            _statusFilter == StatusFilter.used),
+
         _buildPopupItem(StatusFilter.owned, Icons.check_circle, "只看已擁有",
             _statusFilter == StatusFilter.owned),
         _buildPopupItem(StatusFilter.missing, Icons.radio_button_unchecked,
             "只看未擁有", _statusFilter == StatusFilter.missing),
         _buildPopupItem(StatusFilter.duplicates, Icons.copy, "重複 (>1)",
             _statusFilter == StatusFilter.duplicates),
-        _buildPopupItem(StatusFilter.competitive, Icons.layers, "多餘 (>4)",
+        _buildPopupItem(StatusFilter.competitive, Icons.layers, "多餘物資 (>4)",
             _statusFilter == StatusFilter.competitive),
+
         const PopupMenuDivider(),
         const PopupMenuItem(
             enabled: false,
@@ -393,140 +418,140 @@ class _HomeScreenState extends State<HomeScreen> {
                 ]));
   }
 
-void _showHelpDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Row(
-          children: [
-            Icon(Icons.manage_search, color: Colors.redAccent),
-            SizedBox(width: 10),
-            Text("PokeScan TW 使用手冊"),
-          ],
-        ),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  "歡迎使用 PokeScan TW！這是一款專為繁體中文 PTCG 玩家與收藏家設計的工具，支援雲端同步、牌組構建與詳細的收藏管理。",
-                  style: TextStyle(fontSize: 14, color: Colors.black87),
-                ),
-                const Divider(height: 30),
-                _buildHelpHeader("1. 基礎收藏管理", Icons.touch_app),
-                _buildHelpItem("增加數量", "直接點擊卡片，收藏數量 +1。"),
-                _buildHelpItem("減少數量", "長按卡片即可減少數量 -1。\n加速功能：按越久減越快。"),
-                _buildHelpItem(
-                    "視覺辨識", "• 彩色：已擁有該卡片\n• 黑白半透明：尚未收藏\n• 左上角紅圈：持有總數量"),
-                _buildHelpHeader("2. 強大的搜尋與過濾", Icons.search),
-                _buildHelpItem(
-                    "全方位搜尋", "點擊放大鏡輸入 名稱 / 編號 / 稀有度 / 系列名，按 Enter 執行。"),
-                _buildHelpItem("多重過濾", "點擊漏斗切換收藏狀態或賽制環境。"),
-                const Padding(
-                  padding: EdgeInsets.only(left: 12, top: 4),
-                  child: Column(
-                    children: [
-                      _ColorTip(Colors.redAccent, "紅色：一般瀏覽"),
-                      _ColorTip(Colors.green, "綠色：只看已擁有"),
-                      _ColorTip(Colors.orange, "橘色：只看缺卡"),
-                      _ColorTip(Colors.deepPurple, "紫色：資產清點"),
-                      _ColorTip(Colors.blue, "藍色：標準賽制環境"),
-                    ],
+  void _showHelpDialog(BuildContext context) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.manage_search, color: Colors.redAccent),
+              SizedBox(width: 10),
+              Text("PokeScan TW 使用手冊"),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "歡迎使用 PokeScan TW！這是一款專為繁體中文 PTCG 玩家與收藏家設計的工具，支援雲端同步、牌組構建與詳細的收藏管理。",
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
                   ),
-                ),
-                _buildHelpHeader("3. 牌組與收藏本系統", Icons.style),
-                _buildHelpItem("種類區分", "• 牌組：限 60 張、同名 4 張限制\n• 收藏本：無張數與同名限制"),
-                Padding(
-                  padding: const EdgeInsets.only(left: 12, bottom: 10),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text("🛠️ 編輯模式",
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14)),
-                      const SizedBox(height: 4),
-                      const Text("點擊「板手」進入。上方顯示青色條。",
-                          style:
-                              TextStyle(fontSize: 13, color: Colors.black54)),
-                      const Text("• 點擊卡片改為「放入牌組」",
-                          style:
-                              TextStyle(fontSize: 13, color: Colors.black54)),
+                  const Divider(height: 30),
+                  _buildHelpHeader("1. 基礎收藏管理", Icons.touch_app),
+                  _buildHelpItem("增加數量", "直接點擊卡片，收藏數量 +1。"),
+                  _buildHelpItem("減少數量", "長按卡片即可減少數量 -1。\n加速功能：按越久減越快。"),
+                  _buildHelpItem(
+                      "視覺辨識", "• 彩色：已擁有該卡片\n• 黑白半透明：尚未收藏\n• 左上角紅圈：持有總數量"),
+                  _buildHelpHeader("2. 強大的搜尋與過濾", Icons.search),
+                  _buildHelpItem(
+                      "全方位搜尋", "點擊放大鏡輸入 名稱 / 編號 / 稀有度 / 系列名，按 Enter 執行。"),
+                  _buildHelpItem("多重過濾", "點擊漏斗切換收藏狀態或賽制環境。"),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 12, top: 4),
+                    child: Column(
+                      children: [
+                        _ColorTip(Colors.redAccent, "紅色：一般瀏覽"),
+                        _ColorTip(Colors.green, "綠色：只看已擁有"),
+                        _ColorTip(Colors.orange, "橘色：只看缺卡"),
+                        _ColorTip(Colors.deepPurple, "紫色：資產清點"),
+                        _ColorTip(Colors.blue, "藍色：標準賽制環境"),
+                      ],
+                    ),
+                  ),
+                  _buildHelpHeader("3. 牌組與收藏本系統", Icons.style),
+                  _buildHelpItem("種類區分", "• 牌組：限 60 張、同名 4 張限制\n• 收藏本：無張數與同名限制"),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12, bottom: 10),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("🛠️ 編輯模式",
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 14)),
+                        const SizedBox(height: 4),
+                        const Text("點擊「板手」進入。上方顯示青色條。",
+                            style:
+                                TextStyle(fontSize: 13, color: Colors.black54)),
+                        const Text("• 點擊卡片改為「放入牌組」",
+                            style:
+                                TextStyle(fontSize: 13, color: Colors.black54)),
 
-                      // 使用自定義小色塊取代 Emoji
-                      _LabelRow(Colors.teal.shade600, "青標籤：庫存充足"),
-                      _LabelRow(Colors.red.shade900, "紅標籤 + ⚠️：實體收藏不足"),
-                    ],
+                        // 使用自定義小色塊取代 Emoji
+                        _LabelRow(Colors.teal.shade600, "青標籤：庫存充足"),
+                        _LabelRow(Colors.red.shade900, "紅標籤 + ⚠️：實體收藏不足"),
+                      ],
+                    ),
                   ),
-                ),
-                _buildHelpHeader("4. 進階實戰功能", Icons.bolt),
-                _buildHelpItem("卡片用途查詢", "非編輯模式點擊卡片底部「用於 N 副牌」可查看具體位置。"),
-                _buildHelpItem("一鍵導出", "牌組清單點「複製」可生成對齊的分享文字。"),
-                _buildHelpItem("雲端同步", "登入 Google 帳號後，收藏與牌組將跨裝置自動同步。"),
-                const Divider(height: 30),
-                _buildHelpHeader("💡 小提示", Icons.lightbulb_outline),
-                const Padding(
-                  padding: EdgeInsets.only(left: 12),
-                  child: Text(
-                    "• 基本能量在牌組模式下不受 4 張限制。\n• 點擊系列標題橫條可以收合或展開內容。\n• 內建智慧縮圖，第二次開啟卡片將秒開。",
-                    style: TextStyle(
-                        fontSize: 13, color: Colors.blueGrey, height: 1.6),
+                  _buildHelpHeader("4. 進階實戰功能", Icons.bolt),
+                  _buildHelpItem("卡片用途查詢", "非編輯模式點擊卡片底部「用於 N 副牌」可查看具體位置。"),
+                  _buildHelpItem("一鍵導出", "牌組清單點「複製」可生成對齊的分享文字。"),
+                  _buildHelpItem("雲端同步", "登入 Google 帳號後，收藏與牌組將跨裝置自動同步。"),
+                  const Divider(height: 30),
+                  _buildHelpHeader("💡 小提示", Icons.lightbulb_outline),
+                  const Padding(
+                    padding: EdgeInsets.only(left: 12),
+                    child: Text(
+                      "• 基本能量在牌組模式下不受 4 張限制。\n• 點擊系列標題橫條可以收合或展開內容。\n• 內建智慧縮圖，第二次開啟卡片將秒開。",
+                      style: TextStyle(
+                          fontSize: 13, color: Colors.blueGrey, height: 1.6),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("我知道了",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+            ),
+          ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("我知道了",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-          ),
-        ],
-      ),
-    );
-  }
+      );
+    }
 
-  // 標題組件
-  Widget _buildHelpHeader(String title, IconData icon) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: Colors.blueGrey.shade700),
-          const SizedBox(width: 8),
-          Text(title,
-              style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.blueGrey)),
-        ],
-      ),
-    );
-  }
+    // 標題組件
+    Widget _buildHelpHeader(String title, IconData icon) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: Colors.blueGrey.shade700),
+            const SizedBox(width: 8),
+            Text(title,
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.blueGrey)),
+          ],
+        ),
+      );
+    }
 
-  // 項目組件
-  Widget _buildHelpItem(String title, String content) {
-    return Padding(
-      padding: const EdgeInsets.only(left: 12, bottom: 10),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style:
-                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          const SizedBox(height: 2),
-          Text(content,
-              style: const TextStyle(
-                  fontSize: 13, color: Colors.black54, height: 1.4)),
-        ],
-      ),
-    );
+    // 項目組件
+    Widget _buildHelpItem(String title, String content) {
+      return Padding(
+        padding: const EdgeInsets.only(left: 12, bottom: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style:
+                    const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+            const SizedBox(height: 2),
+            Text(content,
+                style: const TextStyle(
+                    fontSize: 13, color: Colors.black54, height: 1.4)),
+          ],
+        ),
+      );
+    }
   }
-}
 
 // 顏色提示小組件
 class _ColorTip extends StatelessWidget {
