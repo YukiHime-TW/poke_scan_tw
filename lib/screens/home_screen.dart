@@ -317,10 +317,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
       ),
       body: CustomScrollView(cacheExtent: 1000, slivers: slivers),
-      floatingActionButton: IconButton(
-        icon: const Icon(Icons.help_outline),
-        onPressed: () => _showHelpDialog(context),
-      ),
     );
   }
 
