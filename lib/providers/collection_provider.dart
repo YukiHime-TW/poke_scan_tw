@@ -206,4 +206,63 @@ class CollectionProvider with ChangeNotifier {
       }
     }
   }
+
+  // --- 智慧辨識處理核心 ---
+  // isDeckMode: 是否為牌組編輯模式 (如果是，則自動加入牌組；否則加入收藏)
+  // deckProvider: 傳入 DeckProvider 供牌組模式使用
+  Future<String?> processScannedText(String rawText,
+      {dynamic deckProvider}) async {
+    // 1. 預處理字串：轉大寫、去除多餘換行、修正常見 OCR 錯誤
+    String cleanText = rawText
+        .toUpperCase()
+        .replaceAll('O', '0') // 字母 O 轉 數字 0
+        .replaceAll('I', '1') // 字母 I 轉 數字 1
+        .replaceAll('S', '5') // 字母 S 轉 數字 5
+        .replaceAll('Z', '2') // 字母 Z 轉 數字 2
+        .replaceAll('|', ''); // 去除 OCR 常見的垂直線噪音
+
+    // 2. Regex 匹配：(系列號) (卡號)
+    // 支援格式：SV4a 190/190, S-P 001, SV-P 005 等
+    // 群組 1: 系列號 (2-6位 A-Z, 0-9 或 -)
+    // 群組 2: 卡號 (1-3位數字)
+    final RegExp regex = RegExp(r'([A-Z0-9\-]{2,6})\s*(\d{1,3})');
+    final matches = regex.allMatches(cleanText);
+
+    if (matches.isEmpty) return null;
+
+    String? lastAddedInfo;
+
+    for (var match in matches) {
+      String setCode = match.group(1)!;
+      String cardNum = match.group(2)!.padLeft(3, '0'); // 自動補零成 001
+
+      // 3. 驗證資料庫是否存在
+      var cardInfo = getCardInfo(setCode, cardNum);
+
+      // 如果找不到，嘗試針對 SetCode 做模糊修正
+      if (cardInfo == null) {
+        // 修正常見系列號錯誤，例如 '5V4A' 修正回 'SV4A'
+        if (setCode.startsWith('5V'))
+          setCode = setCode.replaceFirst('5V', 'SV');
+        cardInfo = getCardInfo(setCode, cardNum);
+      }
+
+      if (cardInfo != null) {
+        // 4. 根據模式自動加入
+        if (deckProvider != null && deckProvider.currentDeck != null) {
+          // 牌組編輯模式：加入目前牌組
+          String fullId = "$setCode-$cardNum";
+          deckProvider.addCardToDeck(fullId, cardInfo['name'], _database);
+          lastAddedInfo = "【牌組】${cardInfo['name']} ($setCode-$cardNum)";
+        } else {
+          // 收藏模式：加入我的收藏
+          await addCard(setCode, cardNum);
+          lastAddedInfo = "【收藏】${cardInfo['name']} ($setCode-$cardNum)";
+        }
+        // 成功辨識一張就先回傳（或你想一次掃多張可改為 List）
+        return lastAddedInfo;
+      }
+    }
+    return null;
+  }
 }

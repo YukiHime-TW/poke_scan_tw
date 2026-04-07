@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart'; // 需在 pubspec.yaml 新增
 import 'package:permission_handler/permission_handler.dart';
 import 'package:provider/provider.dart';
 import '../providers/collection_provider.dart';
+import '../providers/deck_provider.dart';
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -164,59 +165,26 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
   // 共用的文字解析邏輯
   Future<void> _processInputImage(InputImage inputImage) async {
     final recognizedText = await _textRecognizer.processImage(inputImage);
-    
-    // 用來存放找到的候選結果
-    List<String> foundCards = [];
-    final provider = Provider.of<CollectionProvider>(context, listen: false);
+    final collectionProvider =
+        Provider.of<CollectionProvider>(context, listen: false);
+    final deckProvider = Provider.of<DeckProvider>(context, listen: false);
 
-    // Regex 說明：
-    // ([A-Z0-9\-]{2,6}) : 系列號，允許 A-Z, 0-9, 和連字號 (如 S-P)
-    // \s* : 允許中間有空白
-    // (\d{1,3}) : 卡號 (1到3位數字)
-    final RegExp regex = RegExp(r'([A-Z0-9\-]{2,6})\s*(\d{1,3})');
-
+    String fullText = "";
     for (TextBlock block in recognizedText.blocks) {
-      for (TextLine line in block.lines) {
-        String text = line.text.toUpperCase().trim();
-        
-        // 嘗試匹配
-        final match = regex.firstMatch(text);
-        
-        if (match != null) {
-          String setCode = match.group(1)!;
-          String cardNum = match.group(2)!;
-          
-          // 驗證是否存在於資料庫
-          var cardInfo = provider.getCardInfo(setCode, cardNum);
-          
-          if (cardInfo != null) {
-             // 找到卡片了！
-            provider.addCard(setCode, cardNum);
-            foundCards.add("${cardInfo['name']} ($setCode-$cardNum)");
-          }
-        }
-      }
+      fullText += "${block.text} ";
     }
 
+    // 呼叫智慧處理邏輯
+    final resultInfo = await collectionProvider.processScannedText(fullText,
+        deckProvider: deckProvider);
+
     if (mounted) {
-      if (foundCards.isNotEmpty) {
-        // 成功提示
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("🎉 成功識別: ${foundCards.join(', ')}"),
+      if (resultInfo != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text("🎉 $resultInfo"),
             backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          )
-        );
-      } else {
-        // 失敗提示
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("🤔 未能識別卡號，請對準左下角或調整焦距"),
-            backgroundColor: Colors.orange,
-            duration: Duration(seconds: 1),
-          )
-        );
+            duration: const Duration(milliseconds: 1500)));
+        // 如果想連拍，這裡不需要 Navigator.pop
       }
     }
   }

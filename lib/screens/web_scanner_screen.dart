@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/collection_provider.dart';
 import '../utils/web_ocr_helper.dart';
+import '../providers/deck_provider.dart';
 
 class WebScannerScreen extends StatefulWidget {
   const WebScannerScreen({super.key});
@@ -68,23 +69,20 @@ class _WebScannerScreenState extends State<WebScannerScreen> {
   }
 
   Future<void> _processRawText(String text) async {
-    final provider = Provider.of<CollectionProvider>(context, listen: false);
-    final RegExp regex = RegExp(r'([A-Z0-9\-]{2,6})\s*(\d{1,3})');
-    final match = regex.firstMatch(text.toUpperCase());
+    final collectionProvider =
+        Provider.of<CollectionProvider>(context, listen: false);
+    final deckProvider = Provider.of<DeckProvider>(context, listen: false);
 
-    if (match != null) {
-      String setCode = match.group(1)!;
-      String cardNum = match.group(2)!;
-      var cardInfo = provider.getCardInfo(setCode, cardNum);
+    final resultInfo = await collectionProvider.processScannedText(text,
+        deckProvider: deckProvider);
 
-      if (cardInfo != null) {
-        provider.addCard(setCode, cardNum);
-        _showMsg(
-            "🎉 成功識別: ${cardInfo['name']} ($setCode-$cardNum)", Colors.green);
-        return;
+    if (mounted) {
+      if (resultInfo != null) {
+        _showMsg("🎉 $resultInfo", Colors.green);
+      } else {
+        _showMsg("🤔 未能識別卡號，請對準卡片左下角再試一次", Colors.orange);
       }
     }
-    _showMsg("🤔 未能識別卡號，請再試一次", Colors.orange);
   }
 
   void _showMsg(String msg, Color color) {
