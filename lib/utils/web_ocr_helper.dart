@@ -1,28 +1,32 @@
 import 'dart:async';
-import 'dart:js_util'; // 必須要有這個，才能處理 JavaScript 的 Promise
-import 'package:js/js.dart'; // 處理 @JS 註解
+import 'dart:js_interop'; // 使用最新的 Interop 庫
 
-// 告訴 Dart 這是要呼叫 JS 全域變數 Tesseract 中的 recognize 方法
-@JS('Tesseract.recognize')
-external dynamic _recognize(dynamic image, String lang);
+// 定義 JavaScript 的 Tesseract 全域物件結構
+@JS('Tesseract')
+external JSObject get tesseract;
 
 class WebOCRHelper {
   static Future<String> scanImage(String imageUrl) async {
     try {
-      // 呼叫 JavaScript 方法，這會回傳一個 JS Promise
-      final jsPromise = _recognize(imageUrl, 'eng');
+      // 取得 Tesseract.recognize 方法
+      final JSFunction recognize =
+          tesseract.getProperty('recognize'.toJS) as JSFunction;
 
-      // 將 JS Promise 轉換為 Dart 的 Future
-      final result = await promiseToFuture(jsPromise);
+      // 呼叫方法：recognize(url, 'eng')
+      // 這會回傳一個 JSPromise
+      final JSPromise promise = recognize.callAsFunction(
+          tesseract, imageUrl.toJS, 'eng'.toJS) as JSPromise;
 
-      // 從回傳的 JS 物件中提取 data.text
-      // JS 結構是 result.data.text
-      final data = getProperty(result, 'data');
-      final String text = getProperty(data, 'text');
+      // 等待 Promise 轉換為 Dart Future
+      final JSObject result = await promise.toDart as JSObject;
 
-      return text;
+      // 取得 result.data.text
+      final JSObject data = result.getProperty('data'.toJS) as JSObject;
+      final JSString text = data.getProperty('text'.toJS) as JSString;
+
+      return text.toDart;
     } catch (e) {
-      print("Web OCR Error: $e");
+      print("Web OCR Error (Wasm compatible): $e");
       return "";
     }
   }
