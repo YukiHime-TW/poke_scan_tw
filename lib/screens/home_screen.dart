@@ -8,6 +8,8 @@ import '../providers/deck_provider.dart';
 import '../widgets/card_grid_item.dart';
 import '../widgets/set_header.dart';
 import 'deck_list_screen.dart';
+import 'scanner_screen.dart';
+import 'web_scanner_screen.dart';
 
 // 狀態過濾
 enum StatusFilter { all, owned, missing, duplicates, competitive, inDeck, used }
@@ -15,7 +17,7 @@ enum StatusFilter { all, owned, missing, duplicates, competitive, inDeck, used }
 // 賽制過濾
 enum FormatFilter { all, standard, expanded }
 
-// 種類過濾 (新增)
+// 種類過濾
 enum TypeFilter {
   all,
   pokemon,
@@ -42,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   StatusFilter _statusFilter = StatusFilter.all;
   FormatFilter _formatFilter = FormatFilter.standard;
-  TypeFilter _typeFilter = TypeFilter.all; // 預設看全部種類
+  TypeFilter _typeFilter = TypeFilter.all;
 
   @override
   void dispose() {
@@ -60,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return true;
   }
 
-  // --- 種類過濾邏輯 (核心新增) ---
+  // --- 種類過濾邏輯 ---
   bool _matchesType(dynamic cardData) {
     if (_typeFilter == TypeFilter.all) return true;
     String type = (cardData['type'] ?? "").toString();
@@ -164,11 +166,11 @@ class _HomeScreenState extends State<HomeScreen> {
         String fullId = "$setCode-$k";
         int count = provider.userCollection[fullId] ?? 0;
 
-        // 1. 狀態過濾
         if (_statusFilter == StatusFilter.inDeck) {
           if (!isDeckMode || !activeDeck.cards.containsKey(fullId)) return;
         } else if (_statusFilter == StatusFilter.used) {
-          if (deckProvider.getCardUsages(fullId).isEmpty) return;
+          final usages = deckProvider.getCardUsages(fullId);
+          if (usages.isEmpty) return;
         } else {
           if (_statusFilter == StatusFilter.owned && count == 0) return;
           if (_statusFilter == StatusFilter.missing && count > 0) return;
@@ -176,13 +178,9 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_statusFilter == StatusFilter.competitive && count <= 4) return;
         }
 
-        // 2. 賽制過濾
         if (!_matchesFormat(v)) return;
-
-        // 3. 種類過濾 (核心判斷)
         if (!_matchesType(v)) return;
 
-        // 4. 搜尋過濾
         if (query.isNotEmpty) {
           String cardName = v['name'].toString().toLowerCase();
           String rarity = (v['rarity'] ?? "").toString().toLowerCase();
@@ -206,7 +204,6 @@ class _HomeScreenState extends State<HomeScreen> {
           .where((k) => provider.userCollection.containsKey("$setCode-$k"))
           .length;
 
-      // 搜尋、檢視牌組內、或是開啟特定種類過濾時，強制展開
       bool isExpanded = (query.isNotEmpty ||
               _statusFilter == StatusFilter.inDeck ||
               _statusFilter == StatusFilter.used ||
@@ -353,7 +350,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             deckProvider.selectDeck(null);
                             setState(() {
                               _statusFilter = StatusFilter.all;
-                              _typeFilter = TypeFilter.all; // 結束編輯時重設
+                              _typeFilter = TypeFilter.all;
                             });
                           },
                           child: const Text("完成",
@@ -366,21 +363,40 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
       ),
       body: CustomScrollView(cacheExtent: 1000, slivers: slivers),
+
+      // --- 【重點修改：智慧掃描按鈕】 ---
+      floatingActionButton: FloatingActionButton(
+        backgroundColor: themeColor,
+        child: const Icon(Icons.qr_code_scanner, color: Colors.white),
+        onPressed: () {
+          if (kIsWeb) {
+            // 如果是網頁版，進入 Web 掃描頁面
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const WebScannerScreen()),
+            );
+          } else {
+            // 如果是手機版，進入原生掃描頁面
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ScannerScreen()),
+            );
+          }
+        },
+      ),
     );
   }
 
-  // --- 構建下拉式過濾選單 ---
+  // 下拉選單組件
   Widget _buildFilterMenu(bool isDeckMode) {
     return PopupMenuButton<dynamic>(
       icon: const Icon(Icons.filter_list),
-      tooltip: "進階過濾",
       onSelected: (value) => setState(() {
         if (value is StatusFilter) _statusFilter = value;
         if (value is FormatFilter) _formatFilter = value;
         if (value is TypeFilter) _typeFilter = value;
       }),
       itemBuilder: (BuildContext context) => <PopupMenuEntry<dynamic>>[
-        // 區塊 1：收藏狀態
         const PopupMenuItem(
             enabled: false,
             child: Text("收藏狀態",
@@ -403,10 +419,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _statusFilter == StatusFilter.duplicates),
         _buildPopupItem(StatusFilter.competitive, Icons.layers, "多餘物資 (>4)",
             _statusFilter == StatusFilter.competitive),
-
         const PopupMenuDivider(),
-
-        // 區塊 2：賽制篩選
         const PopupMenuItem(
             enabled: false,
             child: Text("賽制篩選",
@@ -420,10 +433,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _formatFilter == FormatFilter.standard),
         _buildPopupItem(FormatFilter.expanded, Icons.public, "開放賽制",
             _formatFilter == FormatFilter.expanded),
-
         const PopupMenuDivider(),
-
-        // 區塊 3：卡片種類 (核心新增)
         const PopupMenuItem(
             enabled: false,
             child: Text("種類篩選",
@@ -498,7 +508,7 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (ctx) => AlertDialog(
         title: const Row(
           children: [
-            Icon(Icons.style, color: Colors.redAccent), // 更換為卡片圖標
+            Icon(Icons.style, color: Colors.redAccent),
             SizedBox(width: 10),
             Text("PokeScan TW 使用手冊"),
           ],
@@ -587,7 +597,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 標題組件
   Widget _buildHelpHeader(String title, IconData icon) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
@@ -605,7 +614,6 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 項目組件
   Widget _buildHelpItem(String title, String content) {
     return Padding(
       padding: const EdgeInsets.only(left: 12, bottom: 10),
@@ -625,12 +633,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-// 顏色提示小組件
+// 顏色提示
 class _ColorTip extends StatelessWidget {
   final Color color;
   final String text;
   const _ColorTip(this.color, this.text);
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -650,25 +657,21 @@ class _ColorTip extends StatelessWidget {
   }
 }
 
-// 專門用來顯示說明書裡的「標籤範例」
+// 標籤範例
 class _LabelRow extends StatelessWidget {
   final Color color;
   final String text;
   const _LabelRow(this.color, this.text);
-
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         children: [
-          // 畫出一個跟卡片右上角一模一樣的小標籤
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
             decoration: BoxDecoration(
-              color: color,
-              borderRadius: BorderRadius.circular(4),
-            ),
+                color: color, borderRadius: BorderRadius.circular(4)),
             child: const Text("IN: 1",
                 style: TextStyle(
                     color: Colors.white,
