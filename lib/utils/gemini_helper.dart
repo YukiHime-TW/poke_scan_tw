@@ -20,14 +20,16 @@ class GeminiHelper {
         Content.multi([
           DataPart('image/jpeg', imageBytes),
           TextPart("""
-            Identify this Pokémon TCG card from the image. 
-            Return the result ONLY in the following JSON format:
+            You are a professional Pokémon TCG card identifier. 
+            1. Carefully look at the center of the image to identify the Pokémon or Trainer name.
+            2. Locate the bottom-left or bottom-right corners for the set code (e.g., SV4a, AC1a) and the card number (e.g., 190/190).
+            3. Based on the artwork and text, return ONLY a JSON object:
             {
-              "setCode": "Expansion set code, e.g., SV4a",
-              "cardNum": "Card number, e.g., 190"
+              "setCode": "the expansion code",
+              "cardNum": "the number part only"
             }
-            Do not include any other text or explanation. 
-            Respond only with the raw JSON string.
+            Important: If you see "SV4a 190/190", setCode is "SV4a" and cardNum is "190".
+            Respond with raw JSON only.
           """),
         ])
       ];

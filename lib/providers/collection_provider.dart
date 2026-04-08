@@ -168,11 +168,17 @@ class CollectionProvider with ChangeNotifier {
     return null;
   }
 
-  // 【新增】供 ScannerScreen 查詢卡片資訊用
   Map<String, dynamic>? getCardInfo(String setCode, String rawCardNum) {
-    String? realKey = _findRealKeyInDatabase(setCode, rawCardNum);
+    // 1. 全部轉大寫匹配
+    String searchSet = setCode.toUpperCase();
+
+    // 2. 找到對應的 Set (遍歷 database 的 keys 進行不分大小寫匹配)
+    String? realSetKey = _database.keys
+        .firstWhere((k) => k.toUpperCase() == searchSet, orElse: () => setCode);
+
+    String? realKey = _findRealKeyInDatabase(realSetKey, rawCardNum);
     if (realKey != null) {
-      return _database[setCode]['cards'][realKey];
+      return _database[realSetKey]['cards'][realKey];
     }
     return null;
   }
