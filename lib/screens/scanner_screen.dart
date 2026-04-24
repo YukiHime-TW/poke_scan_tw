@@ -14,12 +14,14 @@ class ScannerScreen extends StatefulWidget {
   State<ScannerScreen> createState() => _ScannerScreenState();
 }
 
-class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserver {
+class _ScannerScreenState extends State<ScannerScreen>
+    with WidgetsBindingObserver {
   CameraController? _controller;
   bool _isCameraInitialized = false;
-  final TextRecognizer _textRecognizer = TextRecognizer(script: TextRecognitionScript.latin);
+  final TextRecognizer _textRecognizer =
+      TextRecognizer(script: TextRecognitionScript.latin);
   bool _isProcessing = false;
-  
+
   // 相機控制參數
   bool _isFlashOn = false;
   double _currentZoomLevel = 1.0;
@@ -72,7 +74,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
 
         try {
           await _controller!.initialize();
-          
+
           // 取得變焦範圍
           _minZoomLevel = await _controller!.getMinZoomLevel();
           _maxZoomLevel = await _controller!.getMaxZoomLevel();
@@ -87,10 +89,9 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
         }
       }
     } else {
-      if(mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("請允許相機權限以進行掃描"))
-        );
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(const SnackBar(content: Text("請允許相機權限以進行掃描")));
       }
     }
   }
@@ -100,9 +101,8 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
     if (_controller == null) return;
     try {
       _isFlashOn = !_isFlashOn;
-      await _controller!.setFlashMode(
-        _isFlashOn ? FlashMode.torch : FlashMode.off
-      );
+      await _controller!
+          .setFlashMode(_isFlashOn ? FlashMode.torch : FlashMode.off);
       setState(() {});
     } catch (e) {
       print("閃光燈錯誤: $e");
@@ -124,7 +124,9 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
 
   // 核心邏輯：拍照並辨識
   Future<void> _takePictureAndScan() async {
-    if (_controller == null || !_controller!.value.isInitialized || _isProcessing) return;
+    if (_controller == null ||
+        !_controller!.value.isInitialized ||
+        _isProcessing) return;
 
     setState(() => _isProcessing = true);
 
@@ -137,9 +139,8 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
       await _processInputImage(inputImage);
     } catch (e) {
       print("掃描錯誤: $e");
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("掃描發生錯誤: $e"))
-      );
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text("掃描發生錯誤: $e")));
     } finally {
       if (mounted) setState(() => _isProcessing = false);
     }
@@ -150,7 +151,6 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
     try {
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      
       if (image != null) {
         setState(() => _isProcessing = true);
         final inputImage = InputImage.fromFilePath(image.path);
@@ -219,15 +219,13 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.white, size: 30),
+                  icon: const Icon(Icons.arrow_back,
+                      color: Colors.white, size: 30),
                   onPressed: () => Navigator.pop(context),
                 ),
                 IconButton(
-                  icon: Icon(
-                    _isFlashOn ? Icons.flash_on : Icons.flash_off,
-                    color: Colors.white, 
-                    size: 30
-                  ),
+                  icon: Icon(_isFlashOn ? Icons.flash_on : Icons.flash_off,
+                      color: Colors.white, size: 30),
                   onPressed: _toggleFlash,
                 ),
               ],
@@ -251,7 +249,9 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                         child: Slider(
                           value: _currentZoomLevel,
                           min: _minZoomLevel,
-                          max: _maxZoomLevel > 5.0 ? 5.0 : _maxZoomLevel, // 限制最大 5 倍
+                          max: _maxZoomLevel > 5.0
+                              ? 5.0
+                              : _maxZoomLevel, // 限制最大 5 倍
                           activeColor: Colors.white,
                           inactiveColor: Colors.white24,
                           onChanged: (value) => _setZoom(value),
@@ -262,17 +262,18 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                   ),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // 按鈕區
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     // 相簿按鈕
                     IconButton(
-                      icon: const Icon(Icons.photo_library, color: Colors.white, size: 30),
+                      icon: const Icon(Icons.photo_library,
+                          color: Colors.white, size: 30),
                       onPressed: _pickImageFromGallery,
                     ),
-                    
+
                     // 拍照掃描按鈕
                     GestureDetector(
                       onTap: _takePictureAndScan,
@@ -284,12 +285,14 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
                           border: Border.all(color: Colors.white, width: 4),
                           color: _isProcessing ? Colors.grey : Colors.white24,
                         ),
-                        child: _isProcessing 
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Icon(Icons.document_scanner, size: 40, color: Colors.white),
+                        child: _isProcessing
+                            ? const CircularProgressIndicator(
+                                color: Colors.white)
+                            : const Icon(Icons.document_scanner,
+                                size: 40, color: Colors.white),
                       ),
                     ),
-                    
+
                     // 佔位符 (保持排版平衡)
                     const SizedBox(width: 50),
                   ],
@@ -297,7 +300,7 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
               ],
             ),
           ),
-          
+
           // 5. 提示文字
           Positioned(
             top: 120,
@@ -323,41 +326,30 @@ class _ScannerScreenState extends State<ScannerScreen> with WidgetsBindingObserv
     return Stack(
       children: [
         ColorFiltered(
-          colorFilter: const ColorFilter.mode(
-            Colors.black54,
-            BlendMode.srcOut,
-          ),
+          colorFilter:
+              ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.srcOut),
           child: Stack(
             children: [
-              Container(
-                decoration: const BoxDecoration(
-                  color: Colors.transparent,
-                ),
-                child: Align(
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: 300,
-                    height: 100, // 扁長型框框，適合掃描一行字的卡號
-                    decoration: BoxDecoration(
+              Container(color: Colors.black),
+              Center(
+                child: Container(
+                  width: 280,
+                  height: 390,
+                  decoration: BoxDecoration(
                       color: Colors.black,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
+                      borderRadius: BorderRadius.circular(15)),
                 ),
               ),
             ],
           ),
         ),
-        // 紅色邊框線 (視覺輔助)
-        Align(
-          alignment: Alignment.center,
+        Center(
           child: Container(
-            width: 300,
-            height: 100,
+            width: 280,
+            height: 390,
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.redAccent, width: 2),
-              borderRadius: BorderRadius.circular(10),
-            ),
+                border: Border.all(color: Colors.redAccent, width: 3),
+                borderRadius: BorderRadius.circular(15)),
           ),
         ),
       ],
