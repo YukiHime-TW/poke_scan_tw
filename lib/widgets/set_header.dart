@@ -27,7 +27,7 @@ class SetHeader extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 90.0,
+        constraints: BoxConstraints(minHeight: 90.0),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [

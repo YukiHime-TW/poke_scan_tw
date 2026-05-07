@@ -9,7 +9,6 @@ import '../widgets/card_grid_item.dart';
 import '../widgets/set_header.dart';
 import 'deck_list_screen.dart';
 import 'scanner_screen.dart';
-import 'web_scanner_screen.dart';
 
 // 狀態過濾
 enum StatusFilter { all, owned, missing, duplicates, competitive, inDeck, used }
@@ -159,6 +158,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
     for (String setCode in sortedKeys) {
       var setData = provider.database[setCode];
+
+      if (setData == null || setData['cards'] == null) continue; 
+
       Map allCards = setData['cards'];
       Map filteredCards = {};
 
@@ -365,25 +367,18 @@ class _HomeScreenState extends State<HomeScreen> {
       body: CustomScrollView(cacheExtent: 1000, slivers: slivers),
 
       // --- 【重點修改：智慧掃描按鈕】 ---
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: themeColor,
-        child: const Icon(Icons.qr_code_scanner, color: Colors.white),
-        onPressed: () {
-          if (kIsWeb) {
-            // 如果是網頁版，進入 Web 掃描頁面
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const WebScannerScreen()),
-            );
-          } else {
-            // 如果是手機版，進入原生掃描頁面
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const ScannerScreen()),
-            );
-          }
-        },
-      ),
+      floatingActionButton: kIsWeb
+          ? null
+          : FloatingActionButton(
+              backgroundColor: themeColor,
+              child: const Icon(Icons.qr_code_scanner, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ScannerScreen()),
+                );
+              },
+            ),
     );
   }
 

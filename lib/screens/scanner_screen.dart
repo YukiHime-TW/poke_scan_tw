@@ -1,8 +1,11 @@
+import 'dart:io';
+import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
-import 'package:image_picker/image_picker.dart'; // 需在 pubspec.yaml 新增
-import 'package:permission_handler/permission_handler.dart';
+import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/collection_provider.dart';
 import '../providers/deck_provider.dart';
@@ -17,16 +20,13 @@ class ScannerScreen extends StatefulWidget {
 class _ScannerScreenState extends State<ScannerScreen>
     with WidgetsBindingObserver {
   CameraController? _controller;
-  bool _isCameraInitialized = false;
   final TextRecognizer _textRecognizer =
       TextRecognizer(script: TextRecognitionScript.latin);
-  bool _isProcessing = false;
 
-  // 相機控制參數
+  bool _isProcessing = false;
+  XFile? _capturedImage;
+  String _statusMessage = "請將【左下角編號】對準紅框";
   bool _isFlashOn = false;
-  double _currentZoomLevel = 1.0;
-  double _minZoomLevel = 1.0;
-  double _maxZoomLevel = 1.0;
 
   @override
   void initState() {
@@ -38,321 +38,292 @@ class _ScannerScreenState extends State<ScannerScreen>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _controller?.dispose();
+    _stopCamera();
     _textRecognizer.close();
     super.dispose();
   }
 
-  // 監聽 App 生命週期 (切換到背景再回來時重啟相機)
+  // 防止閃退：App 縮小後釋放相機，回來後重新啟動
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_controller == null || !_controller!.value.isInitialized) return;
     if (state == AppLifecycleState.inactive) {
-      _controller?.dispose();
+      _stopCamera();
     } else if (state == AppLifecycleState.resumed) {
       _initializeCamera();
     }
   }
 
-  Future<void> _initializeCamera() async {
-    var status = await Permission.camera.request();
-    if (status.isGranted) {
-      final cameras = await availableCameras();
-      if (cameras.isNotEmpty) {
-        // 選擇後鏡頭
-        final camera = cameras.firstWhere(
-          (c) => c.lensDirection == CameraLensDirection.back,
-          orElse: () => cameras.first,
-        );
-
-        _controller = CameraController(
-          camera,
-          ResolutionPreset.high, // 使用高解析度以看清小字
-          enableAudio: false,
-          imageFormatGroup: ImageFormatGroup.yuv420,
-        );
-
-        try {
-          await _controller!.initialize();
-
-          // 取得變焦範圍
-          _minZoomLevel = await _controller!.getMinZoomLevel();
-          _maxZoomLevel = await _controller!.getMaxZoomLevel();
-
-          if (mounted) {
-            setState(() {
-              _isCameraInitialized = true;
-            });
-          }
-        } catch (e) {
-          print("相機初始化失敗: $e");
-        }
-      }
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text("請允許相機權限以進行掃描")));
-      }
+  Future<void> _stopCamera() async {
+    if (_controller != null) {
+      await _controller!.dispose();
+      if (mounted) setState(() => _controller = null);
     }
   }
 
-  // 切換閃光燈
+  Future<void> _initializeCamera() async {
+    final cameras = await availableCameras();
+    if (cameras.isEmpty) return;
+
+    final controller = CameraController(
+      cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.back,
+          orElse: () => cameras.first),
+      ResolutionPreset.max,
+      enableAudio: false,
+    );
+
+    try {
+      await controller.initialize();
+      // --- 核心修正：強制預設關閉閃光燈 ---
+      await controller.setFlashMode(FlashMode.off);
+
+      if (mounted) setState(() => _controller = controller);
+    } catch (e) {
+      print("相機啟動失敗: $e");
+    }
+  }
+
   Future<void> _toggleFlash() async {
     if (_controller == null) return;
-    try {
-      _isFlashOn = !_isFlashOn;
-      await _controller!
-          .setFlashMode(_isFlashOn ? FlashMode.torch : FlashMode.off);
-      setState(() {});
-    } catch (e) {
-      print("閃光燈錯誤: $e");
-    }
+    setState(() => _isFlashOn = !_isFlashOn);
+    await _controller!
+        .setFlashMode(_isFlashOn ? FlashMode.torch : FlashMode.off);
   }
 
-  // 設定變焦
-  Future<void> _setZoom(double value) async {
-    if (_controller == null) return;
-    try {
-      await _controller!.setZoomLevel(value);
-      setState(() {
-        _currentZoomLevel = value;
-      });
-    } catch (e) {
-      print("變焦錯誤: $e");
-    }
-  }
-
-  // 核心邏輯：拍照並辨識
   Future<void> _takePictureAndScan() async {
     if (_controller == null ||
         !_controller!.value.isInitialized ||
         _isProcessing) return;
 
-    setState(() => _isProcessing = true);
-
     try {
-      // 1. 拍照
-      final XFile image = await _controller!.takePicture();
-      // 2. 建立 InputImage
-      final inputImage = InputImage.fromFilePath(image.path);
-      // 3. 執行辨識
-      await _processInputImage(inputImage);
+      final XFile rawImage = await _controller!.takePicture();
+
+      if (!mounted) return;
+      setState(() {
+        _isProcessing = true;
+        _statusMessage = "辨識中...";
+      });
+
+      // 執行精確裁切 (小框框模式)
+      final File croppedFile = await _processAndCropImage(rawImage);
+
+      setState(() {
+        _capturedImage = XFile(croppedFile.path);
+      });
+
+      final inputImage = InputImage.fromFile(croppedFile);
+      final recognizedText = await _textRecognizer.processImage(inputImage);
+
+      final collectionProvider =
+          Provider.of<CollectionProvider>(context, listen: false);
+      final deckProvider = Provider.of<DeckProvider>(context, listen: false);
+
+      final resultInfo = await collectionProvider
+          .processScannedText(recognizedText.text, deckProvider: deckProvider);
+
+      if (mounted) {
+        if (resultInfo != null) {
+          HapticFeedback.vibrate();
+          setState(() => _statusMessage = "✅ $resultInfo");
+          await Future.delayed(const Duration(milliseconds: 1500));
+          _resetScanner();
+        } else {
+          HapticFeedback.lightImpact();
+          setState(() {
+            _statusMessage = "🤔 無法辨識編號，請再試一次";
+            _isProcessing = false;
+          });
+        }
+      }
     } catch (e) {
-      print("掃描錯誤: $e");
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text("掃描發生錯誤: $e")));
-    } finally {
-      if (mounted) setState(() => _isProcessing = false);
+      _resetScanner();
     }
   }
 
-  // 從相簿選圖並辨識
-  Future<void> _pickImageFromGallery() async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        setState(() => _isProcessing = true);
-        final inputImage = InputImage.fromFilePath(image.path);
-        await _processInputImage(inputImage);
-        setState(() => _isProcessing = false);
-      }
-    } catch (e) {
-      print("相簿選圖錯誤: $e");
-    }
+  // 裁切邏輯：改回長方形編號框 (300x110)
+  Future<File> _processAndCropImage(XFile xFile) async {
+    final Uint8List bytes = await xFile.readAsBytes();
+    img.Image? originalImage = img.decodeImage(bytes);
+    if (originalImage == null) return File(xFile.path);
+
+    originalImage = img.bakeOrientation(originalImage);
+
+    final double screenW = MediaQuery.of(context).size.width;
+    final double screenH = MediaQuery.of(context).size.height;
+
+    // 定義編號專用的長方形框
+    const double rectW = 300.0;
+    const double rectH = 110.0;
+
+    double factorX = originalImage.width / screenW;
+    double factorY = originalImage.height / screenH;
+    double factor = factorX > factorY ? factorX : factorY;
+
+    int cropW = (rectW * factor).toInt();
+    int cropH = (rectH * factor).toInt();
+    int cropX = ((originalImage.width - cropW) / 2).toInt();
+    int cropY = ((originalImage.height - cropH) / 2).toInt();
+
+    img.Image cropped = img.copyCrop(originalImage,
+        x: cropX, y: cropY, width: cropW, height: cropH);
+
+    final tempDir = await getTemporaryDirectory();
+    final croppedFile = File(
+        '${tempDir.path}/code_crop_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    await croppedFile
+        .writeAsBytes(img.encodeJpg(cropped, quality: 95)); // 調高畫質以利編號讀取
+
+    return croppedFile;
   }
 
-  // 共用的文字解析邏輯
-  Future<void> _processInputImage(InputImage inputImage) async {
-    final recognizedText = await _textRecognizer.processImage(inputImage);
-    final collectionProvider =
-        Provider.of<CollectionProvider>(context, listen: false);
-    final deckProvider = Provider.of<DeckProvider>(context, listen: false);
-
-    String fullText = "";
-    for (TextBlock block in recognizedText.blocks) {
-      fullText += "${block.text} ";
-    }
-
-    // 呼叫智慧處理邏輯
-    final resultInfo = await collectionProvider.processScannedText(fullText,
-        deckProvider: deckProvider);
-
-    if (mounted) {
-      if (resultInfo != null) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text("🎉 $resultInfo"),
-            backgroundColor: Colors.green,
-            duration: const Duration(milliseconds: 1500)));
-        // 如果想連拍，這裡不需要 Navigator.pop
-      }
-    }
+  void _resetScanner() {
+    if (!mounted) return;
+    setState(() {
+      _capturedImage = null;
+      _isProcessing = false;
+      _statusMessage = "請將【左下角編號】對準紅框";
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_isCameraInitialized) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    final isReady = _controller != null && _controller!.value.isInitialized;
 
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          // 1. 相機預覽 (全螢幕)
-          Center(
-            child: CameraPreview(_controller!),
-          ),
-
-          // 2. 掃描框框與遮罩
-          _buildOverlay(),
-
-          // 3. 頂部工具列 (返回、閃光燈)
-          Positioned(
-            top: 40,
-            left: 20,
-            right: 20,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.arrow_back,
-                      color: Colors.white, size: 30),
-                  onPressed: () => Navigator.pop(context),
-                ),
-                IconButton(
-                  icon: Icon(_isFlashOn ? Icons.flash_on : Icons.flash_off,
-                      color: Colors.white, size: 30),
-                  onPressed: _toggleFlash,
-                ),
-              ],
-            ),
-          ),
-
-          // 4. 底部控制區 (變焦、快門、相簿)
-          Positioned(
-            bottom: 30,
-            left: 0,
-            right: 0,
-            child: Column(
-              children: [
-                // 變焦滑桿
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.zoom_out, color: Colors.white, size: 20),
-                      Expanded(
-                        child: Slider(
-                          value: _currentZoomLevel,
-                          min: _minZoomLevel,
-                          max: _maxZoomLevel > 5.0
-                              ? 5.0
-                              : _maxZoomLevel, // 限制最大 5 倍
-                          activeColor: Colors.white,
-                          inactiveColor: Colors.white24,
-                          onChanged: (value) => _setZoom(value),
-                        ),
-                      ),
-                      const Icon(Icons.zoom_in, color: Colors.white, size: 20),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // 按鈕區
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    // 相簿按鈕
-                    IconButton(
-                      icon: const Icon(Icons.photo_library,
-                          color: Colors.white, size: 30),
-                      onPressed: _pickImageFromGallery,
-                    ),
-
-                    // 拍照掃描按鈕
-                    GestureDetector(
-                      onTap: _takePictureAndScan,
-                      child: Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 4),
-                          color: _isProcessing ? Colors.grey : Colors.white24,
-                        ),
-                        child: _isProcessing
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
-                            : const Icon(Icons.document_scanner,
-                                size: 40, color: Colors.white),
-                      ),
-                    ),
-
-                    // 佔位符 (保持排版平衡)
-                    const SizedBox(width: 50),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          // 5. 提示文字
-          Positioned(
-            top: 120,
-            left: 0,
-            right: 0,
-            child: Text(
-              "請將【左下角編號】對準中央紅框\n(例如: SV4a 001/190)",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+          if (_capturedImage != null)
+            Center(
+                child: Image.file(File(_capturedImage!.path),
+                    width: 300, fit: BoxFit.contain))
+          else if (isReady)
+            CameraPreview(_controller!)
+          else
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
+          if (isReady && _capturedImage == null)
+            Positioned.fill(
+              child: CustomPaint(
+                painter: ScannerOverlayPainter(
+                    rectWidth: 300, rectHeight: 110, borderRadius: 10),
               ),
             ),
-          ),
+          _buildUI(),
         ],
       ),
     );
   }
 
-  // 建立遮罩與掃描框
-  Widget _buildOverlay() {
-    return Stack(
+  Widget _buildUI() {
+    return Column(
       children: [
-        ColorFiltered(
-          colorFilter:
-              ColorFilter.mode(Colors.black.withOpacity(0.5), BlendMode.srcOut),
-          child: Stack(
+        const SizedBox(height: 60),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(color: Colors.black),
-              Center(
-                child: Container(
-                  width: 280,
-                  height: 390,
-                  decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(15)),
+              IconButton(
+                icon: const CircleAvatar(
+                    backgroundColor: Colors.black54,
+                    child: Icon(Icons.close, color: Colors.white)),
+                onPressed: () => Navigator.pop(context),
+              ),
+              IconButton(
+                icon: CircleAvatar(
+                  backgroundColor: _isFlashOn ? Colors.yellow : Colors.black54,
+                  child: Icon(_isFlashOn ? Icons.flash_on : Icons.flash_off,
+                      color: Colors.white),
                 ),
+                onPressed: _toggleFlash,
               ),
             ],
           ),
         ),
-        Center(
-          child: Container(
-            width: 280,
-            height: 390,
+        const Spacer(),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          decoration: BoxDecoration(
+              color: Colors.black87, borderRadius: BorderRadius.circular(20)),
+          child: Text(_statusMessage,
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold)),
+        ),
+        const SizedBox(height: 30),
+        GestureDetector(
+          onTap: _isProcessing
+              ? null
+              : (_capturedImage == null ? _takePictureAndScan : _resetScanner),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
-                border: Border.all(color: Colors.redAccent, width: 3),
-                borderRadius: BorderRadius.circular(15)),
+              shape: BoxShape.circle,
+              border: Border.all(color: Colors.white, width: 4),
+              color: _isProcessing ? Colors.white10 : Colors.white24,
+            ),
+            child: _isProcessing
+                ? const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: CircularProgressIndicator(
+                        color: Colors.cyanAccent, strokeWidth: 3))
+                : Icon(
+                    _capturedImage == null ? Icons.camera_alt : Icons.refresh,
+                    size: 35,
+                    color: Colors.white),
           ),
         ),
+        const SizedBox(height: 60),
       ],
     );
   }
+}
+
+class ScannerOverlayPainter extends CustomPainter {
+  final double rectWidth;
+  final double rectHeight;
+  final double borderRadius;
+  ScannerOverlayPainter(
+      {required this.rectWidth,
+      required this.rectHeight,
+      required this.borderRadius});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = Colors.black.withOpacity(0.7);
+    final backgroundPath = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    final holePath = Path()
+      ..addRRect(RRect.fromRectAndRadius(
+        Rect.fromCenter(
+            center: Offset(size.width / 2, size.height / 2),
+            width: rectWidth,
+            height: rectHeight),
+        Radius.circular(borderRadius),
+      ));
+    canvas.drawPath(
+        Path.combine(PathOperation.difference, backgroundPath, holePath),
+        paint);
+
+    final borderPaint = Paint()
+      ..color = Colors.redAccent
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
+    canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromCenter(
+              center: Offset(size.width / 2, size.height / 2),
+              width: rectWidth,
+              height: rectHeight),
+          Radius.circular(borderRadius),
+        ),
+        borderPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
