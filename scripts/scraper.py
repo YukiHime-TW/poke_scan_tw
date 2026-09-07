@@ -211,7 +211,11 @@ if __name__ == "__main__":
 
     print("\n🚦 開始補種類...")
     subprocess.run(["python", "add_type.py"], check=True)
-    
+
+    print("\n🚦 開始補屬性 (elem)...")
+    # --refresh：重抓官方清單頁對照表，確保新卡也涵蓋到
+    subprocess.run(["python", "add_elem.py", "--refresh"], check=True)
+
     elapsed_time = time.time() - start_time
     print(f"\n🎉 全部完成！")
     print(f"⏱️ 總共花費 {elapsed_time:.2f} 秒。")

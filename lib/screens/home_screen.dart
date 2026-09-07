@@ -29,6 +29,51 @@ enum TypeFilter {
   basicEnergy
 }
 
+// 屬性過濾（寶可夢能量色，對應卡片資料的 elem 欄位）
+enum ElementFilter {
+  all,
+  grass,
+  fire,
+  water,
+  lightning,
+  psychic,
+  fighting,
+  darkness,
+  metal,
+  fairy,
+  dragon,
+  colorless,
+}
+
+// enum -> 資料庫 elem 字串（由 scripts/add_elem.py 寫入）
+const Map<ElementFilter, String> kElementLabels = {
+  ElementFilter.grass: "草",
+  ElementFilter.fire: "火",
+  ElementFilter.water: "水",
+  ElementFilter.lightning: "雷",
+  ElementFilter.psychic: "超",
+  ElementFilter.fighting: "格鬥",
+  ElementFilter.darkness: "惡",
+  ElementFilter.metal: "鋼",
+  ElementFilter.fairy: "妖精",
+  ElementFilter.dragon: "龍",
+  ElementFilter.colorless: "無色",
+};
+
+const Map<ElementFilter, Color> kElementColors = {
+  ElementFilter.grass: Color(0xFF4CAF50),
+  ElementFilter.fire: Color(0xFFF44336),
+  ElementFilter.water: Color(0xFF2196F3),
+  ElementFilter.lightning: Color(0xFFFBC02D),
+  ElementFilter.psychic: Color(0xFF9C27B0),
+  ElementFilter.fighting: Color(0xFFBF360C),
+  ElementFilter.darkness: Color(0xFF37474F),
+  ElementFilter.metal: Color(0xFF90A4AE),
+  ElementFilter.fairy: Color(0xFFEC407A),
+  ElementFilter.dragon: Color(0xFFFFB300),
+  ElementFilter.colorless: Color(0xFFBDBDBD),
+};
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -69,6 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
   StatusFilter _statusFilter = StatusFilter.all;
   FormatFilter _formatFilter = FormatFilter.standard;
   TypeFilter _typeFilter = TypeFilter.all;
+  ElementFilter _elementFilter = ElementFilter.all;
 
   @override
   void dispose() {
@@ -110,6 +156,12 @@ class _HomeScreenState extends State<HomeScreen> {
       default:
         return true;
     }
+  }
+
+  // --- 屬性過濾邏輯（只有寶可夢卡有 elem）---
+  bool _matchesElement(dynamic cardData) {
+    if (_elementFilter == ElementFilter.all) return true;
+    return (cardData['elem'] ?? "").toString() == kElementLabels[_elementFilter];
   }
 
   Color _getThemeColor(bool isDeckMode) {
@@ -208,6 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         if (!_matchesFormat(v)) return;
         if (!_matchesType(v)) return;
+        if (!_matchesElement(v)) return;
 
         if (query.isNotEmpty) {
           String cardName = v['name'].toString().toLowerCase();
@@ -235,7 +288,8 @@ class _HomeScreenState extends State<HomeScreen> {
       bool isExpanded = (query.isNotEmpty ||
               _statusFilter == StatusFilter.inDeck ||
               _statusFilter == StatusFilter.used ||
-              _typeFilter != TypeFilter.all)
+              _typeFilter != TypeFilter.all ||
+              _elementFilter != ElementFilter.all)
           ? true
           : (_expandedState[setCode] ?? false);
 
@@ -258,7 +312,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (query.isEmpty &&
                       _statusFilter != StatusFilter.inDeck &&
                       _statusFilter != StatusFilter.used &&
-                      _typeFilter == TypeFilter.all) {
+                      _typeFilter == TypeFilter.all &&
+                      _elementFilter == ElementFilter.all) {
                     final bool willCollapse = isExpanded;
                     setState(() => _expandedState[setCode] = !isExpanded);
                     if (willCollapse) {
@@ -384,6 +439,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             setState(() {
                               _statusFilter = StatusFilter.all;
                               _typeFilter = TypeFilter.all;
+                              _elementFilter = ElementFilter.all;
                             });
                           },
                           child: const Text("完成",
@@ -422,6 +478,7 @@ class _HomeScreenState extends State<HomeScreen> {
         if (value is StatusFilter) _statusFilter = value;
         if (value is FormatFilter) _formatFilter = value;
         if (value is TypeFilter) _typeFilter = value;
+        if (value is ElementFilter) _elementFilter = value;
       }),
       itemBuilder: (BuildContext context) => <PopupMenuEntry<dynamic>>[
         const PopupMenuItem(
@@ -484,7 +541,51 @@ class _HomeScreenState extends State<HomeScreen> {
             _typeFilter == TypeFilter.specialEnergy),
         _buildPopupItem(TypeFilter.basicEnergy, Icons.flash_on, "基本能量",
             _typeFilter == TypeFilter.basicEnergy),
+        const PopupMenuDivider(),
+        const PopupMenuItem(
+            enabled: false,
+            child: Text("屬性篩選",
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    color: Colors.grey))),
+        _buildElementItem(ElementFilter.all, "所有屬性"),
+        for (final e in ElementFilter.values)
+          if (e != ElementFilter.all)
+            _buildElementItem(e, kElementLabels[e]!),
       ],
+    );
+  }
+
+  PopupMenuEntry<dynamic> _buildElementItem(ElementFilter value, String title) {
+    final bool isSelected = _elementFilter == value;
+    final Color activeColor = _getThemeColor(false);
+    final Color dot = kElementColors[value] ?? Colors.grey;
+    return PopupMenuItem<dynamic>(
+      value: value,
+      child: Row(
+        children: [
+          value == ElementFilter.all
+              ? Icon(Icons.blur_on,
+                  size: 20, color: isSelected ? activeColor : Colors.grey)
+              : Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                      color: dot,
+                      shape: BoxShape.circle,
+                      border:
+                          Border.all(color: Colors.black12, width: 1))),
+          const SizedBox(width: 12),
+          Text(title,
+              style: TextStyle(
+                  color: isSelected ? activeColor : Colors.black87,
+                  fontWeight:
+                      isSelected ? FontWeight.bold : FontWeight.normal)),
+          const Spacer(),
+          if (isSelected) Icon(Icons.check, color: activeColor, size: 16),
+        ],
+      ),
     );
   }
 
