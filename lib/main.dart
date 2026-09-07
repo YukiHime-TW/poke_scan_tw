@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
     @override
     Widget build(BuildContext context) {
         return MaterialApp(
-        title: '繁中PTCG卡片管理',
+        title: '繁中PTCG集換所',
         theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.red),
             useMaterial3: true,

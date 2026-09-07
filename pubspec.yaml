@@ -34,12 +34,14 @@ dependencies:
   http: ^1.2.0
   path_provider: ^2.1.2
 
-# 在最下方加入設定區塊
+# 圖示由 scripts/gen_icons.py 產生（集換所：雙疊卡片，深紫 #4B3BA6）
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/icon.png" # 您的圖片路徑
-  min_sdk_android: 21 # android min sdk min:16, default 21
+  image_path: "assets/icon.png"
+  min_sdk_android: 21
+  adaptive_icon_background: "#4B3BA6"
+  adaptive_icon_foreground: "assets/icon_foreground.png"
   web:
     generate: true
     image_path: "assets/icon.png"
