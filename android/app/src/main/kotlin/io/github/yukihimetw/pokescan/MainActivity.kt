@@ -1,4 +1,4 @@
-package com.example.poke_scan_tw
+package io.github.yukihimetw.pokescan
 
 import io.flutter.embedding.android.FlutterActivity
 

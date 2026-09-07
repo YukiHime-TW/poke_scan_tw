@@ -15,7 +15,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.poke_scan_tw"
+    namespace = "io.github.yukihimetw.pokescan"
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -29,7 +29,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.poke_scan_tw"
+        applicationId = "io.github.yukihimetw.pokescan"
         minSdk = flutter.minSdkVersion
         targetSdk = 36
         versionCode = flutter.versionCode
