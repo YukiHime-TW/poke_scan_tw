@@ -1,18 +1,90 @@
-# poke_scan_tw
+# 繁中PTCG集換所
 
-beta測試中
+繁體中文寶可夢集換式卡牌（PTCG）玩家與收藏家的工具：收藏管理、牌組構築、
+用相機掃描卡片編號快速登錄。
 
-pip install -r requirements.txt
+> 非官方的粉絲自製工具，與 Nintendo、The Pokémon Company、Creatures Inc.
+> 無任何關係。卡片名稱與圖片版權皆屬原公司所有。
 
-flutter run -d web-server
+- 網頁版：<https://yukihime-tw.github.io/poke_scan_tw/>
+- 隱私權政策：[PRIVACY.md](PRIVACY.md)
 
-(on cmd)
-flutter build web --base-href /poke_scan_tw/ --wasm --release
+## 功能
 
-cd build/web
+- **收藏管理**：依系列瀏覽，點一下 +1、長按 -1；彩色／黑白區分持有；完成度進度條
+- **相機掃描**：對準卡片左下角編號，裝置端 OCR（ML Kit）辨識並加入收藏，不上傳照片
+- **牌組 / 收藏本**：牌組限 60 張・同名 4 張；收藏本無限制；比對實體庫存；匯出牌表
+- **篩選**：收藏狀態 / 賽制 / 種類 / 屬性 / 關鍵字（名稱・編號・稀有度・系列）
+- **雲端同步**：Google 登入後收藏與牌組跨裝置同步（Firestore）；不登入則只存本機
 
-git add .
+## 技術
 
-git commit -m
+Flutter（Android / iOS / Web）、Provider、Firebase Auth + Cloud Firestore、
+Google ML Kit 文字辨識、`sliver_tools`。
 
-git push -u -f origin main:gh-pages
+App 啟動時從 `raw.githubusercontent.com/.../refs/heads/main/assets` 抓最新卡表
+JSON，**所以卡片資料變更需合併進 `main` 才會生效**，不需重出 App。
+
+## 專案結構
+
+```
+lib/                Flutter 原始碼
+assets/sets/        各系列卡片資料 JSON（131 個系列）
+assets/index.json   系列索引
+scripts/            資料維護腳本（見下）
+store/              Play 上架素材（圖示、功能圖、文案、表單答案）
+android/ ios/ web/  各平台設定
+```
+
+## 資料維護（scripts/）
+
+`python scraper.py` 會依序跑完整條管線：
+
+| 腳本 | 作用 |
+|---|---|
+| `scraper.py` | 從卡表來源爬新卡（編號 / 名稱 / 稀有度），更新 `index.json` |
+| `convert.py` | 簡體 → 繁體（OpenCC `s2t`；`s2tw` 不適用，見檔內註解） |
+| `fix_translation.py` | 異體字與舊譯名修正字典 |
+| `add_date.py` | 補系列發售日期 |
+| `add_match.py` | 補賽制標記（reg） |
+| `add_type.py` | 補卡片種類（預設寶可夢，再由後續腳本 / 人工修正） |
+| `add_elem.py` | 補寶可夢屬性 elem（官方清單頁 `pokemonEnergy` 篩選） |
+| `add_elem_tcgdex.py` | 補無官方圖的卡的 elem（tcgdex API） |
+| `fix_type_tcgdex.py` / `fix_type_official.py` | 用 tcgdex / 官方詳情頁校對修正 type |
+
+其他一次性工具：`check_names.py`（對官方卡片頁核對卡名）、`add_rarity.py`
+（補空白稀有度）、`gen_icons.py`（產生 App 圖示與 Play 素材）。
+
+```
+pip install -r scripts/requirements.txt   # requests, beautifulsoup4, opencc, Pillow ...
+```
+
+## 建置
+
+```bash
+# Android APK（自動輸出 build/app/outputs/flutter-apk/pokescan_<版本>.apk）
+flutter build apk --release
+
+# Android App Bundle（上 Play 用）
+flutter build appbundle --release
+
+# Web
+flutter build web --release --base-href /poke_scan_tw/
+```
+
+APK 簽署需 `android/key.properties`（指向上傳用 keystore）。版本號改
+`pubspec.yaml` 的 `version:`。
+
+### 部署網頁版（gh-pages）
+
+`gh-pages` 分支放的是 `flutter build web` 的產物。合併進 `main` 後：
+
+```bash
+flutter build web --release --base-href /poke_scan_tw/
+# 用一個乾淨 worktree 取代整個 gh-pages 內容後 push（不要在 build/web 裡塞 git repo）
+git worktree add /tmp/ghp origin/gh-pages
+rm -rf /tmp/ghp/*; cp -r build/web/. /tmp/ghp/
+git -C /tmp/ghp add -A && git -C /tmp/ghp commit -m "更新網頁版"
+git -C /tmp/ghp push origin HEAD:gh-pages
+git worktree remove /tmp/ghp
+```
