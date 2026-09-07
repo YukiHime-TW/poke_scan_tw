@@ -216,6 +216,9 @@ if __name__ == "__main__":
     # --refresh：重抓官方清單頁對照表，確保新卡也涵蓋到
     subprocess.run(["python", "add_elem.py", "--refresh"], check=True)
 
+    print("\n🚦 補屬性 Phase 2（tcgdex，處理無官方圖的卡）...")
+    subprocess.run(["python", "add_elem_tcgdex.py"], check=True)
+
     elapsed_time = time.time() - start_time
     print(f"\n🎉 全部完成！")
     print(f"⏱️ 總共花費 {elapsed_time:.2f} 秒。")
