@@ -15,6 +15,9 @@ def convert_json_files():
         return
 
     # 初始化轉換器 (簡體 -> 繁體)
+    # 註：試過 s2tw（台灣字形標準），但它的 MOE 用字（巖/託/後/僕/迴）
+    # 跟寶可夢卡牌繁中官方譯名（岩/托/后/仆）相反，會把 290 個卡名改壞，
+    # 也會 undo fix_translation.py 的規則，所以維持 s2t。
     converter = opencc.OpenCC('s2t')
     
     print("🚀 開始執行簡繁轉換...")
