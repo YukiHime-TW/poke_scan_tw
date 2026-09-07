@@ -52,7 +52,7 @@ const Map<ElementFilter, String> kElementLabels = {
   ElementFilter.water: "水",
   ElementFilter.lightning: "雷",
   ElementFilter.psychic: "超",
-  ElementFilter.fighting: "格鬥",
+  ElementFilter.fighting: "鬥",
   ElementFilter.darkness: "惡",
   ElementFilter.metal: "鋼",
   ElementFilter.fairy: "妖精",
