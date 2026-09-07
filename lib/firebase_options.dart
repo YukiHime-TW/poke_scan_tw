@@ -52,7 +52,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyDaeSlVZB6nuGGd0ilH7WzYPYbM27DMhTA',
-    appId: '1:755806773470:android:41b8c05f2704659d67a24f',
+    appId: '1:755806773470:android:013c08dcb4e5a66867a24f',
     messagingSenderId: '755806773470',
     projectId: 'pokescan-tw',
     storageBucket: 'pokescan-tw.firebasestorage.app',
