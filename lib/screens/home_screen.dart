@@ -74,6 +74,17 @@ const Map<ElementFilter, Color> kElementColors = {
   ElementFilter.colorless: Color(0xFFBDBDBD),
 };
 
+const Map<TypeFilter, String> kTypeFilterLabels = {
+  TypeFilter.all: "所有種類",
+  TypeFilter.pokemon: "寶可夢",
+  TypeFilter.goods: "物品",
+  TypeFilter.supporter: "支援者",
+  TypeFilter.stadium: "競技場",
+  TypeFilter.tool: "道具",
+  TypeFilter.specialEnergy: "特殊能量",
+  TypeFilter.basicEnergy: "基本能量",
+};
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -386,7 +397,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       _searchController.clear();
                     }
                   })),
-          _buildFilterMenu(isDeckMode),
+          _buildFilterButton(isDeckMode),
           IconButton(
               icon: const Icon(Icons.style),
               onPressed: () => Navigator.push(context,
@@ -470,143 +481,205 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  // 下拉選單組件
-  Widget _buildFilterMenu(bool isDeckMode) {
-    return PopupMenuButton<dynamic>(
-      icon: const Icon(Icons.filter_list),
-      onSelected: (value) => setState(() {
-        if (value is StatusFilter) _statusFilter = value;
-        if (value is FormatFilter) _formatFilter = value;
-        if (value is TypeFilter) _typeFilter = value;
-        if (value is ElementFilter) _elementFilter = value;
-      }),
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<dynamic>>[
-        const PopupMenuItem(
-            enabled: false,
-            child: Text("收藏狀態",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                    color: Colors.grey))),
-        _buildPopupItem(StatusFilter.all, Icons.apps, "顯示全部",
-            _statusFilter == StatusFilter.all),
-        if (isDeckMode)
-          _buildPopupItem(StatusFilter.inDeck, Icons.fact_check, "這副牌的卡片",
-              _statusFilter == StatusFilter.inDeck),
-        _buildPopupItem(StatusFilter.used, Icons.inventory, "已使用的卡片",
-            _statusFilter == StatusFilter.used),
-        _buildPopupItem(StatusFilter.owned, Icons.check_circle, "只看已擁有",
-            _statusFilter == StatusFilter.owned),
-        _buildPopupItem(StatusFilter.missing, Icons.radio_button_unchecked,
-            "只看未擁有", _statusFilter == StatusFilter.missing),
-        _buildPopupItem(StatusFilter.duplicates, Icons.copy, "重複 (>1)",
-            _statusFilter == StatusFilter.duplicates),
-        _buildPopupItem(StatusFilter.competitive, Icons.layers, "多餘物資 (>4)",
-            _statusFilter == StatusFilter.competitive),
-        const PopupMenuDivider(),
-        const PopupMenuItem(
-            enabled: false,
-            child: Text("賽制篩選",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                    color: Colors.grey))),
-        _buildPopupItem(FormatFilter.all, Icons.not_interested, "不限賽制",
-            _formatFilter == FormatFilter.all),
-        _buildPopupItem(FormatFilter.standard, Icons.verified_user, "標準賽制",
-            _formatFilter == FormatFilter.standard),
-        _buildPopupItem(FormatFilter.expanded, Icons.public, "開放賽制",
-            _formatFilter == FormatFilter.expanded),
-        const PopupMenuDivider(),
-        const PopupMenuItem(
-            enabled: false,
-            child: Text("種類篩選",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                    color: Colors.grey))),
-        _buildPopupItem(TypeFilter.all, Icons.dashboard_customize, "所有種類",
-            _typeFilter == TypeFilter.all),
-        _buildPopupItem(TypeFilter.pokemon, Icons.catching_pokemon, "寶可夢",
-            _typeFilter == TypeFilter.pokemon),
-        _buildPopupItem(TypeFilter.goods, Icons.shopping_bag, "物品",
-            _typeFilter == TypeFilter.goods),
-        _buildPopupItem(TypeFilter.supporter, Icons.person, "支援者",
-            _typeFilter == TypeFilter.supporter),
-        _buildPopupItem(TypeFilter.stadium, Icons.stadium, "競技場",
-            _typeFilter == TypeFilter.stadium),
-        _buildPopupItem(TypeFilter.tool, Icons.build_circle, "道具",
-            _typeFilter == TypeFilter.tool),
-        _buildPopupItem(TypeFilter.specialEnergy, Icons.stars, "特殊能量",
-            _typeFilter == TypeFilter.specialEnergy),
-        _buildPopupItem(TypeFilter.basicEnergy, Icons.flash_on, "基本能量",
-            _typeFilter == TypeFilter.basicEnergy),
-        const PopupMenuDivider(),
-        const PopupMenuItem(
-            enabled: false,
-            child: Text("屬性篩選",
-                style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
-                    color: Colors.grey))),
-        _buildElementItem(ElementFilter.all, "所有屬性"),
-        for (final e in ElementFilter.values)
-          if (e != ElementFilter.all)
-            _buildElementItem(e, kElementLabels[e]!),
+  // ---- 篩選面板（底部彈出 + chip 分組）----
+
+  // 目前生效（非預設）的篩選數量。賽制預設是「標準」。
+  int _activeFilterCount() {
+    int n = 0;
+    if (_statusFilter != StatusFilter.all) n++;
+    if (_formatFilter != FormatFilter.standard) n++;
+    if (_typeFilter != TypeFilter.all) n++;
+    if (_elementFilter != ElementFilter.all) n++;
+    return n;
+  }
+
+  void _resetFilters() {
+    _statusFilter = StatusFilter.all;
+    _formatFilter = FormatFilter.standard;
+    _typeFilter = TypeFilter.all;
+    _elementFilter = ElementFilter.all;
+  }
+
+  Widget _buildFilterButton(bool isDeckMode) {
+    final int count = _activeFilterCount();
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.filter_list),
+          tooltip: "篩選",
+          onPressed: () => _openFilterSheet(isDeckMode),
+        ),
+        if (count > 0)
+          Positioned(
+            right: 6,
+            top: 6,
+            child: Container(
+              padding: const EdgeInsets.all(2),
+              constraints:
+                  const BoxConstraints(minWidth: 16, minHeight: 16),
+              decoration: const BoxDecoration(
+                  color: Colors.redAccent, shape: BoxShape.circle),
+              child: Text("$count",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold)),
+            ),
+          ),
       ],
     );
   }
 
-  PopupMenuEntry<dynamic> _buildElementItem(ElementFilter value, String title) {
-    final bool isSelected = _elementFilter == value;
-    final Color activeColor = _getThemeColor(false);
-    final Color dot = kElementColors[value] ?? Colors.grey;
-    return PopupMenuItem<dynamic>(
-      value: value,
-      child: Row(
-        children: [
-          value == ElementFilter.all
-              ? Icon(Icons.blur_on,
-                  size: 20, color: isSelected ? activeColor : Colors.grey)
-              : Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                      color: dot,
-                      shape: BoxShape.circle,
-                      border:
-                          Border.all(color: Colors.black12, width: 1))),
-          const SizedBox(width: 12),
-          Text(title,
-              style: TextStyle(
-                  color: isSelected ? activeColor : Colors.black87,
-                  fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.normal)),
-          const Spacer(),
-          if (isSelected) Icon(Icons.check, color: activeColor, size: 16),
-        ],
-      ),
-    );
-  }
+  void _openFilterSheet(bool isDeckMode) {
+    final Color active = _getThemeColor(isDeckMode);
 
-  PopupMenuEntry<dynamic> _buildPopupItem(
-      dynamic value, IconData icon, String title, bool isSelected) {
-    Color activeColor = _getThemeColor(false);
-    return PopupMenuItem<dynamic>(
-      value: value,
-      child: Row(
-        children: [
-          Icon(icon, color: isSelected ? activeColor : Colors.grey, size: 20),
-          const SizedBox(width: 12),
-          Text(title,
-              style: TextStyle(
-                  color: isSelected ? activeColor : Colors.black87,
-                  fontWeight:
-                      isSelected ? FontWeight.bold : FontWeight.normal)),
-          const Spacer(),
-          if (isSelected) Icon(Icons.check, color: activeColor, size: 16),
-        ],
-      ),
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16))),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setSheet) {
+            void pick(VoidCallback apply) {
+              setState(apply);
+              setSheet(() {});
+            }
+
+            Widget chip(String label, bool selected, VoidCallback onTap,
+                {Widget? avatar}) {
+              return ChoiceChip(
+                label: Text(label),
+                avatar: avatar,
+                selected: selected,
+                showCheckmark: false,
+                onSelected: (_) => onTap(),
+                visualDensity: VisualDensity.compact,
+                labelStyle: TextStyle(
+                    fontSize: 13,
+                    color: selected ? active : Colors.black87,
+                    fontWeight:
+                        selected ? FontWeight.bold : FontWeight.normal),
+                selectedColor: active.withOpacity(0.15),
+                backgroundColor: const Color(0xFFF0F0F0),
+                side: selected
+                    ? BorderSide(color: active, width: 1.2)
+                    : BorderSide(color: Colors.grey.shade300),
+              );
+            }
+
+            Widget section(String title, List<Widget> chips) => Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey)),
+                      const SizedBox(height: 8),
+                      Wrap(spacing: 8, runSpacing: 8, children: chips),
+                    ],
+                  ),
+                );
+
+            return SafeArea(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.78),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Row(
+                        children: [
+                          const Text("篩選",
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold)),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: _activeFilterCount() == 0
+                                ? null
+                                : () => pick(_resetFilters),
+                            child: const Text("清除全部"),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      section("收藏狀態", [
+                        chip("全部", _statusFilter == StatusFilter.all,
+                            () => pick(() => _statusFilter = StatusFilter.all)),
+                        if (isDeckMode)
+                          chip(
+                              "這副牌的卡片",
+                              _statusFilter == StatusFilter.inDeck,
+                              () => pick(() =>
+                                  _statusFilter = StatusFilter.inDeck)),
+                        chip("已使用的卡片", _statusFilter == StatusFilter.used,
+                            () => pick(
+                                () => _statusFilter = StatusFilter.used)),
+                        chip("只看已擁有", _statusFilter == StatusFilter.owned,
+                            () => pick(
+                                () => _statusFilter = StatusFilter.owned)),
+                        chip("只看未擁有", _statusFilter == StatusFilter.missing,
+                            () => pick(
+                                () => _statusFilter = StatusFilter.missing)),
+                        chip("重複 (>1)",
+                            _statusFilter == StatusFilter.duplicates,
+                            () => pick(() =>
+                                _statusFilter = StatusFilter.duplicates)),
+                        chip("多餘物資 (>4)",
+                            _statusFilter == StatusFilter.competitive,
+                            () => pick(() =>
+                                _statusFilter = StatusFilter.competitive)),
+                      ]),
+                      section("賽制", [
+                        chip("不限", _formatFilter == FormatFilter.all,
+                            () => pick(
+                                () => _formatFilter = FormatFilter.all)),
+                        chip("標準", _formatFilter == FormatFilter.standard,
+                            () => pick(() =>
+                                _formatFilter = FormatFilter.standard)),
+                        chip("開放", _formatFilter == FormatFilter.expanded,
+                            () => pick(() =>
+                                _formatFilter = FormatFilter.expanded)),
+                      ]),
+                      section("種類", [
+                        for (final e in kTypeFilterLabels.entries)
+                          chip(e.value, _typeFilter == e.key,
+                              () => pick(() => _typeFilter = e.key)),
+                      ]),
+                      section("屬性", [
+                        chip("全部", _elementFilter == ElementFilter.all,
+                            () => pick(() =>
+                                _elementFilter = ElementFilter.all)),
+                        for (final e in ElementFilter.values)
+                          if (e != ElementFilter.all)
+                            chip(
+                              kElementLabels[e]!,
+                              _elementFilter == e,
+                              () => pick(() => _elementFilter = e),
+                              avatar: CircleAvatar(
+                                  radius: 7,
+                                  backgroundColor: kElementColors[e]),
+                            ),
+                      ]),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
     );
   }
 
