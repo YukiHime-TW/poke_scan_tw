@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:provider/provider.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
@@ -37,9 +38,33 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final Map<String, bool> _expandedState = {};
+  final Map<String, GlobalKey> _headerKeys = {};
+  final ScrollController _scrollController = ScrollController();
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchText = "";
+
+  // 收合某個系列時，若目前已捲動到它的內容裡，
+  // 收合後把該系列標題重新對齊到頂端，避免整個清單「跟著往下滑」。
+  void _keepHeaderPinnedAfterCollapse(String setCode) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_scrollController.hasClients) return;
+      final ctx = _headerKeys[setCode]?.currentContext;
+      final renderObject = ctx?.findRenderObject();
+      if (renderObject == null) return;
+
+      final viewport = RenderAbstractViewport.of(renderObject);
+      final position = _scrollController.position;
+      final target = viewport
+          .getOffsetToReveal(renderObject, 0.0)
+          .offset
+          .clamp(position.minScrollExtent, position.maxScrollExtent);
+
+      if (_scrollController.offset > target) {
+        _scrollController.jumpTo(target);
+      }
+    });
+  }
 
   StatusFilter _statusFilter = StatusFilter.all;
   FormatFilter _formatFilter = FormatFilter.standard;
@@ -48,6 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _searchController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -219,6 +245,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             SliverPinnedHeader(
               child: SetHeader(
+                key: _headerKeys.putIfAbsent(setCode, () => GlobalKey()),
                 title: setData['name'],
                 setCode: setCode,
                 progress:
@@ -232,7 +259,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       _statusFilter != StatusFilter.inDeck &&
                       _statusFilter != StatusFilter.used &&
                       _typeFilter == TypeFilter.all) {
+                    final bool willCollapse = isExpanded;
                     setState(() => _expandedState[setCode] = !isExpanded);
+                    if (willCollapse) {
+                      _keepHeaderPinnedAfterCollapse(setCode);
+                    }
                   }
                 },
               ),
@@ -364,7 +395,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
       ),
-      body: CustomScrollView(cacheExtent: 1000, slivers: slivers),
+      body: CustomScrollView(
+          controller: _scrollController, cacheExtent: 1000, slivers: slivers),
 
       // --- 【重點修改：智慧掃描按鈕】 ---
       floatingActionButton: kIsWeb
