@@ -67,3 +67,18 @@ scripts/name_check_run.log
 scripts/rarity_map.json
 scripts/rarity_misses.txt
 scripts/all_name_changes.tsv
+
+# 資料維護腳本的中間產物（快取 / 差異清單 / log），一律不進版控
+scripts/*_cache.json
+scripts/*_map.json
+scripts/*_exists.json
+scripts/*_log.tsv
+scripts/*_log.txt
+scripts/*_review.tsv
+scripts/*_misses.txt
+scripts/*_unresolved.txt
+scripts/*_report.md
+scripts/*_run.log
+scripts/name_diffs.tsv
+scripts/all_name_changes.tsv
+scripts/type_review_tagged.tsv
