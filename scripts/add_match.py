@@ -31,7 +31,7 @@ def add_type_to_cards():
                     for card_id, card_info in set_data['cards'].items():
 
                         if 'reg' not in card_info:
-                            card_info['reg'] = "I"
+                            card_info['reg'] = "J"
                             is_modified = True
 
             # 如果檔案內容有變動，才執行寫回動作
