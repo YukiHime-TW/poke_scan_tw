@@ -219,6 +219,9 @@ if __name__ == "__main__":
     print("\n🚦 補屬性 Phase 2（tcgdex，處理無官方圖的卡）...")
     subprocess.run(["python", "add_elem_tcgdex.py"], check=True)
 
+    print("\n🚦 用 tcgdex 校對修正標錯的 type...")
+    subprocess.run(["python", "fix_type_tcgdex.py"], check=True)
+
     elapsed_time = time.time() - start_time
     print(f"\n🎉 全部完成！")
     print(f"⏱️ 總共花費 {elapsed_time:.2f} 秒。")
