@@ -95617,7 +95617,7 @@ return s},
 $S:636}
 A.Pw.prototype={
 J(a){var s=null
-return new A.C5(B.I5,"\u7e41\u4e2dPTCG\u5361\u7247\u7ba1\u7406",A.wR(s,A.aKt(B.a6,s,s,B.lg),!0),s)}}
+return new A.C5(B.I5,"\u7e41\u4e2dPTCG\u96c6\u63db\u6240",A.wR(s,A.aKt(B.a6,s,s,B.lg),!0),s)}}
 A.kc.prototype={
 uu(){var s=0,r=A.z(t.H),q=1,p=[],o=this,n,m,l,k,j,i,h,g,f,e
 var $async$uu=A.v(function(a,b){if(a===1){p.push(b)
