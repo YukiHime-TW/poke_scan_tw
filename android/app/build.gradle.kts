@@ -54,11 +54,36 @@ android {
             // Kotlin DSL 中，布林值設定要加 "is"
             isMinifyEnabled = false
             isShrinkResources = false
-            
+
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+        }
+    }
+
+    // 4. 每次 build 都自動產生 pokescan_<versionName>.apk（不含 versionCode）
+    //    - Gradle 原生輸出（outputs/apk/<type>/）直接改名
+    //    - assemble 後再複製一份到 flutter 慣用的 outputs/flutter-apk/
+    //      （flutter build apk 自己那份仍叫 app-release.apk，不動它）
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            (this as com.android.build.gradle.internal.api.BaseVariantOutputImpl)
+                .outputFileName = "pokescan_${variant.versionName}.apk"
+        }
+        if (variant.buildType.name == "release") {
+            assembleProvider.configure {
+                doLast {
+                    val apk = variant.outputs.first().outputFile
+                    if (apk.exists()) {
+                        val flutterApkDir = apk.parentFile.parentFile.parentFile
+                            .resolve("flutter-apk")
+                        flutterApkDir.mkdirs()
+                        apk.copyTo(flutterApkDir.resolve(apk.name), overwrite = true)
+                    }
+                }
+            }
         }
     }
 }
