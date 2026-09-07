@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,6 +8,14 @@ import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/collection_provider.dart';
 import '../providers/deck_provider.dart';
+import '../utils/card_matcher.dart';
+
+// --- 裁切框的幾何（畫面比例）---
+// 紅框給使用者對準的可見區域
+const double _boxCx = 0.5, _boxCy = 0.60; // 中心：水平置中、垂直偏下
+const double _boxW = 0.66, _boxH = 0.13;
+// 實際裁下來丟 OCR 的區域：比紅框大一圈，容忍預覽/實拍的長寬比誤差
+const double _cropW = 0.74, _cropH = 0.22;
 
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
@@ -25,8 +32,10 @@ class _ScannerScreenState extends State<ScannerScreen>
 
   bool _isProcessing = false;
   XFile? _capturedImage;
-  String _statusMessage = "請將【左下角編號】對準紅框";
+  String _statusMessage = "請將卡片【左下角編號】對準紅框";
   bool _isFlashOn = false;
+
+  ScanCandidate? _pendingConfirm; // 低信心 -> 跳確認
 
   @override
   void initState() {
@@ -43,7 +52,6 @@ class _ScannerScreenState extends State<ScannerScreen>
     super.dispose();
   }
 
-  // 防止閃退：App 縮小後釋放相機，回來後重新啟動
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (_controller == null || !_controller!.value.isInitialized) return;
@@ -68,18 +76,16 @@ class _ScannerScreenState extends State<ScannerScreen>
     final controller = CameraController(
       cameras.firstWhere((c) => c.lensDirection == CameraLensDirection.back,
           orElse: () => cameras.first),
-      ResolutionPreset.max,
+      ResolutionPreset.veryHigh, // 1080p：夠讀小編號又不會像 max 那樣拖慢
       enableAudio: false,
     );
 
     try {
       await controller.initialize();
-      // --- 核心修正：強制預設關閉閃光燈 ---
       await controller.setFlashMode(FlashMode.off);
-
       if (mounted) setState(() => _controller = controller);
     } catch (e) {
-      print("相機啟動失敗: $e");
+      debugPrint("相機啟動失敗: $e");
     }
   }
 
@@ -97,83 +103,115 @@ class _ScannerScreenState extends State<ScannerScreen>
 
     try {
       final XFile rawImage = await _controller!.takePicture();
-
       if (!mounted) return;
       setState(() {
         _isProcessing = true;
-        _statusMessage = "辨識中...";
+        _statusMessage = "辨識中…";
       });
 
-      // 執行精確裁切 (小框框模式)
       final File croppedFile = await _processAndCropImage(rawImage);
-
-      setState(() {
-        _capturedImage = XFile(croppedFile.path);
-      });
+      setState(() => _capturedImage = XFile(croppedFile.path));
 
       final inputImage = InputImage.fromFile(croppedFile);
       final recognizedText = await _textRecognizer.processImage(inputImage);
 
-      final collectionProvider =
-          Provider.of<CollectionProvider>(context, listen: false);
-      final deckProvider = Provider.of<DeckProvider>(context, listen: false);
-
-      final resultInfo = await collectionProvider
-          .processScannedText(recognizedText.text, deckProvider: deckProvider);
-
-      if (mounted) {
-        if (resultInfo != null) {
-          HapticFeedback.vibrate();
-          setState(() => _statusMessage = "✅ $resultInfo");
-          await Future.delayed(const Duration(milliseconds: 1500));
-          _resetScanner();
-        } else {
-          HapticFeedback.lightImpact();
-          setState(() {
-            _statusMessage = "🤔 無法辨識編號，請再試一次";
-            _isProcessing = false;
-          });
+      // 用 blocks/lines 的 bounding box，把文字行由「畫面下方往上」排
+      final withY = <({String text, double y})>[];
+      for (final b in recognizedText.blocks) {
+        for (final l in b.lines) {
+          withY.add((text: l.text, y: l.boundingBox.center.dy));
         }
       }
+      withY.sort((a, b) => b.y.compareTo(a.y));
+      final bottomFirst = withY.map((e) => e.text).toList();
+      if (bottomFirst.isEmpty && recognizedText.text.trim().isNotEmpty) {
+        bottomFirst.addAll(recognizedText.text.split('\n'));
+      }
+
+      final collection =
+          Provider.of<CollectionProvider>(context, listen: false);
+      final deck = Provider.of<DeckProvider>(context, listen: false);
+      final ScanCandidate? cand = collection.analyzeScan(bottomFirst);
+
+      if (!mounted) return;
+
+      if (cand == null) {
+        HapticFeedback.lightImpact();
+        setState(() {
+          _statusMessage = "🤔 認不出編號，換個角度或開閃光燈再試";
+          _isProcessing = false;
+        });
+        return;
+      }
+
+      if (cand.isHighConfidence) {
+        final label = await collection.commitScan(cand, deckProvider: deck);
+        HapticFeedback.vibrate();
+        if (!mounted) return;
+        setState(() => _statusMessage = "✅ $label");
+        await Future.delayed(const Duration(milliseconds: 1200));
+        _resetScanner();
+      } else {
+        // 低信心 -> 跳確認
+        HapticFeedback.selectionClick();
+        setState(() {
+          _pendingConfirm = cand;
+          _isProcessing = false;
+          _statusMessage = "是這張嗎？";
+        });
+      }
     } catch (e) {
+      debugPrint("掃描出錯: $e");
       _resetScanner();
     }
   }
 
-  // 裁切邏輯：改回長方形編號框 (300x110)
+  Future<void> _confirmPending(bool yes) async {
+    final cand = _pendingConfirm;
+    setState(() => _pendingConfirm = null);
+    if (cand == null) return;
+    if (!yes) {
+      _resetScanner();
+      return;
+    }
+    final collection = Provider.of<CollectionProvider>(context, listen: false);
+    final deck = Provider.of<DeckProvider>(context, listen: false);
+    final label = await collection.commitScan(cand, deckProvider: deck);
+    HapticFeedback.vibrate();
+    if (!mounted) return;
+    setState(() => _statusMessage = "✅ $label");
+    await Future.delayed(const Duration(milliseconds: 1000));
+    _resetScanner();
+  }
+
+  // 裁切：直接取「擷取到的圖片本身」的固定比例，不再靠螢幕座標換算
+  // （CameraPreview 不是 cover-fit，用螢幕矩形去對圖片會裁錯位置）
   Future<File> _processAndCropImage(XFile xFile) async {
-    final Uint8List bytes = await xFile.readAsBytes();
-    img.Image? originalImage = img.decodeImage(bytes);
-    if (originalImage == null) return File(xFile.path);
+    final bytes = await xFile.readAsBytes();
+    img.Image? src = img.decodeImage(bytes);
+    if (src == null) return File(xFile.path);
+    src = img.bakeOrientation(src);
 
-    originalImage = img.bakeOrientation(originalImage);
+    int cw = (src.width * _cropW).round();
+    int ch = (src.height * _cropH).round();
+    int cx = ((src.width * _boxCx) - cw / 2).round().clamp(0, src.width - cw);
+    int cy = ((src.height * _boxCy) - ch / 2).round().clamp(0, src.height - ch);
 
-    final double screenW = MediaQuery.of(context).size.width;
-    final double screenH = MediaQuery.of(context).size.height;
+    img.Image out = img.copyCrop(src, x: cx, y: cy, width: cw, height: ch);
 
-    // 定義編號專用的長方形框
-    const double rectW = 300.0;
-    const double rectH = 110.0;
-
-    double factorX = originalImage.width / screenW;
-    double factorY = originalImage.height / screenH;
-    double factor = factorX > factorY ? factorX : factorY;
-
-    int cropW = (rectW * factor).toInt();
-    int cropH = (rectH * factor).toInt();
-    int cropX = ((originalImage.width - cropW) / 2).toInt();
-    int cropY = ((originalImage.height - cropH) / 2).toInt();
-
-    img.Image cropped = img.copyCrop(originalImage,
-        x: cropX, y: cropY, width: cropW, height: cropH);
+    // 太小的話放大，幫 OCR
+    if (out.width < 1000) {
+      out = img.copyResize(out, width: 1400);
+    }
+    // 前處理：灰階 + 拉對比，小編號讀得比較準
+    out = img.grayscale(out);
+    out = img.contrast(out, contrast: 135);
 
     final tempDir = await getTemporaryDirectory();
-    final croppedFile = File(
-        '${tempDir.path}/code_crop_${DateTime.now().millisecondsSinceEpoch}.jpg');
-    await croppedFile
-        .writeAsBytes(img.encodeJpg(cropped, quality: 95)); // 調高畫質以利編號讀取
-
-    return croppedFile;
+    final f = File(
+        '${tempDir.path}/code_crop_${DateTime.now().millisecondsSinceEpoch}.png');
+    await f.writeAsBytes(img.encodePng(out)); // PNG 無損，利於文字辨識
+    return f;
   }
 
   void _resetScanner() {
@@ -181,7 +219,8 @@ class _ScannerScreenState extends State<ScannerScreen>
     setState(() {
       _capturedImage = null;
       _isProcessing = false;
-      _statusMessage = "請將【左下角編號】對準紅框";
+      _pendingConfirm = null;
+      _statusMessage = "請將卡片【左下角編號】對準紅框";
     });
   }
 
@@ -197,20 +236,77 @@ class _ScannerScreenState extends State<ScannerScreen>
           if (_capturedImage != null)
             Center(
                 child: Image.file(File(_capturedImage!.path),
-                    width: 300, fit: BoxFit.contain))
+                    width: 320, fit: BoxFit.contain))
           else if (isReady)
             CameraPreview(_controller!)
           else
             const Center(child: CircularProgressIndicator(color: Colors.white)),
           if (isReady && _capturedImage == null)
             Positioned.fill(
-              child: CustomPaint(
-                painter: ScannerOverlayPainter(
-                    rectWidth: 300, rectHeight: 110, borderRadius: 10),
-              ),
+              child: CustomPaint(painter: ScannerOverlayPainter()),
             ),
-          _buildUI(),
+          if (_pendingConfirm != null) _buildConfirmPanel() else _buildUI(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildConfirmPanel() {
+    final c = _pendingConfirm!;
+    final img = (c.cardData['image'] ?? '').toString();
+    return Container(
+      color: Colors.black.withValues(alpha: 0.82),
+      child: SafeArea(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text("是這張嗎？",
+                style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            if (img.isNotEmpty)
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 320, maxWidth: 240),
+                child: Image.network(img, fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) =>
+                        const SizedBox(height: 200, child: Icon(Icons.image_not_supported, color: Colors.white54, size: 60))),
+              ),
+            const SizedBox(height: 10),
+            Text("${c.cardData['name'] ?? ''}  (${c.setCode}-${c.cardKey})",
+                style: const TextStyle(color: Colors.white, fontSize: 15)),
+            Text("信心分數 ${c.score.toStringAsFixed(0)}",
+                style: const TextStyle(color: Colors.white38, fontSize: 12)),
+            const SizedBox(height: 24),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12)),
+                  onPressed: () => _confirmPending(true),
+                  icon: const Icon(Icons.check),
+                  label: const Text("就是這張"),
+                ),
+                const SizedBox(width: 20),
+                OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      side: const BorderSide(color: Colors.white54),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 12)),
+                  onPressed: () => _confirmPending(false),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text("重掃"),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -284,44 +380,32 @@ class _ScannerScreenState extends State<ScannerScreen>
 }
 
 class ScannerOverlayPainter extends CustomPainter {
-  final double rectWidth;
-  final double rectHeight;
-  final double borderRadius;
-  ScannerOverlayPainter(
-      {required this.rectWidth,
-      required this.rectHeight,
-      required this.borderRadius});
-
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withOpacity(0.7);
-    final backgroundPath = Path()
-      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
-    final holePath = Path()
-      ..addRRect(RRect.fromRectAndRadius(
-        Rect.fromCenter(
-            center: Offset(size.width / 2, size.height / 2),
-            width: rectWidth,
-            height: rectHeight),
-        Radius.circular(borderRadius),
-      ));
-    canvas.drawPath(
-        Path.combine(PathOperation.difference, backgroundPath, holePath),
-        paint);
+    final rect = Rect.fromCenter(
+      center: Offset(size.width * _boxCx, size.height * _boxCy),
+      width: size.width * _boxW,
+      height: size.height * _boxH,
+    );
+    final rrect = RRect.fromRectAndRadius(rect, const Radius.circular(10));
 
-    final borderPaint = Paint()
-      ..color = Colors.redAccent
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.5;
+    final scrim = Paint()..color = Colors.black.withValues(alpha: 0.7);
+    canvas.drawPath(
+      Path.combine(
+        PathOperation.difference,
+        Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
+        Path()..addRRect(rrect),
+      ),
+      scrim,
+    );
+
     canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromCenter(
-              center: Offset(size.width / 2, size.height / 2),
-              width: rectWidth,
-              height: rectHeight),
-          Radius.circular(borderRadius),
-        ),
-        borderPaint);
+      rrect,
+      Paint()
+        ..color = Colors.redAccent
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2.5,
+    );
   }
 
   @override

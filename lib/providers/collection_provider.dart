@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../utils/card_matcher.dart';
 
 class CollectionProvider with ChangeNotifier {
   Map<String, dynamic> _database = {};
@@ -268,95 +269,32 @@ class CollectionProvider with ChangeNotifier {
     }
   }
 
-  // --- OCR 智慧處理 ---
+  // --- 掃描：解析 (純函式，不改資料) + 送出 (真的加卡) ---
 
-  Future<String?> processScannedText(String rawText, {dynamic deckProvider}) async {
-    print("🔍 OCR 原始讀取內容: \n$rawText");
-
-    print("🔍 OCR 全文讀取: \n$rawText");
-
-    // 1. 預處理：去除括號與雜質，但保留斜線 (因為編號常有 037/078)
-    String cleanText = rawText
-        .toUpperCase()
-        .replaceAll('(', ' ')
-        .replaceAll(')', ' ')
-        .replaceAll('[', ' ')
-        .replaceAll(']', ' ')
-        .replaceAll('|', '1');
-
-    // 2. 強化版 Regex
-    // 我們尋找：[系列代號] + [空格] + [編號] (後面可能有 /總數)
-    // 例如: "SV4A 123" 或 "SV4A 123/190"
-    final RegExp regex = RegExp(r'([A-Z0-9\-]{2,8})\s+(\d{1,3})(?:/\d+)?');
-    final matches = regex.allMatches(cleanText);
-
-    if (matches.isEmpty) return null;
-
-    // 我們優先處理「靠後面」的匹配，因為編號通常在卡片底部
-    final reversedMatches = matches.toList().reversed;
-
-    for (var match in reversedMatches) {
-      String detectedSet = match.group(1)!.trim();
-      String detectedNum = match.group(2)!.trim();
-      String formattedNum = detectedNum.padLeft(3, '0');
-
-      print("🎯 處理片段: 系列[$detectedSet] 編號[$formattedNum]");
-
-      // --- 核心優化：資料庫 Key 匹配策略 ---
-      String? bestSetMatch;
-
-      // 方法 A: 直接檢查資料庫的 Key 是否被「包含」在偵測到的字串中
-      // 例如：detectedSet "GSV1V" 包含了資料庫的 "SV1V"
-      for (String dbKey in _database.keys) {
-        String upperDbKey = dbKey.toUpperCase();
-
-        // 1. 完整包含比對
-        if (detectedSet.contains(upperDbKey)) {
-          bestSetMatch = dbKey;
-          break;
-        }
-
-        // 2. OCR 規範化比對 (處理 1 / L / I / V 互換)
-        String normDetected = _normalizeForOCR(detectedSet);
-        String normDbKey = _normalizeForOCR(upperDbKey);
-
-        if (normDetected.contains(normDbKey) ||
-            normDbKey.contains(normDetected)) {
-          // 如果長度相近且規範化後匹配
-          if ((detectedSet.length - upperDbKey.length).abs() <= 2) {
-            bestSetMatch = dbKey;
-            break;
-          }
-        }
-      }
-
-      if (bestSetMatch != null) {
-        var cardInfo = getCardInfo(bestSetMatch, formattedNum);
-        if (cardInfo != null) {
-          String fullName = "${cardInfo['name']} ($bestSetMatch-$formattedNum)";
-          if (deckProvider != null && deckProvider.currentDeck != null) {
-            deckProvider.addCardToDeck(
-                "$bestSetMatch-$formattedNum", cardInfo['name'], _database);
-            return "【牌組】$fullName";
-          } else {
-            await addCard(bestSetMatch, formattedNum);
-            return "【收藏】$fullName";
-          }
-        }
-      }
+  /// lines：OCR 讀到的文字行，由畫面「下方往上」排。回傳最佳候選或 null。
+  ScanCandidate? analyzeScan(List<String> bottomFirstLines) {
+    if (_database.isEmpty) return null;
+    final matcher = CardMatcher(_database);
+    final r = matcher.match(bottomFirstLines);
+    if (r != null) {
+      print("🎯 掃描候選: ${r.setCode}-${r.cardKey} "
+          "score=${r.score.toStringAsFixed(0)} total=${r.totalMatched} "
+          "high=${r.isHighConfidence}");
+    } else {
+      print("🤔 掃描：無法配對 → $bottomFirstLines");
     }
-    return null;
+    return r;
   }
 
-  // 將長得像的字元統一，大幅提升 OCR 匹配率
-  String _normalizeForOCR(String input) {
-    return input
-        .replaceAll('L', '1')
-        .replaceAll('I', '1')
-        .replaceAll('|', '1')
-        .replaceAll('V', '1') // 有時候 SV1V 的 V 會被讀成 1
-        .replaceAll('S', '5')
-        .replaceAll('O', '0');
+  /// 確認後真的加進「收藏」或「當前牌組」。回傳給使用者看的字串。
+  Future<String?> commitScan(ScanCandidate c, {dynamic deckProvider}) async {
+    final name = c.cardData['name'] ?? '未知';
+    final fullName = "$name (${c.setCode}-${c.cardKey})";
+    if (deckProvider != null && deckProvider.currentDeck != null) {
+      deckProvider.addCardToDeck("${c.setCode}-${c.cardKey}", name, _database);
+      return "【牌組】$fullName";
+    }
+    await addCard(c.setCode, c.rawNum);
+    return "【收藏】$fullName";
   }
-
 }

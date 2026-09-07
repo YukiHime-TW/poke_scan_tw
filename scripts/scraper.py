@@ -5,7 +5,6 @@ import time
 import os
 import re
 import subprocess
-from tcgdexsdk import TCGdex
 
 # ==========================================
 # 1. 設定區
@@ -22,8 +21,6 @@ PROMO_CODES = [
     "M-P"
 ]
 
-# 初始化 TCGdex
-tcgdex = TCGdex("zh-tw")
 
 def clean_text(text):
     if not text: return ""
