@@ -32,6 +32,17 @@ CHANGELOG = "name_fix_changelog.tsv"
 REVIEW = "name_fix_review.tsv"
 
 ZW_RE = re.compile(r"[​‌‍‎‏﻿]")
+
+# G 桶：交給 fix_translation.py 處理的異體字（這裡不動資料），以「我方名稱含此子字串」判斷
+G_TO_FIXTRANS = (
+    "火暴", "卷卷耳", "保姆", "拳海蔘", "引力山嶽", "奇蹟修正檔", "車輪球",
+    "喫剩的東西", "夠贊狗", "辣味香料咖喱", "頓甲龍", "盆纔怪", "妮莫的揹包",
+    "改造之鎚", "多邊獸2", "N的PP提升劑", "神秘珍寶", "巨大爐灶", "台北的皮卡丘",
+    "Ｑ", "Ｚ", "Ｕ", "Ｎ",
+)
+# G 桶：官方那邊才是錯的（呐是簡體），維持我方
+G_KEEP_OURS = ("吶喊隊",)
+
 C_PREFIX = ("老大的指令", "博士的研究")
 C_PAREN = re.compile(r"^(老大的指令|博士的研究)\s*[（(]\s*(.+?)\s*[)）]\s*$")
 BAD_OFFICIAL = {"卡牌搜尋結果"}
@@ -90,7 +101,13 @@ def target_name(cat, ours, official):
             cand = f"{m.group(1)} {m.group(2)}"
             return cand if cand != ours else None
         return None  # 官方裸名 / 抽不出 -> 人工
-    return None  # A / E / I / G
+    if k == "G":
+        if any(x in ours for x in G_KEEP_OURS):
+            return None  # 官方是錯的，維持我方
+        if any(x in ours for x in G_TO_FIXTRANS):
+            return None  # 異體字，交給 fix_translation.py
+        return official  # 其餘是真的不同名字 -> 照官方
+    return None  # A / E / I
 
 
 def main():
