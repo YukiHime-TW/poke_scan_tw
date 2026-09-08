@@ -139,8 +139,29 @@ class CollectionProvider with ChangeNotifier {
             .toSet();
       }
       if (fmt is Map && fmt['standardNames'] is List) {
-        _standardNames =
+        // 官方「過往可用卡清單」是以卡名列出，但同一張卡有帶角色副標的異圖
+        // （例：「老大的指令 赤日」「老大的指令 魁奇思」都是「老大的指令」），
+        // 這些也算標準合法。展開成完整卡名集合，讓比對維持精確相等即可。
+        final base =
             (fmt['standardNames'] as List).map((e) => e.toString()).toSet();
+        final expanded = <String>{...base};
+        for (final sd in _database.values) {
+          final cards = (sd is Map) ? sd['cards'] : null;
+          if (cards is! Map) continue;
+          for (final c in cards.values) {
+            final n = (c is Map ? c['name'] : null)?.toString() ?? '';
+            if (n.isEmpty || expanded.contains(n)) continue;
+            for (final b in base) {
+              if (n.startsWith('$b ') ||
+                  n.startsWith('$b（') ||
+                  n.startsWith('$b(')) {
+                expanded.add(n);
+                break;
+              }
+            }
+          }
+        }
+        _standardNames = expanded;
       }
       if (fmt is Map && fmt['banned'] is List) {
         _bannedIds = (fmt['banned'] as List).map((e) => e.toString()).toSet();
