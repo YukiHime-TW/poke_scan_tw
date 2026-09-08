@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
+import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:provider/provider.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
@@ -12,7 +13,16 @@ import 'deck_list_screen.dart';
 import 'scanner_screen.dart';
 
 // 狀態過濾
-enum StatusFilter { all, owned, missing, duplicates, competitive, inDeck, used }
+enum StatusFilter {
+  all,
+  owned,
+  missing,
+  duplicates,
+  competitive,
+  inDeck,
+  used,
+  wishlist
+}
 
 // 賽制過濾
 enum FormatFilter { all, standard, expanded }
@@ -193,6 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Color _getThemeColor(bool isDeckMode) {
+    if (_statusFilter == StatusFilter.wishlist) return Colors.pink.shade400;
     if (_statusFilter == StatusFilter.inDeck) return Colors.teal.shade400;
     if (_statusFilter == StatusFilter.used) return Colors.blueGrey.shade600;
     if (isDeckMode) return Colors.teal.shade800;
@@ -211,7 +222,9 @@ class _HomeScreenState extends State<HomeScreen> {
   String _getAppBarTitle(bool isDeckMode) {
     if (_isSearching) return "";
     String title = "PokeScan TW";
-    if (_statusFilter == StatusFilter.inDeck)
+    if (_statusFilter == StatusFilter.wishlist)
+      title = "願望清單";
+    else if (_statusFilter == StatusFilter.inDeck)
       title = "當前牌組內容";
     else if (_statusFilter == StatusFilter.used)
       title = "已使用的卡片";
@@ -279,6 +292,8 @@ class _HomeScreenState extends State<HomeScreen> {
         } else if (_statusFilter == StatusFilter.used) {
           final usages = deckProvider.getCardUsages(fullId);
           if (usages.isEmpty) return;
+        } else if (_statusFilter == StatusFilter.wishlist) {
+          if (!provider.wishlist.containsKey(fullId)) return;
         } else {
           if (_statusFilter == StatusFilter.owned && count == 0) return;
           if (_statusFilter == StatusFilter.missing && count > 0) return;
@@ -316,6 +331,7 @@ class _HomeScreenState extends State<HomeScreen> {
       bool isExpanded = (query.isNotEmpty ||
               _statusFilter == StatusFilter.inDeck ||
               _statusFilter == StatusFilter.used ||
+              _statusFilter == StatusFilter.wishlist ||
               _typeFilter != TypeFilter.all ||
               _elementFilter != ElementFilter.all ||
               _rarityFilter != null ||
@@ -342,6 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (query.isEmpty &&
                       _statusFilter != StatusFilter.inDeck &&
                       _statusFilter != StatusFilter.used &&
+                      _statusFilter != StatusFilter.wishlist &&
                       _typeFilter == TypeFilter.all &&
                       _elementFilter == ElementFilter.all &&
                       _rarityFilter == null &&
@@ -409,6 +426,18 @@ class _HomeScreenState extends State<HomeScreen> {
             : Text(_getAppBarTitle(isDeckMode),
                 style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
+          if (_statusFilter == StatusFilter.wishlist)
+            IconButton(
+              icon: const Icon(Icons.copy_all),
+              tooltip: "複製願望清單",
+              onPressed: () {
+                Clipboard.setData(
+                    ClipboardData(text: provider.generateWishlistText()));
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text("願望清單已複製"),
+                    duration: Duration(seconds: 1)));
+              },
+            ),
           IconButton(
               icon: Icon(_isSearching ? Icons.close : Icons.search),
               onPressed: () => setState(() {
@@ -656,6 +685,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         chip("已使用的卡片", _statusFilter == StatusFilter.used,
                             () => pick(
                                 () => _statusFilter = StatusFilter.used)),
+                        chip("願望清單", _statusFilter == StatusFilter.wishlist,
+                            () => pick(
+                                () => _statusFilter = StatusFilter.wishlist)),
                         chip("只看已擁有", _statusFilter == StatusFilter.owned,
                             () => pick(
                                 () => _statusFilter = StatusFilter.owned)),

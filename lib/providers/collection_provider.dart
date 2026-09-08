@@ -14,6 +14,7 @@ import '../utils/card_matcher.dart';
 class CollectionProvider with ChangeNotifier {
   Map<String, dynamic> _database = {};
   Map<String, int> _userCollection = {};
+  Map<String, int> _wishlist = {}; // "setCode-num" -> 想要張數
   bool _isLoading = true;
   User? _user;
 
@@ -29,6 +30,7 @@ class CollectionProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   Map<String, dynamic> get database => _database;
   Map<String, int> get userCollection => _userCollection;
+  Map<String, int> get wishlist => _wishlist;
   User? get user => _user;
 
   List<String> get rarityOrder => _rarityOrder;
@@ -227,16 +229,16 @@ class CollectionProvider with ChangeNotifier {
 
   // --- 收藏同步邏輯 ---
 
+  Map<String, int> _decodeCounts(String? raw) {
+    if (raw == null) return {};
+    final Map<String, dynamic> decoded = json.decode(raw);
+    return decoded.map((k, v) => MapEntry(k, (v as num).toInt()));
+  }
+
   Future<void> _loadFromLocal() async {
     final prefs = await SharedPreferences.getInstance();
-    final String? savedData = prefs.getString('my_collection');
-    if (savedData != null) {
-      Map<String, dynamic> decoded = json.decode(savedData);
-      _userCollection =
-          decoded.map((key, value) => MapEntry(key, value as int));
-    } else {
-      _userCollection = {};
-    }
+    _userCollection = _decodeCounts(prefs.getString('my_collection'));
+    _wishlist = _decodeCounts(prefs.getString('my_wishlist'));
   }
 
   Future<void> _loadFromCloud(String uid) async {
@@ -244,11 +246,16 @@ class CollectionProvider with ChangeNotifier {
       DocumentSnapshot doc =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
       if (doc.exists && doc.data() != null) {
-        var data = doc.get('data') as Map<String, dynamic>;
-        _userCollection = data.map((key, value) => MapEntry(key, value as int));
+        final data = doc.data() as Map<String, dynamic>;
+        _userCollection = (data['data'] as Map<String, dynamic>? ?? {})
+            .map((k, v) => MapEntry(k, (v as num).toInt()));
+        _wishlist = (data['wishlist'] as Map<String, dynamic>? ?? {})
+            .map((k, v) => MapEntry(k, (v as num).toInt()));
+        _pruneWishlist();
         final prefs = await SharedPreferences.getInstance();
         prefs.setString('my_collection', json.encode(_userCollection));
-      } else if (_userCollection.isNotEmpty) {
+        prefs.setString('my_wishlist', json.encode(_wishlist));
+      } else if (_userCollection.isNotEmpty || _wishlist.isNotEmpty) {
         await _saveToCloud();
       }
     } catch (e) {
@@ -260,6 +267,7 @@ class CollectionProvider with ChangeNotifier {
   Future<void> _save() async {
     final prefs = await SharedPreferences.getInstance();
     prefs.setString('my_collection', json.encode(_userCollection));
+    prefs.setString('my_wishlist', json.encode(_wishlist));
     if (_user != null) await _saveToCloud();
   }
 
@@ -268,6 +276,7 @@ class CollectionProvider with ChangeNotifier {
     try {
       await FirebaseFirestore.instance.collection('users').doc(_user!.uid).set({
         'data': _userCollection,
+        'wishlist': _wishlist,
         'last_updated': FieldValue.serverTimestamp(),
         'email': _user!.email,
         'name': _user!.displayName,
@@ -275,6 +284,12 @@ class CollectionProvider with ChangeNotifier {
     } catch (e) {
       print("雲端同步失敗: $e");
     }
+  }
+
+  /// 已擁有張數 >= 想要張數的卡，從願望清單移除。
+  void _pruneWishlist() {
+    _wishlist.removeWhere(
+        (id, want) => (_userCollection[id] ?? 0) >= want || want <= 0);
   }
 
   // --- 查詢與修改邏輯 ---
@@ -304,9 +319,55 @@ class CollectionProvider with ChangeNotifier {
     if (realKey != null) {
       String storageKey = "$setCode-$realKey";
       _userCollection[storageKey] = (_userCollection[storageKey] ?? 0) + 1;
+      final want = _wishlist[storageKey];
+      if (want != null && _userCollection[storageKey]! >= want) {
+        _wishlist.remove(storageKey); // 收齊了就從願望清單移除
+      }
       notifyListeners();
       _save();
     }
+  }
+
+  // --- 願望清單 ---
+
+  int wishOf(String fullId) => _wishlist[fullId] ?? 0;
+
+  Future<void> setWish(String fullId, int n) async {
+    if (n <= 0) {
+      _wishlist.remove(fullId);
+    } else {
+      _wishlist[fullId] = n;
+    }
+    notifyListeners();
+    await _save();
+  }
+
+  Future<void> addWish(String fullId) => setWish(fullId, wishOf(fullId) + 1);
+  Future<void> removeWish(String fullId) => setWish(fullId, wishOf(fullId) - 1);
+
+  String generateWishlistText() {
+    final buffer = StringBuffer("【願望清單】\n");
+    final rows = <List<String>>[];
+    _wishlist.forEach((id, want) {
+      final dash = id.indexOf('-');
+      if (dash < 0) return;
+      final sCode = id.substring(0, dash);
+      final num = id.substring(dash + 1);
+      final card = _database[sCode]?['cards']?[num];
+      if (card == null) return;
+      final have = _userCollection[id] ?? 0;
+      rows.add([sCode, num, card['name'].toString(), '$want', '$have']);
+    });
+    rows.sort((a, b) {
+      final s = a[0].compareTo(b[0]);
+      return s != 0 ? s : a[1].compareTo(b[1]);
+    });
+    for (final r in rows) {
+      buffer.writeln("• [${r[0]}] ${r[2]}　想要 ${r[3]}"
+          "${int.parse(r[4]) > 0 ? '（已有 ${r[4]}）' : ''}");
+    }
+    buffer.writeln("\n共 ${rows.length} 種");
+    return buffer.toString();
   }
 
   Future<void> removeCard(String setCode, String rawCardNum) async {

@@ -1,9 +1,9 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/collection_provider.dart';
 import '../providers/deck_provider.dart';
+import 'card_detail_sheet.dart';
 
 class CardGridItem extends StatefulWidget {
   final String setCode;
@@ -21,15 +21,6 @@ class CardGridItem extends StatefulWidget {
 }
 
 class _CardGridItemState extends State<CardGridItem> {
-  Timer? _timer;
-  int _interval = 500;
-
-  @override
-  void dispose() {
-    _stopDecreasing();
-    super.dispose();
-  }
-
   // --- 圖片優化邏輯 ---
   String _getOptimizedUrl(String? rawUrl, double screenWidth) {
     if (rawUrl == null || rawUrl.isEmpty || rawUrl == "X") return "";
@@ -82,35 +73,6 @@ class _CardGridItemState extends State<CardGridItem> {
     );
   }
 
-  // 通用連續扣除邏輯
-  void _startDecreasing(VoidCallback action, int Function() getCount) {
-    _stopDecreasing();
-    _interval = 500;
-    _executeLoop(action, getCount);
-  }
-
-  void _executeLoop(VoidCallback action, int Function() getCount) {
-    if (!mounted || getCount() <= 0) {
-      _stopDecreasing();
-      return;
-    }
-
-    action();
-
-    _interval = (_interval * 0.8).toInt();
-    if (_interval < 50) _interval = 50;
-
-    _timer = Timer(Duration(milliseconds: _interval),
-        () => _executeLoop(action, getCount));
-  }
-
-  void _stopDecreasing() {
-    if (_timer != null && _timer!.isActive) {
-      _timer!.cancel();
-      _timer = null;
-    }
-  }
-
   // 顯示卡片在哪些牌組中被使用的彈窗
   void _showUsageDialog(
       BuildContext context, String cardName, Map<String, int> usages) {
@@ -156,6 +118,7 @@ class _CardGridItemState extends State<CardGridItem> {
 
     int count = provider.userCollection[fullId] ?? 0;
     bool isOwned = count > 0;
+    int wishCount = provider.wishOf(fullId);
     String shortNum = widget.cNum.split('/')[0];
     String optimizedImgUrl =
         _getOptimizedUrl(widget.cardData['image'], screenWidth);
@@ -176,22 +139,8 @@ class _CardGridItemState extends State<CardGridItem> {
           provider.addCard(widget.setCode, widget.cNum);
         }
       },
-      onLongPressStart: (_) {
-        if (activeDeck != null) {
-          if (inDeckCount > 0) {
-            _startDecreasing(() => deckProvider.removeCardFromDeck(fullId),
-                () => activeDeck.cards[fullId] ?? 0);
-          }
-        } else {
-          if (count > 0) {
-            _startDecreasing(
-                () => provider.removeCard(widget.setCode, widget.cNum),
-                () => provider.userCollection[fullId] ?? 0);
-          }
-        }
-      },
-      onLongPressEnd: (_) => _stopDecreasing(),
-      onLongPressCancel: () => _stopDecreasing(),
+      onLongPress: () => showCardDetailSheet(
+          context, widget.setCode, widget.cNum, widget.cardData),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
@@ -274,6 +223,32 @@ class _CardGridItemState extends State<CardGridItem> {
                                 color: Colors.white,
                                 fontSize: 10,
                                 fontWeight: FontWeight.w900))),
+                  ),
+                ),
+
+              // 2b. 願望清單星星 (左下)
+              if (wishCount > 0)
+                Positioned(
+                  left: 2,
+                  bottom: 2,
+                  child: Container(
+                    padding: const EdgeInsets.all(3),
+                    decoration: BoxDecoration(
+                        color: Colors.pink.shade400,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 1.5)),
+                    constraints:
+                        const BoxConstraints(minWidth: 22, minHeight: 22),
+                    child: Center(
+                      child: wishCount > 1
+                          ? Text("★$wishCount",
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900))
+                          : const Icon(Icons.star,
+                              color: Colors.white, size: 12),
+                    ),
                   ),
                 ),
 
