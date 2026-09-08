@@ -17,9 +17,10 @@ class CollectionProvider with ChangeNotifier {
   bool _isLoading = true;
   User? _user;
 
-  // 稀有度顯示順序、標準賽制 reg 清單（啟動時抓 main 上的版本，離線用 bundled）
+  // 稀有度順序、標準賽制 reg 清單、機制標籤順序（啟動時抓 main，離線用 bundled）
   List<String> _rarityOrder = [];
   Set<String> _standardRegs = {};
+  List<String> _tagOrder = [];
 
   // --- GitHub Raw 網址配置 ---
   final String _remoteBaseUrl =
@@ -55,6 +56,30 @@ class CollectionProvider with ChangeNotifier {
         return d != 0 ? d : a.compareTo(b);
       });
     return list;
+  }
+
+  /// 資料庫裡實際出現過的機制標籤，依 tags_order.json 排序。
+  List<String> get availableTags {
+    final set = <String>{};
+    for (final sd in _database.values) {
+      final cards = (sd is Map) ? sd['cards'] : null;
+      if (cards is Map) {
+        for (final c in cards.values) {
+          final t = (c is Map) ? c['tags'] : null;
+          if (t is List) set.addAll(t.map((e) => e.toString()));
+        }
+      }
+    }
+    int rank(String x) {
+      final i = _tagOrder.indexOf(x);
+      return i < 0 ? 9999 : i;
+    }
+
+    return set.toList()
+      ..sort((a, b) {
+        final d = rank(a).compareTo(rank(b));
+        return d != 0 ? d : a.compareTo(b);
+      });
   }
 
   CollectionProvider() {
@@ -103,6 +128,8 @@ class CollectionProvider with ChangeNotifier {
             .map((e) => e.toString().toUpperCase())
             .toSet();
       }
+      final to = await _loadJsonConfig('tags_order.json');
+      if (to is List) _tagOrder = to.map((e) => e.toString()).toList();
     } catch (e) {
       print("⚠️ 初始化資料庫發生嚴重錯誤: $e");
     }
