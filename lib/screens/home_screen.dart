@@ -821,7 +821,7 @@ class _HomeScreenState extends State<HomeScreen> {
           children: [
             Icon(Icons.style, color: Colors.redAccent),
             SizedBox(width: 10),
-            Text("PokeScan TW 使用手冊"),
+            Expanded(child: Text("繁中PTCG集換所 使用手冊")),
           ],
         ),
         content: SizedBox(
@@ -832,33 +832,44 @@ class _HomeScreenState extends State<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "歡迎使用 PokeScan TW！這是一款專為繁體中文 PTCG 玩家與收藏家設計的工具，支援雲端同步、牌組構建與詳細的收藏管理。",
+                  "繁體中文 PTCG 玩家與收藏家的工具：收藏管理、牌組構築、相機掃描登錄，登入後可跨裝置同步。",
                   style: TextStyle(fontSize: 14, color: Colors.black87),
                 ),
                 const Divider(height: 30),
-                _buildHelpHeader("1. 基礎收藏管理", Icons.touch_app),
+                _buildHelpHeader("1. 收藏管理", Icons.touch_app),
                 _buildHelpItem("增加數量", "直接點擊卡片，收藏數量 +1。"),
-                _buildHelpItem("減少數量", "長按卡片即可減少數量 -1。\n加速功能：按越久減越快。"),
+                _buildHelpItem("卡片詳情", "長按卡片開啟詳情：招式、特性、效果、弱點、繪師等，"
+                    "並可在裡面調整「收藏 / 這副 / 想要」的張數。"),
+                _buildHelpItem("視覺辨識",
+                    "• 彩色：已擁有\n• 黑白半透明：尚未收藏\n• 左上角紅圈：持有數量\n• 左下角粉紅星星：願望清單想要數"),
+                _buildHelpHeader("2. 願望清單", Icons.star_border),
                 _buildHelpItem(
-                    "視覺辨識", "• 彩色：已擁有該卡片\n• 黑白半透明：尚未收藏\n• 左上角紅圈：持有總數量"),
-                _buildHelpHeader("2. 強大的搜尋與過濾", Icons.search),
+                    "加入 / 調整", "在卡片詳情裡的「想要」+/− 設定想要幾張。收藏數達到想要數時會自動移出清單。"),
+                _buildHelpItem("檢視 / 複製",
+                    "篩選面板選「願望清單」只看已標的卡；此時右上角出現「複製」，可輸出「還缺 N」的對齊文字貼社群。"),
+                _buildHelpHeader("3. 搜尋與過濾", Icons.search),
                 _buildHelpItem(
-                    "全方位搜尋", "點擊放大鏡輸入 名稱 / 編號 / 稀有度 / 系列名，按 Enter 執行。"),
-                _buildHelpItem("多重過濾", "點擊漏斗切換收藏狀態、賽制環境或卡片種類。"),
+                    "搜尋", "點放大鏡輸入 名稱 / 編號 / 系列代碼或系列名，按 Enter。"),
+                _buildHelpItem("篩選面板", "點漏斗開啟，各組用 chip 選：\n"
+                    "• 收藏狀態（含願望清單）\n• 賽制（標準 / 開放）\n• 種類 / 屬性\n"
+                    "• 稀有度、機制標籤（依資料動態產生）\n漏斗上的數字 = 目前生效幾個篩選。"),
                 const Padding(
-                  padding: EdgeInsets.only(left: 12, top: 4),
+                  padding: EdgeInsets.only(left: 12, top: 4, bottom: 6),
                   child: Column(
                     children: [
-                      _ColorTip(Colors.redAccent, "紅色：一般瀏覽"),
-                      _ColorTip(Colors.green, "綠色：只看已擁有"),
-                      _ColorTip(Colors.orange, "橘色：只看缺卡"),
-                      _ColorTip(Colors.deepPurple, "紫色：資產清點"),
-                      _ColorTip(Colors.blue, "藍色：標準賽制環境"),
+                      _ColorTip(Colors.redAccent, "紅：一般瀏覽"),
+                      _ColorTip(Colors.green, "綠：只看已擁有"),
+                      _ColorTip(Colors.orange, "橘：只看未擁有"),
+                      _ColorTip(Colors.deepPurple, "紫：重複 / 競技用量"),
+                      _ColorTip(Colors.pink, "粉紅：願望清單"),
                     ],
                   ),
                 ),
-                _buildHelpHeader("3. 牌組與收藏本系統", Icons.style),
-                _buildHelpItem("種類區分", "• 牌組：限 60 張、同名 4 張限制\n• 收藏本：無張數與同名限制"),
+                _buildHelpHeader("4. 牌組與收藏本", Icons.style),
+                _buildHelpItem("種類區分", "• 牌組：限 60 張、同名 4 張\n• 收藏本：無張數與同名限制"),
+                _buildHelpItem("合法性標記", "牌組名稱旁：\n"
+                    "• 標準：全部標準賽制合法\n• 開放：含已輪替的卡\n"
+                    "• 未完成：未滿 60 張、或沒有基礎寶可夢\n預覽頁會列出是哪幾張非標準卡。"),
                 Padding(
                   padding: const EdgeInsets.only(left: 12, bottom: 10),
                   child: Column(
@@ -868,10 +879,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 14)),
                       const SizedBox(height: 4),
-                      const Text("點擊「板手」進入。上方顯示青色條。",
-                          style:
-                              TextStyle(fontSize: 13, color: Colors.black54)),
-                      const Text("• 點擊卡片改為「放入牌組」",
+                      const Text("點「板手」進入，上方顯示青色條；點卡片 = 放入牌組。",
                           style:
                               TextStyle(fontSize: 13, color: Colors.black54)),
                       _LabelRow(Colors.teal.shade600, "青標籤：庫存充足"),
@@ -879,16 +887,19 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
-                _buildHelpHeader("4. 進階實戰功能", Icons.bolt),
-                _buildHelpItem("卡片用途查詢", "非編輯模式點擊卡片底部「用於 N 副牌」可查看具體位置。"),
-                _buildHelpItem("一鍵導出", "牌組清單點「複製」可生成對齊的分享文字。"),
-                _buildHelpItem("雲端同步", "登入 Google 帳號後，收藏與牌組將跨裝置自動同步。"),
+                _buildHelpHeader("5. 其他", Icons.bolt),
+                _buildHelpItem("卡片用途查詢", "非編輯模式點卡片底部「用於 N 副牌」可查看位置。"),
+                _buildHelpItem("牌組導出", "牌組清單點「複製」生成對齊的分享文字。"),
+                _buildHelpItem("雲端同步", "登入 Google 後收藏與牌組跨裝置自動同步；登出會清掉本機資料。"),
                 const Divider(height: 30),
                 _buildHelpHeader("💡 小提示", Icons.lightbulb_outline),
                 const Padding(
                   padding: EdgeInsets.only(left: 12),
                   child: Text(
-                    "• 基本能量在牌組模式下不受 4 張限制。\n• 點擊系列標題橫條可以收合或展開內容。\n• 內建智慧縮圖，第二次開啟卡片將秒開。",
+                    "• 基本能量在牌組模式下不受 4 張限制。\n"
+                    "• 點系列標題橫條可收合 / 展開（有篩選時會強制展開）。\n"
+                    "• 賽制篩選會記住，其他篩選每次開 App 還原預設。\n"
+                    "• 內建智慧縮圖，第二次開卡片秒開。",
                     style: TextStyle(
                         fontSize: 13, color: Colors.blueGrey, height: 1.6),
                   ),
