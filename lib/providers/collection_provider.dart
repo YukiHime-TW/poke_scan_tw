@@ -356,15 +356,16 @@ class CollectionProvider with ChangeNotifier {
       final card = _database[sCode]?['cards']?[num];
       if (card == null) return;
       final have = _userCollection[id] ?? 0;
-      rows.add([sCode, num, card['name'].toString(), '$want', '$have']);
+      final need = want - have;
+      if (need <= 0) return; // 收齊的不列
+      rows.add([sCode, num, card['name'].toString(), '$need']);
     });
     rows.sort((a, b) {
       final s = a[0].compareTo(b[0]);
       return s != 0 ? s : a[1].compareTo(b[1]);
     });
     for (final r in rows) {
-      buffer.writeln("• [${r[0]}] ${r[2]}　想要 ${r[3]}"
-          "${int.parse(r[4]) > 0 ? '（已有 ${r[4]}）' : ''}");
+      buffer.writeln("• [${r[0]}] ${r[2]}　還缺 ${r[3]}");
     }
     buffer.writeln("\n共 ${rows.length} 種");
     return buffer.toString();

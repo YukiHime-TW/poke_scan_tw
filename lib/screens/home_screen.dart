@@ -430,12 +430,19 @@ class _HomeScreenState extends State<HomeScreen> {
             IconButton(
               icon: const Icon(Icons.copy_all),
               tooltip: "複製願望清單",
-              onPressed: () {
-                Clipboard.setData(
-                    ClipboardData(text: provider.generateWishlistText()));
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                    content: Text("願望清單已複製"),
-                    duration: Duration(seconds: 1)));
+              onPressed: () async {
+                final messenger = ScaffoldMessenger.of(context);
+                try {
+                  await Clipboard.setData(ClipboardData(
+                      text: provider.generateWishlistText()));
+                  messenger.showSnackBar(const SnackBar(
+                      content: Text("願望清單已複製"),
+                      duration: Duration(seconds: 1)));
+                } catch (_) {
+                  messenger.showSnackBar(const SnackBar(
+                      content: Text("複製失敗"),
+                      duration: Duration(seconds: 1)));
+                }
               },
             ),
           IconButton(
