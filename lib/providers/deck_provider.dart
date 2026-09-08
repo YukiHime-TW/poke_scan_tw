@@ -164,7 +164,9 @@ class DeckProvider with ChangeNotifier {
     return [fullId.substring(0, firstDash), fullId.substring(firstDash + 1)];
   }
 
-  Map? _cardOf(String id, Map<String, dynamic> database) {
+  /// 用 _smartSplit 正確拆出 setCode/num（處理 M-P、SV-P 這種多 dash 的代號），
+  /// 回傳該卡資料，找不到回 null。
+  Map? cardOf(String id, Map<String, dynamic> database) {
     final p = _smartSplit(id, database);
     final c = database[p[0]]?['cards']?[p[1]];
     return c is Map ? c : null;
@@ -185,7 +187,7 @@ class DeckProvider with ChangeNotifier {
   int deckSize(Deck deck, Map<String, dynamic> database, List<DeckRule> rules) {
     int t = 0;
     deck.cards.forEach((id, n) {
-      t += n * (deck.isBinder ? 1 : cardWeight(_cardOf(id, database), rules));
+      t += n * (deck.isBinder ? 1 : cardWeight(cardOf(id, database), rules));
     });
     return t;
   }
@@ -195,14 +197,14 @@ class DeckProvider with ChangeNotifier {
   List<String> _ruleViolations(
       Deck deck, Map<String, dynamic> database, List<DeckRule> rules) {
     if (deck.isBinder || rules.isEmpty) return const [];
-    Map? cardOf(String id) => _cardOf(id, database);
+    Map? lookup(String id) => cardOf(id, database);
 
     final out = <String>[];
     for (final rule in rules) {
       if (rule.scope == "name") {
         final byName = <String, int>{};
         deck.cards.forEach((id, n) {
-          final c = cardOf(id);
+          final c = lookup(id);
           if (c == null || !rule.matches(c)) return;
           final nm = c['name'].toString();
           byName[nm] = (byName[nm] ?? 0) + n;
@@ -215,7 +217,7 @@ class DeckProvider with ChangeNotifier {
       } else {
         int n = 0;
         deck.cards.forEach((id, cnt) {
-          final c = cardOf(id);
+          final c = lookup(id);
           if (c != null && rule.matches(c)) n += cnt;
         });
         if (n > rule.max) {
@@ -442,7 +444,7 @@ class DeckProvider with ChangeNotifier {
 
       if (deckSize(deck, database, deckRules) > 60) {
         undo();
-        final w = cardWeight(_cardOf(fullId, database), deckRules);
+        final w = cardWeight(cardOf(fullId, database), deckRules);
         return w > 1 ? "「$cardName」要算 $w 張，加入後會超過 60 張" : "牌組已滿 60 張";
       }
       final violations = _ruleViolations(deck, database, deckRules);
