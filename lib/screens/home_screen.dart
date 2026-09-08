@@ -871,7 +871,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     "◇（稜柱之星）卡同名限 1 張\n• 收藏本：無張數與同名限制"),
                 _buildHelpItem("合法性標記", "牌組名稱旁：\n"
                     "• 標準：全部標準賽制合法\n• 開放：含已輪替的卡\n"
-                    "• 未完成：未滿 60 張、或沒有基礎寶可夢\n預覽頁會列出是哪幾張非標準卡。"),
+                    "• 未完成：未滿 60 張、沒有基礎寶可夢，或違反上述額外張數規則\n"
+                    "預覽頁會列出是哪幾張非標準卡、以及違反了哪條規則。"),
                 Padding(
                   padding: const EdgeInsets.only(left: 12, bottom: 10),
                   child: Column(
