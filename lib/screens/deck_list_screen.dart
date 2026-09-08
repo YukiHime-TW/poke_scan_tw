@@ -116,7 +116,9 @@ class DeckListScreen extends StatelessWidget {
   Widget? _legalityBadge(Deck deck, DeckProvider dp, CollectionProvider cp) {
     if (deck.isBinder) return null;
     final legal = dp.checkLegality(deck, cp.database, cp.standardRegs,
-        deckRules: cp.deckRules);
+        deckRules: cp.deckRules,
+        standardNames: cp.standardNames,
+        bannedIds: cp.bannedIds);
     final Color c = switch (legal.status) {
       "標準" => Colors.green.shade600,
       "開放" => Colors.grey.shade500,
@@ -212,7 +214,9 @@ class DeckListScreen extends StatelessWidget {
         ? null
         : Provider.of<DeckProvider>(context, listen: false).checkLegality(
             deck, database, cp.standardRegs,
-            deckRules: cp.deckRules);
+            deckRules: cp.deckRules,
+            standardNames: cp.standardNames,
+            bannedIds: cp.bannedIds);
     final legalityLines = <String>[
       if (legal != null && legal.cardCount < 60)
         "尚缺 ${60 - legal.cardCount} 張",
@@ -220,6 +224,8 @@ class DeckListScreen extends StatelessWidget {
         "多了 ${legal.cardCount - 60} 張",
       if (legal != null && legal.cardCount > 0 && !legal.hasBasic)
         "沒有基礎寶可夢",
+      if (legal != null && legal.bannedNames.isNotEmpty)
+        "含禁用卡：${legal.bannedNames.join('、')}",
       if (legal != null) ...legal.ruleViolations,
       if (legal != null && legal.nonStandardNames.isNotEmpty)
         "含 ${legal.nonStandardCount} 張非標準卡："

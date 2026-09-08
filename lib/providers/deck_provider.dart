@@ -53,6 +53,7 @@ class DeckLegality {
   final int cardCount;
   final bool hasBasic; // 至少一張基礎寶可夢
   final List<String> ruleViolations; // 追加組牌規則的違規訊息（光輝 / ACE SPEC / ◇ 等）
+  final List<String> bannedNames; // 牌組內的禁用卡卡名（去重）
 
   DeckLegality(
       {required this.status,
@@ -60,7 +61,8 @@ class DeckLegality {
       required this.nonStandardCount,
       required this.cardCount,
       required this.hasBasic,
-      this.ruleViolations = const []});
+      this.ruleViolations = const [],
+      this.bannedNames = const []});
 }
 
 /// 追加的組牌張數限制，來自 `deck_rules.json`（啟動時抓 main，離線用 bundled）。
@@ -225,30 +227,40 @@ class DeckProvider with ChangeNotifier {
   }
 
   /// 牌組合法性（只對「牌組」有意義，收藏本不用查）。
+  /// standardNames：reg 非 H/I/J 但官方仍列為標準合法的卡名（過往可用卡清單）。
+  /// bannedIds：全面禁用卡的「setCode-num」。
   DeckLegality checkLegality(Deck deck, Map<String, dynamic> database,
       Set<String> standardRegs,
-      {List<DeckRule> deckRules = const []}) {
+      {List<DeckRule> deckRules = const [],
+      Set<String> standardNames = const {},
+      Set<String> bannedIds = const {}}) {
     final regs = standardRegs.isEmpty
         ? const {"H", "I", "J", "NONE"}
         : standardRegs;
     int nonStdCount = 0;
     final nonStd = <String>{};
+    final banned = <String>{};
     bool hasBasic = false;
     deck.cards.forEach((id, n) {
       final parts = _smartSplit(id, database);
       final card = database[parts[0]]?['cards']?[parts[1]];
       if (card == null) return;
+      final name = card['name'].toString();
       final reg = (card['reg'] ?? "").toString().toUpperCase();
-      if (!regs.contains(reg)) {
-        nonStd.add(card['name'].toString());
+      if (bannedIds.contains(id)) banned.add(name);
+      if (!regs.contains(reg) && !standardNames.contains(name)) {
+        nonStd.add(name);
         nonStdCount += n;
       }
       if (card['type'] == "寶可夢" && card['stage'] == "基礎") hasBasic = true;
     });
     final int count = deckSize(deck, database, deckRules);
     final violations = _ruleViolations(deck, database, deckRules);
-    // 合法牌組：正好 60 張 + 至少 1 隻基礎寶可夢 + 沒有違反追加規則。任一不滿足 → 未完成。
-    final String status = (count != 60 || !hasBasic || violations.isNotEmpty)
+    // 合法牌組：正好 60 張 + 至少 1 隻基礎寶可夢 + 沒有違反追加規則 + 沒有禁用卡。
+    final String status = (count != 60 ||
+            !hasBasic ||
+            violations.isNotEmpty ||
+            banned.isNotEmpty)
         ? "未完成"
         : (nonStd.isEmpty ? "標準" : "開放");
     return DeckLegality(
@@ -257,7 +269,8 @@ class DeckProvider with ChangeNotifier {
         nonStandardCount: nonStdCount,
         cardCount: count,
         hasBasic: hasBasic,
-        ruleViolations: violations);
+        ruleViolations: violations,
+        bannedNames: banned.toList());
   }
 
   Map<String, int> getCardUsages(String fullId) {
@@ -387,9 +400,13 @@ class DeckProvider with ChangeNotifier {
 
   String? addCardToDeck(
       String fullId, String cardName, Map<String, dynamic> database,
-      {List<DeckRule> deckRules = const []}) {
+      {List<DeckRule> deckRules = const [], Set<String> bannedIds = const {}}) {
     final deck = currentDeck;
     if (deck == null) return "請先選擇目標";
+
+    if (!deck.isBinder && bannedIds.contains(fullId)) {
+      return "「$cardName」是禁用卡牌，不能加入牌組";
+    }
 
     if (!deck.isBinder && deckSize(deck, database, deckRules) >= 60) {
       return "牌組已滿 60 張";
