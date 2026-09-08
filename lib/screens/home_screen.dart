@@ -126,6 +126,8 @@ class _HomeScreenState extends State<HomeScreen> {
   FormatFilter _formatFilter = FormatFilter.standard;
   TypeFilter _typeFilter = TypeFilter.all;
   ElementFilter _elementFilter = ElementFilter.all;
+  String? _rarityFilter; // null = 全部；"" = 無標記
+  String? _tagFilter; // null = 全部
 
   @override
   void dispose() {
@@ -134,14 +136,29 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // --- 賽制過濾邏輯 ---
-  bool _matchesFormat(dynamic cardData) {
+  // --- 賽制過濾邏輯（標準 reg 清單來自 formats.json，見 collection_provider）---
+  bool _matchesFormat(dynamic cardData, Set<String> standardRegs) {
     if (_formatFilter == FormatFilter.all) return true;
-    String regMark = (cardData['reg'] ?? "").toString().toUpperCase();
     if (_formatFilter == FormatFilter.standard) {
-      return ["H", "I", "J", "NONE"].contains(regMark);
+      final regs = standardRegs.isEmpty
+          ? const {"H", "I", "J", "NONE"}
+          : standardRegs;
+      return regs.contains((cardData['reg'] ?? "").toString().toUpperCase());
     }
-    return true;
+    return true; // 開放：台灣無殿堂 / extra 限制，全部合法
+  }
+
+  // --- 稀有度過濾（動態，值來自資料裡實際出現的 rarity）---
+  bool _matchesRarity(dynamic cardData) {
+    if (_rarityFilter == null) return true;
+    return (cardData['rarity'] ?? "").toString() == _rarityFilter;
+  }
+
+  // --- 機制標籤過濾（單選）---
+  bool _matchesTag(dynamic cardData) {
+    if (_tagFilter == null) return true;
+    final tags = cardData['tags'];
+    return tags is List && tags.contains(_tagFilter);
   }
 
   // --- 種類過濾邏輯 ---
@@ -269,19 +286,19 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_statusFilter == StatusFilter.competitive && count <= 4) return;
         }
 
-        if (!_matchesFormat(v)) return;
+        if (!_matchesFormat(v, provider.standardRegs)) return;
         if (!_matchesType(v)) return;
         if (!_matchesElement(v)) return;
+        if (!_matchesRarity(v)) return;
+        if (!_matchesTag(v)) return;
 
         if (query.isNotEmpty) {
           String cardName = v['name'].toString().toLowerCase();
-          String rarity = (v['rarity'] ?? "").toString().toLowerCase();
           String cardNumber = k.toLowerCase();
           String setCodeLower = setCode.toLowerCase();
           String setName = setData['name'].toString().toLowerCase();
 
           bool matchesText = cardName.contains(query) ||
-              rarity.contains(query) ||
               cardNumber.contains(query) ||
               setCodeLower.contains(query) ||
               setName.contains(query);
@@ -300,7 +317,9 @@ class _HomeScreenState extends State<HomeScreen> {
               _statusFilter == StatusFilter.inDeck ||
               _statusFilter == StatusFilter.used ||
               _typeFilter != TypeFilter.all ||
-              _elementFilter != ElementFilter.all)
+              _elementFilter != ElementFilter.all ||
+              _rarityFilter != null ||
+              _tagFilter != null)
           ? true
           : (_expandedState[setCode] ?? false);
 
@@ -324,7 +343,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       _statusFilter != StatusFilter.inDeck &&
                       _statusFilter != StatusFilter.used &&
                       _typeFilter == TypeFilter.all &&
-                      _elementFilter == ElementFilter.all) {
+                      _elementFilter == ElementFilter.all &&
+                      _rarityFilter == null &&
+                      _tagFilter == null) {
                     final bool willCollapse = isExpanded;
                     setState(() => _expandedState[setCode] = !isExpanded);
                     if (willCollapse) {
@@ -451,6 +472,8 @@ class _HomeScreenState extends State<HomeScreen> {
                               _statusFilter = StatusFilter.all;
                               _typeFilter = TypeFilter.all;
                               _elementFilter = ElementFilter.all;
+                              _rarityFilter = null;
+                              _tagFilter = null;
                             });
                           },
                           child: const Text("完成",
@@ -490,6 +513,8 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_formatFilter != FormatFilter.standard) n++;
     if (_typeFilter != TypeFilter.all) n++;
     if (_elementFilter != ElementFilter.all) n++;
+    if (_rarityFilter != null) n++;
+    if (_tagFilter != null) n++;
     return n;
   }
 
@@ -498,6 +523,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _formatFilter = FormatFilter.standard;
     _typeFilter = TypeFilter.all;
     _elementFilter = ElementFilter.all;
+    _rarityFilter = null;
+    _tagFilter = null;
   }
 
   Widget _buildFilterButton(bool isDeckMode) {
@@ -534,6 +561,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _openFilterSheet(bool isDeckMode) {
     final Color active = _getThemeColor(isDeckMode);
+    final provider = Provider.of<CollectionProvider>(context, listen: false);
+    final rarities = provider.availableRarities;
+    final tags = provider.availableTags;
 
     showModalBottomSheet(
       context: context,
@@ -672,6 +702,22 @@ class _HomeScreenState extends State<HomeScreen> {
                                   backgroundColor: kElementColors[e]),
                             ),
                       ]),
+                      if (rarities.isNotEmpty)
+                        section("稀有度", [
+                          chip("全部", _rarityFilter == null,
+                              () => pick(() => _rarityFilter = null)),
+                          for (final r in rarities)
+                            chip(r.isEmpty ? "無標記" : r, _rarityFilter == r,
+                                () => pick(() => _rarityFilter = r)),
+                        ]),
+                      if (tags.isNotEmpty)
+                        section("機制", [
+                          chip("全部", _tagFilter == null,
+                              () => pick(() => _tagFilter = null)),
+                          for (final t in tags)
+                            chip(t, _tagFilter == t,
+                                () => pick(() => _tagFilter = t)),
+                        ]),
                     ],
                   ),
                 ),
