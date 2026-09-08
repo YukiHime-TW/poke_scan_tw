@@ -439,10 +439,11 @@ class CollectionProvider with ChangeNotifier {
 
   // --- 登入/登出 ---
 
-  Future<void> signInWithGoogle() async {
+  /// 登入失敗時回傳給使用者看的訊息；成功或取消回傳 null。
+  Future<String?> signInWithGoogle() async {
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-      if (googleUser == null) return;
+      if (googleUser == null) return null; // 使用者自己取消
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
@@ -450,8 +451,10 @@ class CollectionProvider with ChangeNotifier {
         idToken: googleAuth.idToken,
       );
       await FirebaseAuth.instance.signInWithCredential(credential);
+      return null;
     } catch (e) {
       print("登入錯誤: $e");
+      return "登入失敗，請稍後再試";
     }
   }
 
