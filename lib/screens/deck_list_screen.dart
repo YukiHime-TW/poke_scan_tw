@@ -210,10 +210,10 @@ class DeckListScreen extends StatelessWidget {
       ..sort((a, b) => a.key.compareTo(b.key));
 
     final cp = Provider.of<CollectionProvider>(context, listen: false);
+    final dp = Provider.of<DeckProvider>(context, listen: false);
     final legal = deck.isBinder
         ? null
-        : Provider.of<DeckProvider>(context, listen: false).checkLegality(
-            deck, database, cp.standardRegs,
+        : dp.checkLegality(deck, database, cp.standardRegs,
             deckRules: cp.deckRules,
             standardNames: cp.standardNames,
             bannedIds: cp.bannedIds);
@@ -271,8 +271,7 @@ class DeckListScreen extends StatelessWidget {
                         itemCount: sortedEntries.length,
                         itemBuilder: (ctx, i) {
                           final id = sortedEntries[i].key;
-                          final parts = id.split('-');
-                          final card = database[parts[0]]?['cards']?[parts[1]];
+                          final card = dp.cardOf(id, database);
                           return ListTile(
                               leading: CircleAvatar(
                                   backgroundColor: deck.isBinder
