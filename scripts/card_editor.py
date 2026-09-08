@@ -18,12 +18,50 @@ import os
 import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-SETS_DIR = os.path.join(os.path.dirname(__file__), "..", "assets", "sets")
+HERE = os.path.dirname(__file__)
+SETS_DIR = os.path.join(HERE, "..", "assets", "sets")
+TAGS_FILE = os.path.join(HERE, "mechanic_tags.json")
 PORT = 8770
 
-TAGS = ["抽卡", "過牌", "換位", "檢索", "回收", "治療", "加速能量", "妨礙"]
+DEFAULT_TAGS = ["抽卡", "過牌", "換位", "檢索", "回收", "治療", "加速能量", "妨礙"]
 
-# (tag, 觸發用的正規式) — 只用來「預先建議」，人工確認
+
+def load_tags():
+    if os.path.exists(TAGS_FILE):
+        with open(TAGS_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    save_tags(DEFAULT_TAGS)
+    return list(DEFAULT_TAGS)
+
+
+def save_tags(tags):
+    with open(TAGS_FILE, "w", encoding="utf-8") as f:
+        json.dump(tags, f, ensure_ascii=False, indent=2)
+
+
+def remove_tag_everywhere(tag):
+    """把某個標籤從所有卡片移除，回傳受影響張數。"""
+    n = 0
+    for fn in set_files():
+        code = fn[:-5]
+        path = os.path.join(SETS_DIR, code + ".json")
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        mod = False
+        for c in data.get(code, {}).get("cards", {}).values():
+            if tag in (c.get("tags") or []):
+                c["tags"] = [t for t in c["tags"] if t != tag]
+                if not c["tags"]:
+                    del c["tags"]
+                mod = True
+                n += 1
+        if mod:
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+    return n
+
+# (tag, 觸發用的正規式) — 只用來「預先建議」，人工確認。
+# 使用者自行新增的標籤沒有規則，純手動打勾。
 TAG_RULES = [
     ("抽卡", r"抽(出)?.{0,4}\d+.{0,2}張卡|抽\d+張|抽出.{0,6}卡"),
     ("過牌", r"棄掉.{0,20}(再抽|抽\d)|洗回牌庫.{0,10}抽"),
@@ -54,13 +92,13 @@ def save_card(code, num, card):
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-def suggest_tags(card):
+def suggest_tags(card, known):
     blob = " ".join(filter(None, [
         card.get("effect", ""),
         " ".join(a.get("text", "") for a in card.get("attacks", []) or []),
         " ".join(a.get("text", "") for a in card.get("abilities", []) or []),
     ]))
-    return [t for t, rx in TAG_RULES if re.search(rx, blob)]
+    return [t for t, rx in TAG_RULES if t in known and re.search(rx, blob)]
 
 
 PAGE = """<!doctype html><html lang="zh-Hant"><meta charset="utf-8">
@@ -99,20 +137,48 @@ small{color:#999}
 <small id="status"></small></div><div id="fields"></div>
 <label>機制標籤　<small>紫框 = 依效果文字建議</small></label>
 <div class="tags" id="tagbox"></div>
+<details style="margin-top:10px"><summary style="cursor:pointer;color:#555">管理標籤</summary>
+<div class="tags" id="tagmgr" style="margin-top:6px"></div>
+<div style="display:flex;gap:6px;margin-top:6px">
+<input id="newtag" placeholder="新標籤名稱" style="flex:1">
+<button id="addtag">新增</button></div>
+</details>
 </div><div id="pic"><img id="pimg"></div></div>
 <script>
-const TAGS=%TAGS%;
+let TAGS=[];
 let SET=null, CODE=null, NUM=null, dirty=false;
 const $=s=>document.querySelector(s);
 const FIELDS=["name","rarity","type","reg","elem","hp","stage","evolvesFrom","dex","category","weakness","resistance","retreat","illustrator","image"];
 async function j(u,o){const r=await fetch(u,o);return r.json()}
 
 async function boot(){
+  TAGS=await j("/api/tags");
   const sets=await j("/api/sets");
   $("#setSel").innerHTML=sets.map(s=>`<option value="${s.code}">${s.code}　${s.name}　(${s.count})</option>`).join("");
   $("#setSel").onchange=()=>openSet($("#setSel").value);
   $("#q").oninput=renderList;
+  $("#addtag").onclick=addTag;
+  $("#newtag").onkeydown=e=>{if(e.key==="Enter")addTag()};
+  renderTagMgr();
   openSet(sets[0].code);
+}
+function renderTagMgr(){
+  $("#tagmgr").innerHTML=TAGS.map(t=>
+    `<label>${t} <span data-del="${t}" style="cursor:pointer;color:#a33">✕</span></label>`).join("");
+  $("#tagmgr").querySelectorAll("[data-del]").forEach(x=>x.onclick=()=>delTag(x.dataset.del));
+}
+async function addTag(){
+  const v=$("#newtag").value.trim(); if(!v||TAGS.includes(v))return;
+  TAGS.push(v); $("#newtag").value="";
+  await j("/api/tags",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tags:TAGS})});
+  renderTagMgr(); if(NUM)pick(NUM);
+}
+async function delTag(t){
+  if(!confirm(`刪除標籤「${t}」？會從所有卡片一併移除。`))return;
+  const r=await j("/api/tags/delete",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({tag:t})});
+  TAGS=TAGS.filter(x=>x!==t);
+  alert(`已刪除，影響 ${r.removed} 張卡。`);
+  renderTagMgr(); openSet(CODE);
 }
 async function openSet(code){
   CODE=code; SET=await j("/api/set/"+code); NUM=null; renderList(); $("#fields").innerHTML="";
@@ -201,8 +267,9 @@ class H(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if self.path == "/":
-            return self._send(200, PAGE.replace("%TAGS%", json.dumps(TAGS)),
-                              "text/html")
+            return self._send(200, PAGE, "text/html")
+        if self.path == "/api/tags":
+            return self._send(200, json.dumps(load_tags(), ensure_ascii=False))
         if self.path == "/api/sets":
             out = []
             for fn in set_files():
@@ -213,19 +280,28 @@ class H(BaseHTTPRequestHandler):
             return self._send(200, json.dumps(out))
         if self.path.startswith("/api/set/"):
             code = self.path.split("/api/set/", 1)[1]
+            known = set(load_tags())
             cards = load_set(code).get(code, {}).get("cards", {})
             for c in cards.values():
-                c["_suggest"] = suggest_tags(c)
+                c["_suggest"] = suggest_tags(c, known)
             return self._send(200, json.dumps(cards, ensure_ascii=False))
         return self._send(404, "{}")
 
     def do_POST(self):
-        if self.path != "/api/save":
-            return self._send(404, "{}")
         n = int(self.headers.get("Content-Length", 0))
-        body = json.loads(self.rfile.read(n))
-        save_card(body["set"], body["num"], body["card"])
-        return self._send(200, json.dumps({"ok": True}))
+        body = json.loads(self.rfile.read(n)) if n else {}
+        if self.path == "/api/save":
+            save_card(body["set"], body["num"], body["card"])
+            return self._send(200, json.dumps({"ok": True}))
+        if self.path == "/api/tags":  # 儲存整個標籤清單（新增 / 排序）
+            save_tags([t.strip() for t in body["tags"] if t.strip()])
+            return self._send(200, json.dumps({"ok": True}))
+        if self.path == "/api/tags/delete":  # 刪一個標籤，並從所有卡片移除
+            tag = body["tag"]
+            hit = remove_tag_everywhere(tag)
+            save_tags([t for t in load_tags() if t != tag])
+            return self._send(200, json.dumps({"ok": True, "removed": hit}))
+        return self._send(404, "{}")
 
 
 if __name__ == "__main__":
