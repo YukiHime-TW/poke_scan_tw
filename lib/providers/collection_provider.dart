@@ -17,6 +17,10 @@ class CollectionProvider with ChangeNotifier {
   bool _isLoading = true;
   User? _user;
 
+  // 稀有度顯示順序、標準賽制 reg 清單（啟動時抓 main 上的版本，離線用 bundled）
+  List<String> _rarityOrder = [];
+  Set<String> _standardRegs = {};
+
   // --- GitHub Raw 網址配置 ---
   final String _remoteBaseUrl =
       "https://raw.githubusercontent.com/YukiHime-TW/poke_scan_tw/refs/heads/main/assets";
@@ -25,6 +29,33 @@ class CollectionProvider with ChangeNotifier {
   Map<String, dynamic> get database => _database;
   Map<String, int> get userCollection => _userCollection;
   User? get user => _user;
+
+  List<String> get rarityOrder => _rarityOrder;
+  Set<String> get standardRegs => _standardRegs;
+
+  /// 資料庫裡實際出現過的稀有度，依 rarity_order.json 排序（表裡沒有的排最後）。
+  List<String> get availableRarities {
+    final set = <String>{};
+    for (final sd in _database.values) {
+      final cards = (sd is Map) ? sd['cards'] : null;
+      if (cards is Map) {
+        for (final c in cards.values) {
+          set.add((c is Map ? c['rarity'] : null)?.toString() ?? '');
+        }
+      }
+    }
+    int rank(String r) {
+      final i = _rarityOrder.indexOf(r);
+      return i < 0 ? 9999 : i;
+    }
+
+    final list = set.toList()
+      ..sort((a, b) {
+        final d = rank(a).compareTo(rank(b));
+        return d != 0 ? d : a.compareTo(b);
+      });
+    return list;
+  }
 
   CollectionProvider() {
     _init();
@@ -62,6 +93,16 @@ class CollectionProvider with ChangeNotifier {
       }
 
       print("✅ 資料庫初始化完成，共載入 ${_database.length} 個擴充包");
+
+      // 設定檔（稀有度順序、賽制清單）
+      final ro = await _loadJsonConfig('rarity_order.json');
+      if (ro is List) _rarityOrder = ro.map((e) => e.toString()).toList();
+      final fmt = await _loadJsonConfig('formats.json');
+      if (fmt is Map && fmt['standard'] is List) {
+        _standardRegs = (fmt['standard'] as List)
+            .map((e) => e.toString().toUpperCase())
+            .toSet();
+      }
     } catch (e) {
       print("⚠️ 初始化資料庫發生嚴重錯誤: $e");
     }
@@ -80,6 +121,21 @@ class CollectionProvider with ChangeNotifier {
   }
 
   // --- 資料讀取與更新邏輯 ---
+
+  /// 抓 main 上的設定檔，失敗則用 APK 內建的離線版本。
+  Future<dynamic> _loadJsonConfig(String filename) async {
+    try {
+      final res = await http
+          .get(Uri.parse('$_remoteBaseUrl/$filename'))
+          .timeout(const Duration(seconds: 5));
+      if (res.statusCode == 200) return json.decode(res.body);
+    } catch (_) {}
+    try {
+      return json.decode(await rootBundle.loadString('assets/$filename'));
+    } catch (_) {
+      return null;
+    }
+  }
 
   Future<List<dynamic>> _fetchIndex() async {
     try {
