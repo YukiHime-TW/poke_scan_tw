@@ -48,13 +48,15 @@ class Deck {
 
 class DeckLegality {
   final String status; // "標準" | "開放" | "未完成"
-  final List<String> nonStandardNames; // 已輪替（非標準）的卡名
+  final List<String> nonStandardNames; // 已輪替（非標準）的卡名（去重）
+  final int nonStandardCount; // 非標準卡的張數（含重複）
   final int cardCount;
   final bool hasBasic; // 至少一張基礎寶可夢
 
   DeckLegality(
       {required this.status,
       required this.nonStandardNames,
+      required this.nonStandardCount,
       required this.cardCount,
       required this.hasBasic});
 }
@@ -111,6 +113,7 @@ class DeckProvider with ChangeNotifier {
         ? const {"H", "I", "J", "NONE"}
         : standardRegs;
     int count = 0;
+    int nonStdCount = 0;
     final nonStd = <String>{};
     bool hasBasic = false;
     deck.cards.forEach((id, n) {
@@ -119,7 +122,10 @@ class DeckProvider with ChangeNotifier {
       final card = database[parts[0]]?['cards']?[parts[1]];
       if (card == null) return;
       final reg = (card['reg'] ?? "").toString().toUpperCase();
-      if (!regs.contains(reg)) nonStd.add(card['name'].toString());
+      if (!regs.contains(reg)) {
+        nonStd.add(card['name'].toString());
+        nonStdCount += n;
+      }
       if (card['type'] == "寶可夢" && card['stage'] == "基礎") hasBasic = true;
     });
     final String status = count < 60
@@ -128,6 +134,7 @@ class DeckProvider with ChangeNotifier {
     return DeckLegality(
         status: status,
         nonStandardNames: nonStd.toList(),
+        nonStandardCount: nonStdCount,
         cardCount: count,
         hasBasic: hasBasic);
   }

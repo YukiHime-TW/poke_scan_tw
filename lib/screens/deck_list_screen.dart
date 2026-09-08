@@ -10,8 +10,7 @@ class DeckListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final deckProvider = Provider.of<DeckProvider>(context);
-    final collectionProvider =
-        Provider.of<CollectionProvider>(context, listen: false);
+    final collectionProvider = Provider.of<CollectionProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -216,10 +215,10 @@ class DeckListScreen extends StatelessWidget {
     final legalityLines = <String>[
       if (legal != null && legal.cardCount < 60)
         "尚缺 ${60 - legal.cardCount} 張",
-      if (legal != null && legal.cardCount >= 60 && !legal.hasBasic)
+      if (legal != null && legal.cardCount > 0 && !legal.hasBasic)
         "沒有基礎寶可夢",
       if (legal != null && legal.nonStandardNames.isNotEmpty)
-        "含 ${legal.nonStandardNames.length} 張非標準卡："
+        "含 ${legal.nonStandardCount} 張非標準卡："
             "${legal.nonStandardNames.take(8).join('、')}"
             "${legal.nonStandardNames.length > 8 ? '…' : ''}",
     ];
