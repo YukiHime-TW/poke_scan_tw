@@ -11,11 +11,19 @@
 
 ## 功能
 
-- **收藏管理**：依系列瀏覽，點一下 +1、長按 -1；彩色／黑白區分持有；完成度進度條
+- **收藏管理**：依系列瀏覽，點一下 +1；彩色／黑白區分持有；完成度進度條
+- **卡片詳情**：長按卡片彈出詳情（招式・特性・效果・弱點・繪師等），
+  在裡面直接調整「收藏／這副牌／想要」的張數
+- **願望清單**：以數量記錄想要幾張，收藏達標時自動移出；卡面左下角粉紅星星標記；
+  可一鍵複製成「還缺 N」的對齊文字貼社群
 - **相機掃描**：對準卡片左下角編號，裝置端 OCR（ML Kit）辨識並加入收藏，不上傳照片
 - **牌組 / 收藏本**：牌組限 60 張・同名 4 張；收藏本無限制；比對實體庫存；匯出牌表
-- **篩選**：收藏狀態 / 賽制 / 種類 / 屬性 / 關鍵字（名稱・編號・稀有度・系列）
-- **雲端同步**：Google 登入後收藏與牌組跨裝置同步（Firestore）；不登入則只存本機
+- **牌組合法性檢查**：牌組清單依 `formats.json` 標示 **標準 / 開放 / 未完成**，
+  預覽頁列出非標準卡與缺張、缺基礎寶可夢
+- **篩選**：收藏狀態（含願望清單）/ 賽制 / 種類 / 屬性 / 稀有度 / 機制標籤
+  （稀有度與機制標籤依卡表內容動態產生）+ 關鍵字（名稱・編號・系列）
+- **雲端同步**：Google 登入後收藏、願望清單與牌組跨裝置同步（Firestore）；
+  不登入則只存本機，登出時清除本機資料
 
 ## 技術
 
@@ -23,17 +31,25 @@ Flutter（Android / iOS / Web）、Provider、Firebase Auth + Cloud Firestore、
 Google ML Kit 文字辨識、`sliver_tools`。
 
 App 啟動時從 `raw.githubusercontent.com/.../refs/heads/main/assets` 抓最新卡表
-JSON，**所以卡片資料變更需合併進 `main` 才會生效**，不需重出 App。
+JSON 與設定檔，**所以卡片資料變更需合併進 `main` 才會生效**，不需重出 App。
+執行期抓取的設定檔（皆有打包在 APK 內的預設值作 fallback）：
+
+| 檔案 | 作用 |
+|---|---|
+| `assets/rarity_order.json` | 稀有度篩選 chip 的排序（陣列，不在清單內的排最後） |
+| `assets/formats.json` | `{ "standard": [...reg] }`，標準賽制的 reg 白名單，供篩選與牌組合法性檢查共用 |
+| `assets/tags_order.json` | 機制標籤 chip 的分組排序 |
 
 ## 專案結構
 
 ```
-lib/                Flutter 原始碼
-assets/sets/        各系列卡片資料 JSON（131 個系列）
-assets/index.json   系列索引
-scripts/            資料維護腳本（見下）
-store/              Play 上架素材（圖示、功能圖、文案、表單答案）
-android/ ios/ web/  各平台設定
+lib/                    Flutter 原始碼
+assets/sets/            各系列卡片資料 JSON（131 個系列）
+assets/index.json       系列索引
+assets/rarity_order.json / formats.json / tags_order.json   執行期設定檔
+scripts/                資料維護腳本（見下）
+store/                  Play 上架素材（圖示、功能圖、文案、表單答案）
+android/ ios/ web/      各平台設定
 ```
 
 ## 資料維護（scripts/）
@@ -52,8 +68,11 @@ android/ ios/ web/  各平台設定
 | `add_elem_tcgdex.py` | 補無官方圖的卡的 elem（tcgdex API） |
 | `fix_type_tcgdex.py` / `fix_type_official.py` | 用 tcgdex / 官方詳情頁校對修正 type |
 
-其他一次性工具：`check_names.py`（對官方卡片頁核對卡名）、`add_rarity.py`
-（補空白稀有度）、`gen_icons.py`（產生 App 圖示與 Play 素材）。
+其他工具：`check_names.py`（對官方卡片頁核對卡名）、`add_rarity.py`
+（補空白稀有度）、`gen_icons.py`（產生 App 圖示與 Play 素材）、
+`scrape_details.py`（爬官方詳情頁補 hp / 招式 / 特性 / 效果 / 弱點 / 繪師等）、
+`card_editor.py`（本機網頁工具 `localhost:8770`，瀏覽 / 編輯卡片欄位、勾機制標籤 →
+`card["tags"]`，標籤定義見 `mechanic_tags.json`）。
 
 ```
 pip install -r scripts/requirements.txt   # requests, beautifulsoup4, opencc, Pillow ...

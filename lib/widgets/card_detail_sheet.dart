@@ -188,16 +188,27 @@ class CardDetailSheet extends StatelessWidget {
           children: [
             Row(
               children: [
-                for (final c in cost)
+                if (cost.isEmpty)
                   Container(
                     width: 14,
                     height: 14,
                     margin: const EdgeInsets.only(right: 2),
                     decoration: BoxDecoration(
-                        color: _energyColors[c] ?? Colors.grey,
-                        shape: BoxShape.circle),
-                  ),
-                if (cost.isNotEmpty) const SizedBox(width: 4),
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black87, width: 1)),
+                  )
+                else
+                  for (final c in cost)
+                    Container(
+                      width: 14,
+                      height: 14,
+                      margin: const EdgeInsets.only(right: 2),
+                      decoration: BoxDecoration(
+                          color: _energyColors[c] ?? Colors.grey,
+                          shape: BoxShape.circle),
+                    ),
+                const SizedBox(width: 4),
                 Expanded(
                   child: Text(a['name'].toString(),
                       style: const TextStyle(
