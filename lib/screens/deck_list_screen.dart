@@ -215,6 +215,8 @@ class DeckListScreen extends StatelessWidget {
     final legalityLines = <String>[
       if (legal != null && legal.cardCount < 60)
         "尚缺 ${60 - legal.cardCount} 張",
+      if (legal != null && legal.cardCount > 60)
+        "多了 ${legal.cardCount - 60} 張",
       if (legal != null && legal.cardCount > 0 && !legal.hasBasic)
         "沒有基礎寶可夢",
       if (legal != null && legal.nonStandardNames.isNotEmpty)

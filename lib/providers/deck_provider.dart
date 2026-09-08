@@ -128,7 +128,8 @@ class DeckProvider with ChangeNotifier {
       }
       if (card['type'] == "寶可夢" && card['stage'] == "基礎") hasBasic = true;
     });
-    final String status = count < 60
+    // 合法牌組：正好 60 張 + 至少 1 隻基礎寶可夢。任一不滿足 → 未完成。
+    final String status = (count != 60 || !hasBasic)
         ? "未完成"
         : (nonStd.isEmpty ? "標準" : "開放");
     return DeckLegality(
