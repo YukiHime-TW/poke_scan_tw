@@ -1,0 +1,25 @@
+{
+  "cardLimits": [
+    {
+      "id": "radiant",
+      "label": "光輝寶可夢",
+      "where": { "nameContains": "光輝", "type": "寶可夢" },
+      "scope": "deck",
+      "max": 1
+    },
+    {
+      "id": "acespec",
+      "label": "ACE SPEC 卡",
+      "where": { "rarity": "ACE" },
+      "scope": "deck",
+      "max": 1
+    },
+    {
+      "id": "prism",
+      "label": "稜柱之星（◇）卡",
+      "where": { "nameContains": "◇" },
+      "scope": "name",
+      "max": 1
+    }
+  ]
+}
