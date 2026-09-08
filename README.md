@@ -68,11 +68,15 @@ android/ ios/ web/      各平台設定
 | `add_elem_tcgdex.py` | 補無官方圖的卡的 elem（tcgdex API） |
 | `fix_type_tcgdex.py` / `fix_type_official.py` | 用 tcgdex / 官方詳情頁校對修正 type |
 
-其他工具：`check_names.py`（對官方卡片頁核對卡名）、`add_rarity.py`
-（補空白稀有度）、`gen_icons.py`（產生 App 圖示與 Play 素材）、
-`scrape_details.py`（爬官方詳情頁補 hp / 招式 / 特性 / 效果 / 弱點 / 繪師等）、
-`card_editor.py`（本機網頁工具 `localhost:8770`，瀏覽 / 編輯卡片欄位、勾機制標籤 →
-`card["tags"]`，標籤定義見 `mechanic_tags.json`）。
+管線外的獨立工具（各自手動執行，不在 `scraper.py` 裡）：
+
+| 腳本 | 作用 |
+|---|---|
+| `scrape_details.py` | 爬官方詳情頁補 hp / 招式 / 特性 / 效果 / 弱點 / 繪師等（量大、單獨跑） |
+| `card_editor.py` | 本機網頁工具 `localhost:8770`，瀏覽 / 編輯卡片欄位、勾機制標籤 → `card["tags"]`（標籤定義見 `mechanic_tags.json`） |
+| `check_names.py` | 對官方卡片頁核對卡名 |
+| `add_rarity.py` | 補空白稀有度 |
+| `gen_icons.py` | 產生 App 圖示與 Play 素材 |
 
 ```
 pip install -r scripts/requirements.txt   # requests, beautifulsoup4, opencc, Pillow ...
