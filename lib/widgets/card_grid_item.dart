@@ -133,7 +133,8 @@ class _CardGridItemState extends State<CardGridItem> {
         HapticFeedback.selectionClick();
         if (activeDeck != null) {
           final err = deckProvider.addCardToDeck(
-              fullId, widget.cardData['name'], provider.database);
+              fullId, widget.cardData['name'], provider.database,
+              deckRules: provider.deckRules);
           if (err != null)
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(err), duration: const Duration(seconds: 1)));

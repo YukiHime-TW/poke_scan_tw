@@ -85,7 +85,8 @@ class CardDetailSheet extends StatelessWidget {
                       color: Colors.teal.shade700,
                       onAdd: () {
                         final err = deckProvider.addCardToDeck(
-                            _fullId, cardData['name'].toString(), prov.database);
+                            _fullId, cardData['name'].toString(), prov.database,
+                            deckRules: prov.deckRules);
                         if (err != null) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                               content: Text(err),

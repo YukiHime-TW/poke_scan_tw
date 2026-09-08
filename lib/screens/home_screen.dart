@@ -866,7 +866,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
                 _buildHelpHeader("4. 牌組與收藏本", Icons.style),
-                _buildHelpItem("種類區分", "• 牌組：限 60 張、同名 4 張\n• 收藏本：無張數與同名限制"),
+                _buildHelpItem("種類區分",
+                    "• 牌組：限 60 張、同名 4 張；光輝寶可夢 / ACE SPEC 各限 1 張、"
+                    "◇（稜柱之星）卡同名限 1 張\n• 收藏本：無張數與同名限制"),
                 _buildHelpItem("合法性標記", "牌組名稱旁：\n"
                     "• 標準：全部標準賽制合法\n• 開放：含已輪替的卡\n"
                     "• 未完成：未滿 60 張、或沒有基礎寶可夢\n預覽頁會列出是哪幾張非標準卡。"),

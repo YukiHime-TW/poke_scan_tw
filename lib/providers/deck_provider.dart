@@ -52,13 +52,63 @@ class DeckLegality {
   final int nonStandardCount; // 非標準卡的張數（含重複）
   final int cardCount;
   final bool hasBasic; // 至少一張基礎寶可夢
+  final List<String> ruleViolations; // 追加組牌規則的違規訊息（光輝 / ACE SPEC / ◇ 等）
 
   DeckLegality(
       {required this.status,
       required this.nonStandardNames,
       required this.nonStandardCount,
       required this.cardCount,
-      required this.hasBasic});
+      required this.hasBasic,
+      this.ruleViolations = const []});
+}
+
+/// 追加的組牌張數限制，來自 `deck_rules.json`（啟動時抓 main，離線用 bundled）。
+/// `where` 內的條件全部要成立才算命中；目前支援 nameContains / type / rarity。
+/// scope=deck：整套牌所有命中卡的總張數上限；scope=name：每個同名命中卡各自的張數上限。
+class DeckRule {
+  final String id;
+  final String label;
+  final String? nameContains;
+  final String? type;
+  final String? rarity;
+  final String scope; // "deck" | "name"
+  final int max;
+
+  const DeckRule({
+    required this.id,
+    required this.label,
+    this.nameContains,
+    this.type,
+    this.rarity,
+    required this.scope,
+    required this.max,
+  });
+
+  factory DeckRule.fromJson(Map<String, dynamic> j) {
+    final w = (j['where'] is Map)
+        ? (j['where'] as Map).cast<String, dynamic>()
+        : const <String, dynamic>{};
+    return DeckRule(
+      id: (j['id'] ?? '').toString(),
+      label: (j['label'] ?? '').toString(),
+      nameContains: w['nameContains']?.toString(),
+      type: w['type']?.toString(),
+      rarity: w['rarity']?.toString(),
+      scope: (j['scope'] ?? 'deck').toString(),
+      max: (j['max'] is num) ? (j['max'] as num).toInt() : 1,
+    );
+  }
+
+  bool matches(Map card) {
+    final nc = nameContains;
+    if (nc != null && !(card['name']?.toString() ?? '').contains(nc)) {
+      return false;
+    }
+    if (type != null && card['type']?.toString() != type) return false;
+    if (rarity != null && card['rarity']?.toString() != rarity) return false;
+    return true;
+  }
 }
 
 class DeckProvider with ChangeNotifier {
@@ -106,9 +156,50 @@ class DeckProvider with ChangeNotifier {
     return [fullId.substring(0, firstDash), fullId.substring(firstDash + 1)];
   }
 
+  /// 檢查追加組牌規則（deck_rules.json），回傳違規訊息清單（沒違規則空）。
+  /// 收藏本不受這些規則約束。
+  List<String> _ruleViolations(
+      Deck deck, Map<String, dynamic> database, List<DeckRule> rules) {
+    if (deck.isBinder || rules.isEmpty) return const [];
+    Map? cardOf(String id) {
+      final p = _smartSplit(id, database);
+      final c = database[p[0]]?['cards']?[p[1]];
+      return c is Map ? c : null;
+    }
+
+    final out = <String>[];
+    for (final rule in rules) {
+      if (rule.scope == "name") {
+        final byName = <String, int>{};
+        deck.cards.forEach((id, n) {
+          final c = cardOf(id);
+          if (c == null || !rule.matches(c)) return;
+          final nm = c['name'].toString();
+          byName[nm] = (byName[nm] ?? 0) + n;
+        });
+        byName.forEach((nm, n) {
+          if (n > rule.max) {
+            out.add("「$nm」是${rule.label}，最多只能放 ${rule.max} 張（現 $n）");
+          }
+        });
+      } else {
+        int n = 0;
+        deck.cards.forEach((id, cnt) {
+          final c = cardOf(id);
+          if (c != null && rule.matches(c)) n += cnt;
+        });
+        if (n > rule.max) {
+          out.add("${rule.label}整套牌最多只能放 ${rule.max} 張（現 $n）");
+        }
+      }
+    }
+    return out;
+  }
+
   /// 牌組合法性（只對「牌組」有意義，收藏本不用查）。
   DeckLegality checkLegality(Deck deck, Map<String, dynamic> database,
-      Set<String> standardRegs) {
+      Set<String> standardRegs,
+      {List<DeckRule> deckRules = const []}) {
     final regs = standardRegs.isEmpty
         ? const {"H", "I", "J", "NONE"}
         : standardRegs;
@@ -128,8 +219,9 @@ class DeckProvider with ChangeNotifier {
       }
       if (card['type'] == "寶可夢" && card['stage'] == "基礎") hasBasic = true;
     });
-    // 合法牌組：正好 60 張 + 至少 1 隻基礎寶可夢。任一不滿足 → 未完成。
-    final String status = (count != 60 || !hasBasic)
+    final violations = _ruleViolations(deck, database, deckRules);
+    // 合法牌組：正好 60 張 + 至少 1 隻基礎寶可夢 + 沒有違反追加規則。任一不滿足 → 未完成。
+    final String status = (count != 60 || !hasBasic || violations.isNotEmpty)
         ? "未完成"
         : (nonStd.isEmpty ? "標準" : "開放");
     return DeckLegality(
@@ -137,7 +229,8 @@ class DeckProvider with ChangeNotifier {
         nonStandardNames: nonStd.toList(),
         nonStandardCount: nonStdCount,
         cardCount: count,
-        hasBasic: hasBasic);
+        hasBasic: hasBasic,
+        ruleViolations: violations);
   }
 
   Map<String, int> getCardUsages(String fullId) {
@@ -262,7 +355,8 @@ class DeckProvider with ChangeNotifier {
   }
 
   String? addCardToDeck(
-      String fullId, String cardName, Map<String, dynamic> database) {
+      String fullId, String cardName, Map<String, dynamic> database,
+      {List<DeckRule> deckRules = const []}) {
     final deck = currentDeck;
     if (deck == null) return "請先選擇目標";
 
@@ -287,7 +381,19 @@ class DeckProvider with ChangeNotifier {
       if (nameCount >= 4) return "同名卡片「$cardName」最多只能放 4 張";
     }
 
+    // 追加組牌規則（光輝 / ACE SPEC / ◇ …）：先試加，違規就還原並回報。
     deck.cards[fullId] = (deck.cards[fullId] ?? 0) + 1;
+    if (!deck.isBinder) {
+      final violations = _ruleViolations(deck, database, deckRules);
+      if (violations.isNotEmpty) {
+        if (deck.cards[fullId]! > 1) {
+          deck.cards[fullId] = deck.cards[fullId]! - 1;
+        } else {
+          deck.cards.remove(fullId);
+        }
+        return violations.first;
+      }
+    }
     deck.lastUpdated = DateTime.now();
     _saveDecksToLocal();
     _syncSingleDeckToCloud(deck);
