@@ -1,7 +1,7 @@
 name: poke_scan_tw
 description: Traditional Chinese Pokemon Scanner
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: '>=3.3.0 <4.0.0' # 確保這裡是 3.3.0 或更高
@@ -51,5 +51,8 @@ flutter:
   assets:
     # 這是索引檔
     - assets/index.json
+    # 稀有度顯示順序、賽制 reg 清單（App 啟動時優先抓 main 上的版本，這裡是離線備援）
+    - assets/rarity_order.json
+    - assets/formats.json
     # 這是存放所有擴充包的資料夾 (注意最後要有斜線 /)
     - assets/sets/
