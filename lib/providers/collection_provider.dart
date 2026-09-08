@@ -10,6 +10,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../utils/card_matcher.dart';
+import 'deck_provider.dart' show DeckRule;
 
 class CollectionProvider with ChangeNotifier {
   Map<String, dynamic> _database = {};
@@ -23,6 +24,7 @@ class CollectionProvider with ChangeNotifier {
   List<String> _rarityOrder = [];
   Set<String> _standardRegs = {};
   List<String> _tagOrder = [];
+  List<DeckRule> _deckRules = []; // 追加組牌規則（光輝 / ACE SPEC / ◇ …）
 
   // --- GitHub Raw 網址配置 ---
   final String _remoteBaseUrl =
@@ -36,6 +38,7 @@ class CollectionProvider with ChangeNotifier {
 
   List<String> get rarityOrder => _rarityOrder;
   Set<String> get standardRegs => _standardRegs;
+  List<DeckRule> get deckRules => _deckRules;
 
   /// 資料庫裡實際出現過的稀有度，依 rarity_order.json 排序（表裡沒有的排最後）。
   List<String> get availableRarities {
@@ -133,6 +136,13 @@ class CollectionProvider with ChangeNotifier {
       }
       final to = await _loadJsonConfig('tags_order.json');
       if (to is List) _tagOrder = to.map((e) => e.toString()).toList();
+      final dr = await _loadJsonConfig('deck_rules.json');
+      if (dr is Map && dr['cardLimits'] is List) {
+        _deckRules = (dr['cardLimits'] as List)
+            .whereType<Map>()
+            .map((e) => DeckRule.fromJson(e.cast<String, dynamic>()))
+            .toList();
+      }
     } catch (e) {
       print("⚠️ 初始化資料庫發生嚴重錯誤: $e");
     }
@@ -464,7 +474,10 @@ class CollectionProvider with ChangeNotifier {
     final name = c.cardData['name'] ?? '未知';
     final fullName = "$name (${c.setCode}-${c.cardKey})";
     if (deckProvider != null && deckProvider.currentDeck != null) {
-      deckProvider.addCardToDeck("${c.setCode}-${c.cardKey}", name, _database);
+      final err = deckProvider.addCardToDeck(
+          "${c.setCode}-${c.cardKey}", name, _database,
+          deckRules: _deckRules);
+      if (err != null) return "⚠️ $err";
       return "【牌組】$fullName";
     }
     await addCard(c.setCode, c.rawNum);
