@@ -251,7 +251,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   String _getAppBarTitle(bool isDeckMode) {
     if (_isSearching) return "";
-    String title = "PokeScan TW";
+    String title = "繁中PTCG集換所";
     if (_statusFilter == StatusFilter.wishlist)
       title = "願望清單";
     else if (_statusFilter == StatusFilter.inDeck)
