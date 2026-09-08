@@ -522,7 +522,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                           child: Text(
-                              "編輯：${activeDeck.name} (${activeDeck.cards.values.fold(0, (sum, c) => sum + c)}${activeDeck.isBinder ? '' : '/60'})",
+                              "編輯：${activeDeck.name} (${deckProvider.deckSize(activeDeck, provider.database, provider.deckRules)}${activeDeck.isBinder ? '' : '/60'})",
                               style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -867,8 +867,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
                 _buildHelpHeader("4. 牌組與收藏本", Icons.style),
                 _buildHelpItem("種類區分",
-                    "• 牌組：限 60 張、同名 4 張；光輝寶可夢 / ACE SPEC 各限 1 張、"
-                    "◇（稜柱之星）卡同名限 1 張\n• 收藏本：無張數與同名限制"),
+                    "• 牌組：限 60 張、同名 4 張。額外上限：光輝寶可夢 / ACE SPEC 各限 1 張、"
+                    "◇（稜柱之星）卡同名限 1 張、「傳說的」競技場同名限 2 張（1 張算 2 張）、"
+                    "V-UNION 寶可夢整套限 1 種（算 4 張）\n• 收藏本：無張數與同名限制"),
                 _buildHelpItem("合法性標記", "牌組名稱旁：\n"
                     "• 標準：全部標準賽制合法\n• 開放：含已輪替的卡\n"
                     "• 未完成：未滿 60 張、沒有基礎寶可夢，或違反上述額外張數規則\n"

@@ -34,8 +34,8 @@ class DeckListScreen extends StatelessWidget {
               itemCount: deckProvider.decks.length,
               itemBuilder: (context, index) {
                 final deck = deckProvider.decks[index];
-                int totalCards =
-                    deck.cards.values.fold(0, (sum, count) => sum + count);
+                int totalCards = deckProvider.deckSize(
+                    deck, collectionProvider.database, collectionProvider.deckRules);
                 Color itemColor = deck.isBinder
                     ? Colors.orange.shade700
                     : Colors.teal.shade700;
@@ -90,7 +90,8 @@ class DeckListScreen extends StatelessWidget {
                             onPressed: () {
                               Clipboard.setData(ClipboardData(
                                   text: deckProvider.generateExportText(
-                                      deck, collectionProvider.database)));
+                                      deck, collectionProvider.database,
+                                      deckRules: collectionProvider.deckRules)));
                               ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text("清單已複製")));
                             }),

@@ -66,6 +66,7 @@ class DeckLegality {
 /// 追加的組牌張數限制，來自 `deck_rules.json`（啟動時抓 main，離線用 bundled）。
 /// `where` 內的條件全部要成立才算命中；目前支援 nameContains / type / rarity。
 /// scope=deck：整套牌所有命中卡的總張數上限；scope=name：每個同名命中卡各自的張數上限。
+/// weight：畫面上 1 張命中卡實際要算成幾張（例：傳說的競技場左右合併=2、V-UNION=4）。
 class DeckRule {
   final String id;
   final String label;
@@ -74,6 +75,7 @@ class DeckRule {
   final String? rarity;
   final String scope; // "deck" | "name"
   final int max;
+  final int weight;
 
   const DeckRule({
     required this.id,
@@ -83,6 +85,7 @@ class DeckRule {
     this.rarity,
     required this.scope,
     required this.max,
+    this.weight = 1,
   });
 
   factory DeckRule.fromJson(Map<String, dynamic> j) {
@@ -97,6 +100,9 @@ class DeckRule {
       rarity: w['rarity']?.toString(),
       scope: (j['scope'] ?? 'deck').toString(),
       max: (j['max'] is num) ? (j['max'] as num).toInt() : 1,
+      weight: (j['weight'] is num && (j['weight'] as num).toInt() > 0)
+          ? (j['weight'] as num).toInt()
+          : 1,
     );
   }
 
@@ -156,16 +162,38 @@ class DeckProvider with ChangeNotifier {
     return [fullId.substring(0, firstDash), fullId.substring(firstDash + 1)];
   }
 
+  Map? _cardOf(String id, Map<String, dynamic> database) {
+    final p = _smartSplit(id, database);
+    final c = database[p[0]]?['cards']?[p[1]];
+    return c is Map ? c : null;
+  }
+
+  /// 畫面上 1 張此卡實際要算成幾張（傳說的競技場=2、V-UNION=4…），預設 1。
+  /// 命中多條帶 weight 的規則時取最大值。
+  int cardWeight(Map? card, List<DeckRule> rules) {
+    if (card == null) return 1;
+    int w = 1;
+    for (final r in rules) {
+      if (r.weight > w && r.matches(card)) w = r.weight;
+    }
+    return w;
+  }
+
+  /// 牌組實際張數（把 weight 算進去）。收藏本就是單純張數加總。
+  int deckSize(Deck deck, Map<String, dynamic> database, List<DeckRule> rules) {
+    int t = 0;
+    deck.cards.forEach((id, n) {
+      t += n * (deck.isBinder ? 1 : cardWeight(_cardOf(id, database), rules));
+    });
+    return t;
+  }
+
   /// 檢查追加組牌規則（deck_rules.json），回傳違規訊息清單（沒違規則空）。
   /// 收藏本不受這些規則約束。
   List<String> _ruleViolations(
       Deck deck, Map<String, dynamic> database, List<DeckRule> rules) {
     if (deck.isBinder || rules.isEmpty) return const [];
-    Map? cardOf(String id) {
-      final p = _smartSplit(id, database);
-      final c = database[p[0]]?['cards']?[p[1]];
-      return c is Map ? c : null;
-    }
+    Map? cardOf(String id) => _cardOf(id, database);
 
     final out = <String>[];
     for (final rule in rules) {
@@ -203,12 +231,10 @@ class DeckProvider with ChangeNotifier {
     final regs = standardRegs.isEmpty
         ? const {"H", "I", "J", "NONE"}
         : standardRegs;
-    int count = 0;
     int nonStdCount = 0;
     final nonStd = <String>{};
     bool hasBasic = false;
     deck.cards.forEach((id, n) {
-      count += n;
       final parts = _smartSplit(id, database);
       final card = database[parts[0]]?['cards']?[parts[1]];
       if (card == null) return;
@@ -219,6 +245,7 @@ class DeckProvider with ChangeNotifier {
       }
       if (card['type'] == "寶可夢" && card['stage'] == "基礎") hasBasic = true;
     });
+    final int count = deckSize(deck, database, deckRules);
     final violations = _ruleViolations(deck, database, deckRules);
     // 合法牌組：正好 60 張 + 至少 1 隻基礎寶可夢 + 沒有違反追加規則。任一不滿足 → 未完成。
     final String status = (count != 60 || !hasBasic || violations.isNotEmpty)
@@ -243,11 +270,15 @@ class DeckProvider with ChangeNotifier {
   }
 
   // --- 修改後的導出功能：增加雙重排序 (擴充包 + 卡號) ---
-  String generateExportText(Deck deck, Map<String, dynamic> database) {
+  String generateExportText(Deck deck, Map<String, dynamic> database,
+      {List<DeckRule> deckRules = const []}) {
     StringBuffer buffer = StringBuffer();
     buffer.writeln("【${deck.isBinder ? '收藏本' : '牌組'}：${deck.name}】");
-    int total = deck.cards.values.fold(0, (sum, c) => sum + c);
-    buffer.writeln("📋 總張數：$total\n");
+    int entries = deck.cards.values.fold(0, (sum, c) => sum + c);
+    int total = deckSize(deck, database, deckRules);
+    buffer.writeln(total == entries
+        ? "📋 總張數：$total\n"
+        : "📋 總張數：$total（畫面 $entries 張，傳說的 / V-UNION 依實體張數計）\n");
 
     List<Map<String, dynamic>> sortedCards = [];
     deck.cards.forEach((id, count) {
@@ -360,9 +391,8 @@ class DeckProvider with ChangeNotifier {
     final deck = currentDeck;
     if (deck == null) return "請先選擇目標";
 
-    if (!deck.isBinder) {
-      int totalCount = deck.cards.values.fold(0, (sum, count) => sum + count);
-      if (totalCount >= 60) return "牌組已滿 60 張";
+    if (!deck.isBinder && deckSize(deck, database, deckRules) >= 60) {
+      return "牌組已滿 60 張";
     }
 
     final parts = _smartSplit(fullId, database);
@@ -381,16 +411,26 @@ class DeckProvider with ChangeNotifier {
       if (nameCount >= 4) return "同名卡片「$cardName」最多只能放 4 張";
     }
 
-    // 追加組牌規則（光輝 / ACE SPEC / ◇ …）：先試加，違規就還原並回報。
+    // 追加組牌規則（光輝 / ACE SPEC / ◇ / 傳說的 / V-UNION …）：
+    // 先試加，超過 60 張或違規就還原並回報。
     deck.cards[fullId] = (deck.cards[fullId] ?? 0) + 1;
     if (!deck.isBinder) {
-      final violations = _ruleViolations(deck, database, deckRules);
-      if (violations.isNotEmpty) {
+      void undo() {
         if (deck.cards[fullId]! > 1) {
           deck.cards[fullId] = deck.cards[fullId]! - 1;
         } else {
           deck.cards.remove(fullId);
         }
+      }
+
+      if (deckSize(deck, database, deckRules) > 60) {
+        undo();
+        final w = cardWeight(_cardOf(fullId, database), deckRules);
+        return w > 1 ? "「$cardName」要算 $w 張，加入後會超過 60 張" : "牌組已滿 60 張";
+      }
+      final violations = _ruleViolations(deck, database, deckRules);
+      if (violations.isNotEmpty) {
+        undo();
         return violations.first;
       }
     }
