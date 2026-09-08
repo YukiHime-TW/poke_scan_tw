@@ -9,7 +9,33 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00006899.png",
         "reg": "F",
-        "elem": "雷"
+        "elem": "雷",
+        "hp": 190,
+        "stage": "基礎",
+        "dex": "479",
+        "attacks": [
+          {
+            "name": "放逐駭入",
+            "cost": [
+              "無色"
+            ],
+            "damage": "",
+            "text": "選擇1個對手的場上寶可夢身上附加的特殊能量，放置於放逐區。"
+          },
+          {
+            "name": "激電流",
+            "cost": [
+              "雷",
+              "雷",
+              "無色"
+            ],
+            "damage": "160",
+            "text": "選擇1個這隻寶可夢身上附加的能量，將其丟棄。"
+          }
+        ],
+        "weakness": "鬥×2",
+        "retreat": 1,
+        "illustrator": "5ban Graphics"
       },
       "002/006": {
         "name": "洛托姆VSTAR",
@@ -17,7 +43,31 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00006900.png",
         "reg": "F",
-        "elem": "雷"
+        "elem": "雷",
+        "hp": 250,
+        "stage": "1階進化",
+        "evolvesFrom": "洛托姆V",
+        "dex": "479",
+        "attacks": [
+          {
+            "name": "廢鐵脈衝",
+            "cost": [
+              "雷",
+              "雷"
+            ],
+            "damage": "80+",
+            "text": "將自己的棄牌區的任意數量的「寶可夢道具」放置於放逐區，增加其張數×40點傷害。"
+          },
+          {
+            "name": "[VSTAR力量][特性]轉化星星",
+            "cost": [],
+            "damage": "",
+            "text": "在自己的回合時可使用。將自己的任意數量的手牌丟棄，從牌庫抽出與其張數相同數量的卡。[對戰中，己方只可使用1次【VSTAR】力量。]"
+          }
+        ],
+        "weakness": "鬥×2",
+        "retreat": 1,
+        "illustrator": "5ban Graphics"
       },
       "003/006": {
         "name": "蒼響V",
@@ -25,7 +75,34 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00006901.png",
         "reg": "F",
-        "elem": "鋼"
+        "elem": "鋼",
+        "hp": 220,
+        "stage": "基礎",
+        "dex": "888",
+        "attacks": [
+          {
+            "name": "打穿",
+            "cost": [
+              "鋼"
+            ],
+            "damage": "40",
+            "text": "這個招式的傷害不計算弱點・抵抗力、對手的戰鬥寶可夢身上的附加效果。"
+          },
+          {
+            "name": "巨獸斬",
+            "cost": [
+              "鋼",
+              "鋼",
+              "無色"
+            ],
+            "damage": "100+",
+            "text": "若對手的戰鬥寶可夢為「寶可夢【VMAX】」，則增加160點傷害。"
+          }
+        ],
+        "weakness": "火×2",
+        "resistance": "草-30",
+        "retreat": 2,
+        "illustrator": "aky CG Works"
       },
       "004/006": {
         "name": "蒼響VSTAR",
@@ -33,7 +110,38 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00006902.png",
         "reg": "F",
-        "elem": "鋼"
+        "elem": "鋼",
+        "hp": 270,
+        "stage": "1階進化",
+        "evolvesFrom": "蒼響V",
+        "dex": "888",
+        "attacks": [
+          {
+            "name": "破壞刀鋒",
+            "cost": [
+              "鋼",
+              "鋼",
+              "無色"
+            ],
+            "damage": "200",
+            "text": "這個招式的傷害不計算弱點・抵抗力、對手的戰鬥寶可夢身上的附加效果。"
+          },
+          {
+            "name": "[VSTAR力量]劍之星星",
+            "cost": [
+              "鋼",
+              "鋼",
+              "無色",
+              "無色"
+            ],
+            "damage": "310",
+            "text": "這隻寶可夢也受到30點傷害。[對戰中，己方只可使用1次【VSTAR】力量。]"
+          }
+        ],
+        "weakness": "火×2",
+        "resistance": "草-30",
+        "retreat": 2,
+        "illustrator": "5ban Graphics"
       },
       "005/006": {
         "name": "藏瑪然特V",
@@ -41,7 +149,32 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00006903.png",
         "reg": "F",
-        "elem": "鋼"
+        "elem": "鋼",
+        "hp": 220,
+        "stage": "基礎",
+        "dex": "889",
+        "abilities": [
+          {
+            "name": "王者之勢",
+            "text": "在自己的回合時可使用1次，若使用，則自己的回合結束。將自己的手牌全部丟棄，從牌庫抽出5張卡。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "復仇暴擊",
+            "cost": [
+              "鋼",
+              "無色",
+              "無色"
+            ],
+            "damage": "120+",
+            "text": "增加對手已經獲得的獎賞卡的張數×30點傷害。"
+          }
+        ],
+        "weakness": "火×2",
+        "resistance": "草-30",
+        "retreat": 2,
+        "illustrator": "5ban Graphics"
       },
       "006/006": {
         "name": "藏瑪然特VSTAR",
@@ -49,7 +182,33 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00006904.png",
         "reg": "F",
-        "elem": "鋼"
+        "elem": "鋼",
+        "hp": 270,
+        "stage": "1階進化",
+        "evolvesFrom": "藏瑪然特V",
+        "dex": "889",
+        "attacks": [
+          {
+            "name": "終極衝擊",
+            "cost": [
+              "鋼",
+              "鋼",
+              "無色"
+            ],
+            "damage": "220",
+            "text": "在下個自己的回合，這隻寶可夢無法使用招式。"
+          },
+          {
+            "name": "[VSTAR力量][特性]盾之星星",
+            "cost": [],
+            "damage": "",
+            "text": "在自己的回合時可使用。在下個對手的回合，自己的所有寶可夢受到對手的寶可夢招式的傷害「-100」點。（包含新上場的寶可夢。）[對戰中，己方只可使用1次【VSTAR】力量。]"
+          }
+        ],
+        "weakness": "火×2",
+        "resistance": "草-30",
+        "retreat": 2,
+        "illustrator": "5ban Graphics"
       }
     },
     "match_reg": "F"
