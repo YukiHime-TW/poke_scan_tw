@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import '../providers/deck_provider.dart';
 import '../providers/collection_provider.dart';
 
@@ -11,8 +10,7 @@ class DeckListScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final deckProvider = Provider.of<DeckProvider>(context);
-    final collectionProvider =
-        Provider.of<CollectionProvider>(context, listen: false);
+    final collectionProvider = Provider.of<CollectionProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -20,6 +18,13 @@ class DeckListScreen extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold)),
         backgroundColor: Colors.teal.shade800,
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: "新增牌組 / 收藏本",
+            onPressed: () => _showCreateDialog(context, deckProvider),
+          ),
+        ],
       ),
       body: deckProvider.decks.isEmpty
           ? const Center(
@@ -34,6 +39,8 @@ class DeckListScreen extends StatelessWidget {
                 Color itemColor = deck.isBinder
                     ? Colors.orange.shade700
                     : Colors.teal.shade700;
+                final Widget? badge = _legalityBadge(
+                    deck, deckProvider, collectionProvider);
 
                 return Card(
                   elevation: 2,
@@ -45,9 +52,20 @@ class DeckListScreen extends StatelessWidget {
                         const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     leading: Icon(deck.isBinder ? Icons.menu_book : Icons.style,
                         color: itemColor, size: 30),
-                    title: Text(deck.name,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 18)),
+                    title: Row(
+                      children: [
+                        Flexible(
+                          child: Text(deck.name,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 18)),
+                        ),
+                        if (badge != null) ...[
+                          const SizedBox(width: 8),
+                          badge,
+                        ],
+                      ],
+                    ),
                     subtitle: Text(
                         "種類：${deck.isBinder ? '收藏本' : '牌組'}\n卡片總數：$totalCards ${!deck.isBinder ? '/ 60' : ''}"),
                     trailing: Row(
@@ -90,11 +108,27 @@ class DeckListScreen extends StatelessWidget {
                 );
               },
             ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: Colors.teal.shade800,
-        child: const Icon(Icons.add, color: Colors.white),
-        onPressed: () => _showCreateDialog(context, deckProvider),
-      ),
+    );
+  }
+
+  // 牌組合法性 badge（收藏本回 null）
+  Widget? _legalityBadge(Deck deck, DeckProvider dp, CollectionProvider cp) {
+    if (deck.isBinder) return null;
+    final legal = dp.checkLegality(deck, cp.database, cp.standardRegs);
+    final Color c = switch (legal.status) {
+      "標準" => Colors.green.shade600,
+      "開放" => Colors.grey.shade500,
+      _ => Colors.orange.shade700,
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+          color: c, borderRadius: BorderRadius.circular(4)),
+      child: Text(legal.status,
+          style: const TextStyle(
+              color: Colors.white,
+              fontSize: 11,
+              fontWeight: FontWeight.bold)),
     );
   }
 
@@ -170,6 +204,26 @@ class DeckListScreen extends StatelessWidget {
       BuildContext context, Deck deck, Map<String, dynamic> database) {
     var sortedEntries = deck.cards.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
+
+    final legal = deck.isBinder
+        ? null
+        : Provider.of<DeckProvider>(context, listen: false).checkLegality(
+            deck,
+            database,
+            Provider.of<CollectionProvider>(context, listen: false)
+                .standardRegs);
+    final legalityLines = <String>[
+      if (legal != null && legal.cardCount < 60)
+        "尚缺 ${60 - legal.cardCount} 張",
+      if (legal != null && legal.cardCount > 60)
+        "多了 ${legal.cardCount - 60} 張",
+      if (legal != null && legal.cardCount > 0 && !legal.hasBasic)
+        "沒有基礎寶可夢",
+      if (legal != null && legal.nonStandardNames.isNotEmpty)
+        "含 ${legal.nonStandardCount} 張非標準卡："
+            "${legal.nonStandardNames.take(8).join('、')}"
+            "${legal.nonStandardNames.length > 8 ? '…' : ''}",
+    ];
     showModalBottomSheet(
         context: context,
         isScrollControlled: true,
@@ -188,6 +242,20 @@ class DeckListScreen extends StatelessWidget {
                 Text("【${deck.name}】預覽",
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold)),
+                if (legal != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 4),
+                    child: Text(
+                      [
+                        "賽制：${legal.status}",
+                        ...legalityLines,
+                      ].join("　·　"),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: 12, color: Colors.grey.shade700),
+                    ),
+                  ),
                 const Divider(),
                 Expanded(
                     child: ListView.builder(
