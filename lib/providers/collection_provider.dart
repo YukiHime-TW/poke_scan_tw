@@ -17,6 +17,7 @@ class CollectionProvider with ChangeNotifier {
   Map<String, int> _wishlist = {}; // "setCode-num" -> 想要張數
   bool _isLoading = true;
   User? _user;
+  int _sessionId = 0; // 每次登入狀態改變都 +1，用來作廢進行中的雲端載入
 
   // 稀有度順序、標準賽制 reg 清單、機制標籤順序（啟動時抓 main，離線用 bundled）
   List<String> _rarityOrder = [];
@@ -139,11 +140,13 @@ class CollectionProvider with ChangeNotifier {
     // 4. 監聽 Firebase 登入狀態
     FirebaseAuth.instance.authStateChanges().listen((User? firebaseUser) async {
       _user = firebaseUser;
+      final session = ++_sessionId;
       if (firebaseUser != null) {
-        await _loadFromCloud(firebaseUser.uid);
+        await _loadFromCloud(firebaseUser.uid, session);
       } else {
         await _loadFromLocal();
       }
+      if (session != _sessionId) return; // 已被後續的登入事件取代
       _isLoading = false;
       notifyListeners();
     });
@@ -241,10 +244,11 @@ class CollectionProvider with ChangeNotifier {
     _wishlist = _decodeCounts(prefs.getString('my_wishlist'));
   }
 
-  Future<void> _loadFromCloud(String uid) async {
+  Future<void> _loadFromCloud(String uid, int session) async {
     try {
       DocumentSnapshot doc =
           await FirebaseFirestore.instance.collection('users').doc(uid).get();
+      if (session != _sessionId) return; // 中途登出 / 切換帳號 → 丟棄
       if (doc.exists && doc.data() != null) {
         final data = doc.data() as Map<String, dynamic>;
         _userCollection = (data['data'] as Map<String, dynamic>? ?? {})
@@ -253,12 +257,14 @@ class CollectionProvider with ChangeNotifier {
             .map((k, v) => MapEntry(k, (v as num).toInt()));
         _pruneWishlist();
         final prefs = await SharedPreferences.getInstance();
+        if (session != _sessionId) return;
         prefs.setString('my_collection', json.encode(_userCollection));
         prefs.setString('my_wishlist', json.encode(_wishlist));
       } else if (_userCollection.isNotEmpty || _wishlist.isNotEmpty) {
         await _saveToCloud();
       }
     } catch (e) {
+      if (session != _sessionId) return;
       print("雲端讀取失敗: $e");
       await _loadFromLocal();
     }
@@ -271,8 +277,8 @@ class CollectionProvider with ChangeNotifier {
     if (_user != null) await _saveToCloud();
   }
 
-  Future<void> _saveToCloud() async {
-    if (_user == null) return;
+  Future<bool> _saveToCloud() async {
+    if (_user == null) return false;
     try {
       await FirebaseFirestore.instance.collection('users').doc(_user!.uid).set({
         'data': _userCollection,
@@ -281,8 +287,10 @@ class CollectionProvider with ChangeNotifier {
         'email': _user!.email,
         'name': _user!.displayName,
       }, SetOptions(merge: true));
+      return true;
     } catch (e) {
       print("雲端同步失敗: $e");
+      return false;
     }
   }
 
@@ -406,12 +414,15 @@ class CollectionProvider with ChangeNotifier {
   }
 
   Future<void> signOut() async {
-    try {
-      // 1. 最後同步一次（安全帶：萬一之前有靜默沒同步到）
-      if (_user != null) await _saveToCloud();
+    _sessionId++; // 作廢任何進行中的 _loadFromCloud
 
-      // 2. 清掉本機的收藏 / 願望清單 / 牌組，回到乾淨的訪客狀態
-      //    （避免同一台手機換帳號時，資料髒掉或被推進別人的雲端）
+    // 1. 最後同步一次。同步失敗（離線 / 出錯）就「不」清本機 ——
+    //    寧可訪客暫時看到舊資料，也不要弄丟還沒上雲的變更。
+    final synced = _user == null ? true : await _saveToCloud();
+
+    // 2. 同步成功才清本機，回到乾淨的訪客狀態
+    //    （避免同機換帳號時資料髒掉、或被推進別人的雲端）
+    if (synced) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('my_collection');
       await prefs.remove('my_wishlist');
@@ -419,13 +430,16 @@ class CollectionProvider with ChangeNotifier {
       _userCollection = {};
       _wishlist = {};
       notifyListeners();
-
-      // 3. 真正登出（auth listener 接著跑 _loadFromLocal，落在空白狀態）
-      await GoogleSignIn().signOut();
-      await FirebaseAuth.instance.signOut();
-    } catch (e) {
-      print("登出錯誤: $e");
     }
+
+    // 3. 一定要登出 Firebase：Google 登出失敗不能擋（不然帳號還在，
+    //    本機卻空了，之後編輯會把空資料覆蓋回雲端）
+    try {
+      await GoogleSignIn().signOut();
+    } catch (e) {
+      print("Google 登出錯誤: $e");
+    }
+    await FirebaseAuth.instance.signOut();
   }
 
   // --- 掃描：解析 (純函式，不改資料) + 送出 (真的加卡) ---

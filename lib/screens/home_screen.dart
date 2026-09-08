@@ -140,13 +140,16 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _rarityFilter; // null = 全部；"" = 無標記
   String? _tagFilter; // null = 全部
 
+  bool _formatTouched = false;
+
   @override
   void initState() {
     super.initState();
     // 只記住上次的「賽制」篩選（其他篩選每次開 App 還原預設）
     SharedPreferences.getInstance().then((prefs) {
       final f = prefs.getString('last_format');
-      if (f != null && mounted) {
+      // 若使用者在讀取完成前已自己選過賽制，就不要覆蓋
+      if (f != null && mounted && !_formatTouched) {
         setState(() {
           _formatFilter = FormatFilter.values.firstWhere((e) => e.name == f,
               orElse: () => FormatFilter.standard);
@@ -156,6 +159,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _setFormat(FormatFilter f) {
+    _formatTouched = true;
     _formatFilter = f;
     SharedPreferences.getInstance()
         .then((p) => p.setString('last_format', f.name));
