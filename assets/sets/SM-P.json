@@ -443,7 +443,38 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00008112.png",
         "reg": "C",
-        "elem": "火"
+        "elem": "火",
+        "hp": 250,
+        "stage": "2階進化",
+        "evolvesFrom": "火恐龍",
+        "dex": "6",
+        "attacks": [
+          {
+            "name": "噴射火焰",
+            "cost": [
+              "火",
+              "火",
+              "無色",
+              "無色"
+            ],
+            "damage": "140",
+            "text": ""
+          },
+          {
+            "name": "閃焰衝鋒GX",
+            "cost": [
+              "火",
+              "火",
+              "無色",
+              "無色"
+            ],
+            "damage": "300",
+            "text": "［對戰中，己方只可使用1次GX招式。］"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 3,
+        "illustrator": "aky CG Works"
       },
       "066/SM-P": {
         "name": "水箭龜&波加曼GX",

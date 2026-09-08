@@ -9,7 +9,77 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00002067.png",
         "reg": "E",
-        "elem": "水"
+        "elem": "水",
+        "hp": 300,
+        "stage": "基礎",
+        "dex": "658",
+        "abilities": [
+          {
+            "name": "忍之身軀",
+            "text": "對手從手牌使出物品時，這隻寶可夢不會受到其效果的影響。"
+          },
+          {
+            "name": "解毒術",
+            "text": "這隻寶可夢不會【中毒】。"
+          },
+          {
+            "name": "踩穩",
+            "text": "在下個對手的回合，受到這個招式的寶可夢無法撤退。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "寶可夢V-UNION放置方法",
+            "cost": [],
+            "damage": "",
+            "text": "對戰中可放置1次，在自己的回合將自己的棄牌區中4種甲賀忍蛙【V-UNION】加以組合，放置於備戰區。"
+          },
+          {
+            "name": "聯盟增輝",
+            "cost": [
+              "無色"
+            ],
+            "damage": "",
+            "text": "從自己的棄牌區選擇最多2張【水】能量卡，附於這隻寶可夢身上。"
+          },
+          {
+            "name": "水之刀鋒",
+            "cost": [
+              "水"
+            ],
+            "damage": "130",
+            "text": ""
+          },
+          {
+            "name": "龍捲風手裏劍",
+            "cost": [
+              "水",
+              "水",
+              "無色"
+            ],
+            "damage": "",
+            "text": "對手的所有備戰寶可夢各受到100點傷害。[在備戰區不計算弱點・抵抗力。]"
+          },
+          {
+            "name": "瀑布束縛",
+            "cost": [
+              "水",
+              "水",
+              "無色"
+            ],
+            "damage": "180",
+            "text": "在自己的回合時，可使用1次。查看對手的手牌。"
+          },
+          {
+            "name": "V-UNION規則",
+            "cost": [],
+            "damage": "",
+            "text": "寶可夢【V-UNION】【氣絕】時，對手獲得3張獎賞卡。"
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 2,
+        "illustrator": "Shin Nagasawa"
       },
       "005/013": {
         "name": "超夢V-UNION",
@@ -17,7 +87,73 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00002068.png",
         "reg": "E",
-        "elem": "超"
+        "elem": "超",
+        "hp": 310,
+        "stage": "基礎",
+        "dex": "150",
+        "abilities": [
+          {
+            "name": "光子屏障",
+            "text": "這隻寶可夢不會受到對手的寶可夢使用招式的效果的影響。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "寶可夢V-UNION放置方法",
+            "cost": [],
+            "damage": "",
+            "text": "對戰中可放置1次，在自己的回合將自己的棄牌區中4種超夢【V-UNION】加以組合，放置於備戰區。"
+          },
+          {
+            "name": "聯盟增輝",
+            "cost": [
+              "無色"
+            ],
+            "damage": "",
+            "text": "從自己的棄牌區選擇最多2張【超】能量卡，附於這隻寶可夢身上。"
+          },
+          {
+            "name": "超再生",
+            "cost": [
+              "超",
+              "超",
+              "無色"
+            ],
+            "damage": "",
+            "text": "將這隻寶可夢恢復「200」HP。"
+          },
+          {
+            "name": "精神爆發",
+            "cost": [
+              "超",
+              "超",
+              "無色"
+            ],
+            "damage": "",
+            "text": "將16個傷害指示物以任意方式放置於對手的寶可夢身上。"
+          },
+          {
+            "name": "終期灼燒",
+            "cost": [
+              "超",
+              "超",
+              "超",
+              "無色"
+            ],
+            "damage": "300",
+            "text": ""
+          },
+          {
+            "name": "V-UNION規則",
+            "cost": [],
+            "damage": "",
+            "text": "寶可夢【V-UNION】【氣絕】時，對手獲得3張獎賞卡。"
+          }
+        ],
+        "weakness": "惡×2",
+        "resistance": "鬥-30",
+        "retreat": 2,
+        "illustrator": "AKIRA EGAWA"
       },
       "009/022": {
         "name": "蒼響V-UNION",
@@ -25,14 +161,98 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00002069.png",
         "reg": "E",
-        "elem": "鋼"
+        "elem": "鋼",
+        "hp": 320,
+        "stage": "基礎",
+        "dex": "888",
+        "attacks": [
+          {
+            "name": "寶可夢V-UNION放置方法",
+            "cost": [],
+            "damage": "",
+            "text": "對戰中可放置1次，在自己的回合將自己的棄牌區中4種蒼響【V-UNION】加以組合，放置於備戰區。"
+          },
+          {
+            "name": "聯盟增輝",
+            "cost": [
+              "無色"
+            ],
+            "damage": "",
+            "text": "從自己的棄牌區選擇最多2張【鋼】能量卡，附於這隻寶可夢身上。"
+          },
+          {
+            "name": "劍王之舞",
+            "cost": [
+              "鋼",
+              "鋼",
+              "無色"
+            ],
+            "damage": "150",
+            "text": "在下個對手的回合，受到這個招式的寶可夢使用招式的傷害「-150」點。"
+          },
+          {
+            "name": "鋼鐵斬",
+            "cost": [
+              "鋼",
+              "鋼",
+              "無色"
+            ],
+            "damage": "200",
+            "text": ""
+          },
+          {
+            "name": "精湛利刃",
+            "cost": [
+              "鋼",
+              "鋼",
+              "鋼",
+              "無色"
+            ],
+            "damage": "340",
+            "text": "選擇3個這隻寶可夢身上附加的能量，將其丟棄。"
+          },
+          {
+            "name": "V-UNION規則",
+            "cost": [],
+            "damage": "",
+            "text": "寶可夢【V-UNION】【氣絕】時，對手獲得3張獎賞卡。"
+          }
+        ],
+        "weakness": "火×2",
+        "resistance": "草-30",
+        "retreat": 2,
+        "illustrator": "PLANETA Tsuji"
       },
       "013/013": {
         "name": "霓虹魚V",
         "rarity": "",
         "type": "訓練家|支援者",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00010055.png",
-        "reg": "E"
+        "reg": "E",
+        "hp": 170,
+        "stage": "基礎",
+        "dex": "457",
+        "abilities": [
+          {
+            "name": "夜光標誌",
+            "text": "在自己的回合，從手牌將這張卡放置於備戰區時，可使用1次。從自己的牌庫選擇1張支援者卡，在給對手看過後加入手牌。並且重洗牌庫。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "水迴旋",
+            "cost": [
+              "水",
+              "無色",
+              "無色"
+            ],
+            "damage": "120",
+            "text": "將這隻寶可夢與附加的卡，全部放回自己的牌庫並重洗。"
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 1,
+        "illustrator": "takuyoa"
       }
     },
     "match_reg": "FGH"
