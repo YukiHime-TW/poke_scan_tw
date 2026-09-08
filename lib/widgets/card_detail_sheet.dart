@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/collection_provider.dart';
@@ -320,7 +321,12 @@ class CardDetailSheet extends StatelessWidget {
           const Spacer(),
           if (enabled)
             IconButton(
-              onPressed: value > 0 ? onRemove : null,
+              onPressed: value > 0
+                  ? () {
+                      HapticFeedback.selectionClick();
+                      onRemove();
+                    }
+                  : null,
               icon: const Icon(Icons.remove_circle_outline),
               color: c,
               visualDensity: VisualDensity.compact,
@@ -336,7 +342,10 @@ class CardDetailSheet extends StatelessWidget {
           ),
           if (enabled)
             IconButton(
-              onPressed: onAdd,
+              onPressed: () {
+                HapticFeedback.selectionClick();
+                onAdd();
+              },
               icon: const Icon(Icons.add_circle),
               color: c,
               visualDensity: VisualDensity.compact,

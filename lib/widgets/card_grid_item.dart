@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../providers/collection_provider.dart';
@@ -129,6 +130,7 @@ class _CardGridItemState extends State<CardGridItem> {
 
     return GestureDetector(
       onTap: () {
+        HapticFeedback.selectionClick();
         if (activeDeck != null) {
           final err = deckProvider.addCardToDeck(
               fullId, widget.cardData['name'], provider.database);
