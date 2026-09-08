@@ -23,6 +23,8 @@ class CollectionProvider with ChangeNotifier {
   // 稀有度順序、標準賽制 reg 清單、機制標籤順序（啟動時抓 main，離線用 bundled）
   List<String> _rarityOrder = [];
   Set<String> _standardRegs = {};
+  Set<String> _standardNames = {}; // reg 非 H/I/J 但官方仍列為標準合法的卡名
+  Set<String> _bannedIds = {}; // 全面禁用卡「setCode-num」
   List<String> _tagOrder = [];
   List<DeckRule> _deckRules = []; // 追加組牌規則（光輝 / ACE SPEC / ◇ …）
 
@@ -38,6 +40,8 @@ class CollectionProvider with ChangeNotifier {
 
   List<String> get rarityOrder => _rarityOrder;
   Set<String> get standardRegs => _standardRegs;
+  Set<String> get standardNames => _standardNames;
+  Set<String> get bannedIds => _bannedIds;
   List<DeckRule> get deckRules => _deckRules;
 
   /// 資料庫裡實際出現過的稀有度，依 rarity_order.json 排序（表裡沒有的排最後）。
@@ -133,6 +137,13 @@ class CollectionProvider with ChangeNotifier {
         _standardRegs = (fmt['standard'] as List)
             .map((e) => e.toString().toUpperCase())
             .toSet();
+      }
+      if (fmt is Map && fmt['standardNames'] is List) {
+        _standardNames =
+            (fmt['standardNames'] as List).map((e) => e.toString()).toSet();
+      }
+      if (fmt is Map && fmt['banned'] is List) {
+        _bannedIds = (fmt['banned'] as List).map((e) => e.toString()).toSet();
       }
       final to = await _loadJsonConfig('tags_order.json');
       if (to is List) _tagOrder = to.map((e) => e.toString()).toList();
@@ -476,7 +487,7 @@ class CollectionProvider with ChangeNotifier {
     if (deckProvider != null && deckProvider.currentDeck != null) {
       final err = deckProvider.addCardToDeck(
           "${c.setCode}-${c.cardKey}", name, _database,
-          deckRules: _deckRules);
+          deckRules: _deckRules, bannedIds: _bannedIds);
       if (err != null) return "⚠️ $err";
       return "【牌組】$fullName";
     }

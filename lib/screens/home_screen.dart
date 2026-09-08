@@ -172,14 +172,18 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  // --- 賽制過濾邏輯（標準 reg 清單來自 formats.json，見 collection_provider）---
-  bool _matchesFormat(dynamic cardData, Set<String> standardRegs) {
+  // --- 賽制過濾邏輯（標準 reg 清單 / 過往可用卡清單來自 formats.json，見 collection_provider）---
+  bool _matchesFormat(
+      dynamic cardData, Set<String> standardRegs, Set<String> standardNames) {
     if (_formatFilter == FormatFilter.all) return true;
     if (_formatFilter == FormatFilter.standard) {
       final regs = standardRegs.isEmpty
           ? const {"H", "I", "J", "NONE"}
           : standardRegs;
-      return regs.contains((cardData['reg'] ?? "").toString().toUpperCase());
+      if (regs.contains((cardData['reg'] ?? "").toString().toUpperCase())) {
+        return true;
+      }
+      return standardNames.contains((cardData['name'] ?? "").toString());
     }
     return true; // 開放：台灣無殿堂 / extra 限制，全部合法
   }
@@ -327,7 +331,8 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_statusFilter == StatusFilter.competitive && count <= 4) return;
         }
 
-        if (!_matchesFormat(v, provider.standardRegs)) return;
+        if (!_matchesFormat(v, provider.standardRegs, provider.standardNames))
+          return;
         if (!_matchesType(v)) return;
         if (!_matchesElement(v)) return;
         if (!_matchesRarity(v)) return;
@@ -871,9 +876,11 @@ class _HomeScreenState extends State<HomeScreen> {
                     "◇（稜柱之星）卡同名限 1 張、「傳說的」競技場同名限 2 張（1 張算 2 張）、"
                     "V-UNION 寶可夢整套限 1 種（算 4 張）\n• 收藏本：無張數與同名限制"),
                 _buildHelpItem("合法性標記", "牌組名稱旁：\n"
-                    "• 標準：全部標準賽制合法\n• 開放：含已輪替的卡\n"
-                    "• 未完成：未滿 60 張、沒有基礎寶可夢，或違反上述額外張數規則\n"
-                    "預覽頁會列出是哪幾張非標準卡、以及違反了哪條規則。"),
+                    "• 標準：全部標準賽制合法（含官方「過往可用卡清單」的舊標記卡）\n"
+                    "• 開放：含已輪替的卡\n"
+                    "• 未完成：未滿 60 張、沒有基礎寶可夢、違反上述額外張數規則，"
+                    "或含官方禁用卡\n"
+                    "預覽頁會列出非標準卡、禁用卡、以及違反了哪條規則。"),
                 Padding(
                   padding: const EdgeInsets.only(left: 12, bottom: 10),
                   child: Column(
