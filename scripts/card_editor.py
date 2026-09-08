@@ -113,6 +113,8 @@ PAGE = """<!doctype html><html lang="zh-Hant"><meta charset="utf-8">
 .row img{width:28px;height:39px;object-fit:cover;border-radius:2px}
 .row .n{color:#888;font-variant-numeric:tabular-nums;min-width:56px}
 .row.tagged .n::after{content:" ●";color:#4B3BA6}
+.row.reviewed{color:#999}
+.row.reviewed .n::after{content:" ○";color:#999}
 #right{flex:1;overflow:auto;padding:16px;display:flex;gap:20px}
 #form{flex:1;max-width:560px}#pic img{width:240px;border-radius:8px}
 label{display:block;margin:8px 0 2px;color:#555;font-size:12px}
@@ -133,6 +135,7 @@ small{color:#999}
 </header><div id="list"></div></div>
 <div id="right"><div id="form"><div class="bar">
 <button id="save">存檔 (Ctrl+S)</button>
+<button class="ghost" id="noTags">無標籤（已審）→</button>
 <button class="ghost" id="nextUntagged">下一張未標記 →</button>
 <small id="status"></small></div><div id="fields"></div>
 <label>機制標籤　<small>紫框 = 依效果文字建議</small></label>
@@ -149,7 +152,7 @@ let TAGS=[];
 let SET=null, CODE=null, NUM=null, dirty=false;
 const $=s=>document.querySelector(s);
 const FIELDS=["name","rarity","type","reg","elem","hp","stage","evolvesFrom","dex","category","weakness","resistance","retreat","illustrator","image"];
-async function j(u,o){const r=await fetch(u,o);return r.json()}
+async function j(u,o){const r=await fetch(u,o);if(!r.ok){alert("請求失敗 "+r.status);throw new Error(r.status);}return r.json()}
 
 async function boot(){
   TAGS=await j("/api/tags");
@@ -186,11 +189,12 @@ async function openSet(code){
 function renderList(){
   const q=$("#q").value.trim().toLowerCase();
   const rows=Object.entries(SET).filter(([n,c])=>!q||n.toLowerCase().includes(q)||(c.name||"").toLowerCase().includes(q));
-  $("#list").innerHTML=rows.map(([n,c])=>
-    `<div class="row ${c.tags?.length?'tagged':''} ${n===NUM?'sel':''}" data-n="${n}">
+  $("#list").innerHTML=rows.map(([n,c])=>{
+    const mark=c.tags?.length?'tagged':(c.tagsReviewed?'reviewed':'');
+    return `<div class="row ${mark} ${n===NUM?'sel':''}" data-n="${n}">
       <span class="n">${n.split('/')[0]}</span>
       <img src="${c.image||''}" loading="lazy">
-      <span>${c.name||''}</span></div>`).join("");
+      <span>${c.name||''}</span></div>`}).join("");
   $("#list").querySelectorAll(".row").forEach(r=>r.onclick=()=>pick(r.dataset.n));
 }
 function pick(n){
@@ -215,12 +219,12 @@ function pick(n){
   renderList();
 }
 function field(f,inner){return `<label>${f}</label>${inner}`}
-async function save(){
+function collect(){
   if(!NUM)return;
   const c={...SET[NUM]}; delete c._suggest;
   FIELDS.forEach(f=>{
     let v=$("#fx_"+f).value.trim();
-    if(v==="")delete c[f];
+    if(v===""){ if(c[f]!==undefined && c[f]!=="") delete c[f]; }
     else if(["hp","retreat"].includes(f))c[f]=parseInt(v)||undefined;
     else c[f]=v;
   });
@@ -229,19 +233,32 @@ async function save(){
       const k=JSON.parse($("#fx_attacks").value); k.length?c.attacks=k:delete c.attacks;}
   catch(e){alert("abilities / attacks JSON 格式錯誤："+e.message);return;}
   const tg=[...$("#tagbox").querySelectorAll("input:checked")].map(i=>i.value);
-  tg.length?c.tags=tg:delete c.tags;
+  if(tg.length){c.tags=tg;delete c.tagsReviewed;}else delete c.tags;
+  return c;
+}
+async function save(){
+  const c=collect(); if(!c)return;
   Object.keys(c).forEach(k=>c[k]===undefined&&delete c[k]);
   await j("/api/save",{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({set:CODE,num:NUM,card:c})});
   SET[NUM]=c; dirty=false; $("#status").textContent="已存 "+new Date().toLocaleTimeString();
   renderList();
 }
+async function markNoTags(){
+  const c=collect(); if(!c)return;
+  delete c.tags; c.tagsReviewed=true;
+  Object.keys(c).forEach(k=>c[k]===undefined&&delete c[k]);
+  await j("/api/save",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({set:CODE,num:NUM,card:c})});
+  SET[NUM]=c; dirty=false; renderList(); nextUntagged();
+}
 function nextUntagged(){
   const ns=Object.keys(SET); let i=ns.indexOf(NUM);
-  for(let k=1;k<=ns.length;k++){const n=ns[(i+k)%ns.length];if(!SET[n].tags?.length){pick(n);return}}
-  alert("這個系列都標完了");
+  for(let k=1;k<=ns.length;k++){const n=ns[(i+k)%ns.length];const x=SET[n];
+    if(!x.tags?.length && !x.tagsReviewed){pick(n);return}}
+  alert("這個系列都審完了");
 }
-$("#save").onclick=save; $("#nextUntagged").onclick=nextUntagged;
+$("#save").onclick=save; $("#nextUntagged").onclick=nextUntagged; $("#noTags").onclick=markNoTags;
 document.onkeydown=e=>{
   if((e.ctrlKey||e.metaKey)&&e.key==="s"){e.preventDefault();save();return}
   if(["INPUT","TEXTAREA","SELECT"].includes(e.target.tagName))return;
