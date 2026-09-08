@@ -494,7 +494,12 @@ class _HomeScreenState extends State<HomeScreen> {
             builder: (context, prov, _) => prov.user == null
                 ? IconButton(
                     icon: const Icon(Icons.login),
-                    onPressed: () => prov.signInWithGoogle())
+                    onPressed: () async {
+                      final err = await prov.signInWithGoogle();
+                      if (!context.mounted || err == null) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(err)));
+                    })
                 : InkWell(
                     onTap: () => _showLogoutDialog(context, prov),
                     child: Padding(
