@@ -20,6 +20,22 @@
       "where": { "nameContains": "◇" },
       "scope": "name",
       "max": 1
+    },
+    {
+      "id": "legend-stadium",
+      "label": "「傳說的」競技場",
+      "where": { "nameContains": "傳說的", "type": "訓練家|競技場" },
+      "scope": "name",
+      "max": 2,
+      "weight": 2
+    },
+    {
+      "id": "v-union",
+      "label": "V-UNION 寶可夢",
+      "where": { "nameContains": "V-UNION", "type": "寶可夢" },
+      "scope": "deck",
+      "max": 1,
+      "weight": 4
     }
   ]
 }

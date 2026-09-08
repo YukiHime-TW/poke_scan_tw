@@ -18,7 +18,8 @@
   可一鍵複製成「還缺 N」的對齊文字貼社群
 - **相機掃描**：對準卡片左下角編號，裝置端 OCR（ML Kit）辨識並加入收藏，不上傳照片
 - **牌組 / 收藏本**：牌組限 60 張・同名 4 張，另依 `deck_rules.json` 套用光輝寶可夢 /
-  ACE SPEC / ◇ 等額外張數上限；收藏本無限制；比對實體庫存；匯出牌表
+  ACE SPEC / ◇ / 「傳說的」競技場（算 2 張）/ V-UNION（算 4 張）等額外張數上限；
+  收藏本無限制；比對實體庫存；匯出牌表
 - **牌組合法性檢查**：牌組清單依 `formats.json` 標示 **標準 / 開放 / 未完成**，
   預覽頁列出非標準卡、缺張、缺基礎寶可夢與違反的額外組牌規則
 - **篩選**：收藏狀態（含願望清單）/ 賽制 / 種類 / 屬性 / 稀有度 / 機制標籤
@@ -40,7 +41,7 @@ JSON 與設定檔，**所以卡片資料變更需合併進 `main` 才會生效**
 | `assets/rarity_order.json` | 稀有度篩選 chip 的排序（陣列，不在清單內的排最後） |
 | `assets/formats.json` | `{ "standard": [...reg] }`，標準賽制的 reg 白名單，供篩選與牌組合法性檢查共用 |
 | `assets/tags_order.json` | 機制標籤 chip 的分組排序 |
-| `assets/deck_rules.json` | 追加組牌張數上限；`cardLimits[]`，每條 `where`（nameContains / type / rarity，全中才算命中）+ `scope`（`deck` 整套牌總量 / `name` 每個同名）+ `max`。新規則同型只改資料 |
+| `assets/deck_rules.json` | 追加組牌張數上限；`cardLimits[]`，每條 `where`（nameContains / type / rarity，全中才算命中）+ `scope`（`deck` 整套牌總量 / `name` 每個同名）+ `max` + 選用 `weight`（畫面 1 張實際算幾張，如傳說的競技場 2、V-UNION 4）。新規則同型只改資料 |
 
 ## 專案結構
 
