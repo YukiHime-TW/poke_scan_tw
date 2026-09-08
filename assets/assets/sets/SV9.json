@@ -9,7 +9,24 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012463.png",
         "reg": "I",
-        "elem": "草"
+        "elem": "草",
+        "hp": 50,
+        "stage": "基礎",
+        "dex": "10",
+        "category": "蟲寶寶寶可夢",
+        "attacks": [
+          {
+            "name": "蟲咬",
+            "cost": [
+              "草"
+            ],
+            "damage": "20",
+            "text": ""
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 1,
+        "illustrator": "Shimaris Yukichi"
       },
       "002/100": {
         "name": "鐵甲蛹",
@@ -173,7 +190,7 @@
       },
       "022/100": {
         "name": "蓮帽小童",
-        "rarity": "c",
+        "rarity": "C",
         "type": "寶可夢",
         "image": "https://assets.tcgdex.net/zh-tw/SV/SV9/022/high.webp",
         "reg": "I",
@@ -796,7 +813,30 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012627.png",
         "reg": "I",
-        "elem": "草"
+        "elem": "草",
+        "hp": 110,
+        "stage": "基礎",
+        "dex": "556",
+        "category": "仙人掌寶可夢",
+        "abilities": [
+          {
+            "name": "炸裂針",
+            "text": "這隻寶可夢在戰鬥場上受到對手的寶可夢招式的傷害而【昏厥】時，在使用招式的寶可夢身上放置6個傷害指示物。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "窮追不捨",
+            "cost": [
+              "無色"
+            ],
+            "damage": "20",
+            "text": "在下個對手的回合，受到這個招式的寶可夢無法撤退。"
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 2,
+        "illustrator": "Ounishi"
       },
       "102/100": {
         "name": "急凍鳥",
@@ -804,7 +844,35 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012628.png",
         "reg": "I",
-        "elem": "水"
+        "elem": "水",
+        "hp": 110,
+        "stage": "基礎",
+        "dex": "144",
+        "category": "冰凍寶可夢",
+        "attacks": [
+          {
+            "name": "冰冷羽擊",
+            "cost": [
+              "無色"
+            ],
+            "damage": "",
+            "text": "從自己的牌庫選擇最多2張「基本【水】能量」卡，附於這隻寶可夢身上。並且重洗牌庫。"
+          },
+          {
+            "name": "冰之爆破",
+            "cost": [
+              "水",
+              "水",
+              "無色"
+            ],
+            "damage": "110",
+            "text": ""
+          }
+        ],
+        "weakness": "雷×2",
+        "resistance": "鬥-30",
+        "retreat": 1,
+        "illustrator": "Kuroimori"
       },
       "103/100": {
         "name": "吼鯨王",
@@ -812,7 +880,28 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012629.png",
         "reg": "I",
-        "elem": "水"
+        "elem": "水",
+        "hp": 240,
+        "stage": "1階進化",
+        "evolvesFrom": "吼吼鯨",
+        "dex": "321",
+        "category": "浮鯨寶可夢",
+        "attacks": [
+          {
+            "name": "水炮",
+            "cost": [
+              "無色",
+              "無色",
+              "無色",
+              "無色"
+            ],
+            "damage": "10+",
+            "text": "增加這隻寶可夢身上附加的【水】能量的數量×50點傷害。"
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 4,
+        "illustrator": "Katsunori Sato"
       },
       "104/100": {
         "name": "奇樹的大電海燕",
@@ -820,7 +909,34 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012630.png",
         "reg": "I",
-        "elem": "雷"
+        "elem": "雷",
+        "hp": 120,
+        "stage": "1階進化",
+        "evolvesFrom": "奇樹的電海燕",
+        "dex": "941",
+        "category": "軍艦鳥寶可夢",
+        "abilities": [
+          {
+            "name": "閃光抽出",
+            "text": "在自己的回合，若將1個這隻寶可夢身上附加的「基本【雷】能量」丟棄，則可使用1次。從牌庫抽卡直到自己的手牌滿6張為止。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "音速伏特",
+            "cost": [
+              "雷",
+              "無色",
+              "無色"
+            ],
+            "damage": "70",
+            "text": ""
+          }
+        ],
+        "weakness": "雷×2",
+        "resistance": "鬥-30",
+        "retreat": 1,
+        "illustrator": "Terada Tera"
       },
       "105/100": {
         "name": "莉莉艾的蝶結萌虻",
@@ -828,7 +944,31 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012631.png",
         "reg": "I",
-        "elem": "超"
+        "elem": "超",
+        "hp": 70,
+        "stage": "1階進化",
+        "evolvesFrom": "莉莉艾的萌虻",
+        "dex": "743",
+        "category": "蜂虻寶可夢",
+        "abilities": [
+          {
+            "name": "邀請眨眼",
+            "text": "在自己的回合，從手牌使出這張卡並完成進化時，可使用1次。查看對手的手牌，從其中選擇任意數量的【基礎】寶可夢卡，放置於對手的備戰區。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "魔法射擊",
+            "cost": [
+              "超"
+            ],
+            "damage": "50",
+            "text": ""
+          }
+        ],
+        "weakness": "鋼×2",
+        "retreat": 0,
+        "illustrator": "saino misaki"
       },
       "106/100": {
         "name": "小山豬",
@@ -836,7 +976,32 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012632.png",
         "reg": "I",
-        "elem": "鬥"
+        "elem": "鬥",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "220",
+        "category": "小豬寶可夢",
+        "attacks": [
+          {
+            "name": "呼朋引伴",
+            "cost": [
+              "無色"
+            ],
+            "damage": "",
+            "text": "從自己的牌庫選擇最多2張【基礎】寶可夢卡，放置於備戰區。並且重洗牌庫。"
+          },
+          {
+            "name": "撞倒",
+            "cost": [
+              "鬥"
+            ],
+            "damage": "10",
+            "text": ""
+          }
+        ],
+        "weakness": "草×2",
+        "retreat": 2,
+        "illustrator": "Nakamura Ippan"
       },
       "107/100": {
         "name": "鬃岩狼人",
@@ -844,7 +1009,33 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012633.png",
         "reg": "I",
-        "elem": "鬥"
+        "elem": "鬥",
+        "hp": 120,
+        "stage": "1階進化",
+        "evolvesFrom": "岩狗狗",
+        "dex": "745",
+        "category": "狼寶可夢",
+        "abilities": [
+          {
+            "name": "尖刺纏身",
+            "text": "在自己的回合，從手牌使出這張卡並完成進化時，可使用1次。從自己的棄牌區選擇最多2張「扣殺能量」，附於這隻寶可夢身上。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "抓擊獠牙",
+            "cost": [
+              "無色",
+              "無色",
+              "無色"
+            ],
+            "damage": "40+",
+            "text": "增加對手的戰鬥寶可夢身上放置的傷害指示物的數量×40點傷害。"
+          }
+        ],
+        "weakness": "草×2",
+        "retreat": 2,
+        "illustrator": "GIDORA"
       },
       "108/100": {
         "name": "N的索羅亞",
@@ -852,7 +1043,24 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012634.png",
         "reg": "I",
-        "elem": "惡"
+        "elem": "惡",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "570",
+        "category": "惡狐寶可夢",
+        "attacks": [
+          {
+            "name": "抓",
+            "cost": [
+              "惡"
+            ],
+            "damage": "20",
+            "text": ""
+          }
+        ],
+        "weakness": "草×2",
+        "retreat": 1,
+        "illustrator": "Megumi Mizutani"
       },
       "109/100": {
         "name": "N的萊希拉姆",
@@ -860,7 +1068,35 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012635.png",
         "reg": "I",
-        "elem": "龍"
+        "elem": "龍",
+        "hp": 130,
+        "stage": "基礎",
+        "dex": "643",
+        "category": "白陽寶可夢",
+        "attacks": [
+          {
+            "name": "強力激怒",
+            "cost": [
+              "火",
+              "雷"
+            ],
+            "damage": "20×",
+            "text": "造成這隻寶可夢身上放置的傷害指示物的數量×20點傷害。"
+          },
+          {
+            "name": "純真火焰",
+            "cost": [
+              "火",
+              "火",
+              "雷",
+              "無色"
+            ],
+            "damage": "170",
+            "text": ""
+          }
+        ],
+        "retreat": 2,
+        "illustrator": "Bun Toujo"
       },
       "110/100": {
         "name": "大尾立",
@@ -868,7 +1104,34 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012636.png",
         "reg": "I",
-        "elem": "無色"
+        "elem": "無色",
+        "hp": 120,
+        "stage": "1階進化",
+        "evolvesFrom": "尾立",
+        "dex": "162",
+        "category": "長軀幹寶可夢",
+        "attacks": [
+          {
+            "name": "抓",
+            "cost": [
+              "無色"
+            ],
+            "damage": "40",
+            "text": ""
+          },
+          {
+            "name": "噴射頭擊",
+            "cost": [
+              "無色",
+              "無色"
+            ],
+            "damage": "70",
+            "text": ""
+          }
+        ],
+        "weakness": "鬥×2",
+        "retreat": 1,
+        "illustrator": "REND"
       },
       "111/100": {
         "name": "嗡蝠",
@@ -876,7 +1139,25 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012637.png",
         "reg": "I",
-        "elem": "無色"
+        "elem": "無色",
+        "hp": 60,
+        "stage": "基礎",
+        "dex": "714",
+        "category": "音波寶可夢",
+        "attacks": [
+          {
+            "name": "快速抽出",
+            "cost": [
+              "無色"
+            ],
+            "damage": "10",
+            "text": "從自己的牌庫抽出1張卡。"
+          }
+        ],
+        "weakness": "雷×2",
+        "resistance": "鬥-30",
+        "retreat": 1,
+        "illustrator": "sowsow"
       },
       "112/100": {
         "name": "赫普的毛辮羊",
@@ -884,7 +1165,26 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012638.png",
         "reg": "I",
-        "elem": "無色"
+        "elem": "無色",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "831",
+        "category": "綿羊寶可夢",
+        "attacks": [
+          {
+            "name": "踢飛",
+            "cost": [
+              "無色",
+              "無色",
+              "無色"
+            ],
+            "damage": "50",
+            "text": ""
+          }
+        ],
+        "weakness": "鬥×2",
+        "retreat": 1,
+        "illustrator": "MINAMINAMI Take"
       },
       "113/100": {
         "name": "波爾凱尼恩ex",
@@ -892,7 +1192,31 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012639.png",
         "reg": "I",
-        "elem": "火"
+        "elem": "火",
+        "hp": 220,
+        "stage": "基礎",
+        "dex": "721",
+        "abilities": [
+          {
+            "name": "燒灼蒸汽",
+            "text": "若這隻寶可夢在戰鬥場上，則在自己的回合時可使用1次。將對手的戰鬥寶可夢【灼傷】。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "高溫旋風",
+            "cost": [
+              "火",
+              "火",
+              "無色"
+            ],
+            "damage": "160",
+            "text": "選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 3,
+        "illustrator": "5ban Graphics"
       },
       "114/100": {
         "name": "奇樹的電肚蛙ex",
@@ -900,7 +1224,33 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012640.png",
         "reg": "I",
-        "elem": "雷"
+        "elem": "雷",
+        "hp": 280,
+        "stage": "1階進化",
+        "evolvesFrom": "奇樹的光蚪仔",
+        "dex": "939",
+        "abilities": [
+          {
+            "name": "電氣流",
+            "text": "在自己的回合時，可不限次數使用。從自己的手牌選擇1張「基本【雷】能量」卡，附於自己的「奇樹的寶可夢」身上。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "閃電伏特",
+            "cost": [
+              "雷",
+              "雷",
+              "雷",
+              "無色"
+            ],
+            "damage": "230",
+            "text": "在下個自己的回合，這隻寶可夢無法使用招式。"
+          }
+        ],
+        "weakness": "鬥×2",
+        "retreat": 2,
+        "illustrator": "5ban Graphics"
       },
       "115/100": {
         "name": "莉莉艾的皮皮ex",
@@ -908,7 +1258,30 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012641.png",
         "reg": "I",
-        "elem": "超"
+        "elem": "超",
+        "hp": 190,
+        "stage": "基礎",
+        "dex": "35",
+        "abilities": [
+          {
+            "name": "妖精領域",
+            "text": "只要這隻寶可夢在場上，對手的場上的所有【龍】寶可夢的弱點全部改爲【超】屬性。[弱點以「×2」計算傷害。]"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "滿月輪舞",
+            "cost": [
+              "超",
+              "無色"
+            ],
+            "damage": "20+",
+            "text": "增加雙方的備戰寶可夢的數量×20點傷害。"
+          }
+        ],
+        "weakness": "鋼×2",
+        "retreat": 1,
+        "illustrator": "5ban Graphics"
       },
       "116/100": {
         "name": "象牙豬ex",
@@ -916,7 +1289,31 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012642.png",
         "reg": "I",
-        "elem": "鬥"
+        "elem": "鬥",
+        "hp": 340,
+        "stage": "2階進化",
+        "evolvesFrom": "長毛豬",
+        "dex": "473",
+        "abilities": [
+          {
+            "name": "毛象搬運",
+            "text": "在自己的回合時可使用1次。從自己的牌庫選擇1張寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "雷鳴行進",
+            "cost": [
+              "鬥",
+              "鬥"
+            ],
+            "damage": "180+",
+            "text": "增加自己的備戰區的【2階進化】寶可夢的數量×40點傷害。"
+          }
+        ],
+        "weakness": "草×2",
+        "retreat": 4,
+        "illustrator": "N-DESIGN Inc."
       },
       "117/100": {
         "name": "N的索羅亞克ex",
@@ -924,7 +1321,31 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012643.png",
         "reg": "I",
-        "elem": "惡"
+        "elem": "惡",
+        "hp": 280,
+        "stage": "1階進化",
+        "evolvesFrom": "N的索羅亞",
+        "dex": "571",
+        "abilities": [
+          {
+            "name": "交易",
+            "text": "在自己的回合，若將自己的1張手牌丟棄，則可使用1次。從自己的牌庫抽出2張卡。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "暗黑底牌",
+            "cost": [
+              "惡",
+              "惡"
+            ],
+            "damage": "",
+            "text": "選擇1個自己的備戰區的「N的寶可夢」持有的招式，作為這個招式使用。"
+          }
+        ],
+        "weakness": "草×2",
+        "retreat": 2,
+        "illustrator": "takuyoa"
       },
       "118/100": {
         "name": "赫普的蒼響ex",
@@ -932,7 +1353,35 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012644.png",
         "reg": "I",
-        "elem": "鋼"
+        "elem": "鋼",
+        "hp": 230,
+        "stage": "基礎",
+        "dex": "888",
+        "attacks": [
+          {
+            "name": "剎那斬",
+            "cost": [
+              "無色"
+            ],
+            "damage": "30",
+            "text": "對手的1隻備戰寶可夢也受到30點傷害。[在備戰區不計算弱點・抵抗力。]"
+          },
+          {
+            "name": "無畏斬",
+            "cost": [
+              "鋼",
+              "鋼",
+              "鋼",
+              "無色"
+            ],
+            "damage": "240",
+            "text": "在下個自己的回合，這隻寶可夢無法使用「無畏斬」。"
+          }
+        ],
+        "weakness": "火×2",
+        "resistance": "草-30",
+        "retreat": 2,
+        "illustrator": "aky CG Works"
       },
       "119/100": {
         "name": "暴飛龍ex",
@@ -940,7 +1389,36 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012645.png",
         "reg": "I",
-        "elem": "龍"
+        "elem": "龍",
+        "hp": 320,
+        "stage": "2階進化",
+        "evolvesFrom": "甲殼龍",
+        "dex": "373",
+        "attacks": [
+          {
+            "name": "廣域爆破",
+            "cost": [
+              "火",
+              "無色",
+              "無色"
+            ],
+            "damage": "",
+            "text": "對手的所有備戰寶可夢各受到50點傷害。[在備戰區不計算弱點・抵抗力。]"
+          },
+          {
+            "name": "狂龍衝擊",
+            "cost": [
+              "火",
+              "水",
+              "無色",
+              "無色"
+            ],
+            "damage": "300",
+            "text": "選擇2個這隻寶可夢身上附加的能量，將其丟棄。"
+          }
+        ],
+        "retreat": 2,
+        "illustrator": "5ban Graphics"
       },
       "120/100": {
         "name": "土龍節節ex",
@@ -948,28 +1426,61 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012646.png",
         "reg": "I",
-        "elem": "無色"
+        "elem": "無色",
+        "hp": 270,
+        "stage": "1階進化",
+        "evolvesFrom": "土龍弟弟",
+        "dex": "982",
+        "attacks": [
+          {
+            "name": "逆境之尾",
+            "cost": [
+              "無色"
+            ],
+            "damage": "60×",
+            "text": "造成對手的場上的「寶可夢【ex】」的數量×60點傷害。"
+          },
+          {
+            "name": "鑽破壞",
+            "cost": [
+              "無色",
+              "無色",
+              "無色"
+            ],
+            "damage": "150",
+            "text": "這個招式的傷害不計算對手的戰鬥寶可夢身上的附加效果。"
+          }
+        ],
+        "weakness": "鬥×2",
+        "retreat": 3,
+        "illustrator": "5ban Graphics"
       },
       "121/100": {
         "name": "艾莉絲的鬥志",
         "rarity": "SR",
         "type": "訓練家|支援者",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012647.png",
-        "reg": "I"
+        "reg": "I",
+        "effect": "這張卡必須將自己的1張手牌丟棄才可使用。\n\n從牌庫抽卡直到自己的手牌滿6張為止。",
+        "illustrator": "yuu"
       },
       "122/100": {
         "name": "可怕的哥哥",
         "rarity": "SR",
         "type": "訓練家|支援者",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012648.png",
-        "reg": "I"
+        "reg": "I",
+        "effect": "選擇1隻對手的寶可夢，將那隻寶可夢身上附加的「寶可夢道具」卡與「特殊能量」卡各丟棄1張。",
+        "illustrator": "Hideki Ishikawa"
       },
       "123/100": {
         "name": "小剛的發掘",
         "rarity": "SR",
         "type": "訓練家|支援者",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012649.png",
-        "reg": "I"
+        "reg": "I",
+        "effect": "從自己的牌庫選擇最多2張【基礎】寶可夢卡，或者1張進化寶可夢卡，在給對手看過後加入手牌。並且重洗牌庫。",
+        "illustrator": "Teeziro"
       },
       "124/100": {
         "name": "波爾凱尼恩ex",
@@ -977,7 +1488,31 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012650.png",
         "reg": "I",
-        "elem": "火"
+        "elem": "火",
+        "hp": 220,
+        "stage": "基礎",
+        "dex": "721",
+        "abilities": [
+          {
+            "name": "燒灼蒸汽",
+            "text": "若這隻寶可夢在戰鬥場上，則在自己的回合時可使用1次。將對手的戰鬥寶可夢【灼傷】。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "高溫旋風",
+            "cost": [
+              "火",
+              "火",
+              "無色"
+            ],
+            "damage": "160",
+            "text": "選擇1個這隻寶可夢身上附加的能量，改附於備戰寶可夢身上。"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 3,
+        "illustrator": "akagi"
       },
       "125/100": {
         "name": "奇樹的電肚蛙ex",
@@ -985,7 +1520,33 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012651.png",
         "reg": "I",
-        "elem": "雷"
+        "elem": "雷",
+        "hp": 280,
+        "stage": "1階進化",
+        "evolvesFrom": "奇樹的光蚪仔",
+        "dex": "939",
+        "abilities": [
+          {
+            "name": "電氣流",
+            "text": "在自己的回合時，可不限次數使用。從自己的手牌選擇1張「基本【雷】能量」卡，附於自己的「奇樹的寶可夢」身上。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "閃電伏特",
+            "cost": [
+              "雷",
+              "雷",
+              "雷",
+              "無色"
+            ],
+            "damage": "230",
+            "text": "在下個自己的回合，這隻寶可夢無法使用招式。"
+          }
+        ],
+        "weakness": "鬥×2",
+        "retreat": 2,
+        "illustrator": "Yuu Nishida"
       },
       "126/100": {
         "name": "莉莉艾的皮皮ex",
@@ -993,7 +1554,30 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012652.png",
         "reg": "I",
-        "elem": "超"
+        "elem": "超",
+        "hp": 190,
+        "stage": "基礎",
+        "dex": "35",
+        "abilities": [
+          {
+            "name": "妖精領域",
+            "text": "只要這隻寶可夢在場上，對手的場上的所有【龍】寶可夢的弱點全部改爲【超】屬性。[弱點以「×2」計算傷害。]"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "滿月輪舞",
+            "cost": [
+              "超",
+              "無色"
+            ],
+            "damage": "20+",
+            "text": "增加雙方的備戰寶可夢的數量×20點傷害。"
+          }
+        ],
+        "weakness": "鋼×2",
+        "retreat": 1,
+        "illustrator": "Susumu Maeya"
       },
       "127/100": {
         "name": "N的索羅亞克ex",
@@ -1001,7 +1585,31 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012653.png",
         "reg": "I",
-        "elem": "惡"
+        "elem": "惡",
+        "hp": 280,
+        "stage": "1階進化",
+        "evolvesFrom": "N的索羅亞",
+        "dex": "571",
+        "abilities": [
+          {
+            "name": "交易",
+            "text": "在自己的回合，若將自己的1張手牌丟棄，則可使用1次。從自己的牌庫抽出2張卡。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "暗黑底牌",
+            "cost": [
+              "惡",
+              "惡"
+            ],
+            "damage": "",
+            "text": "選擇1個自己的備戰區的「N的寶可夢」持有的招式，作為這個招式使用。"
+          }
+        ],
+        "weakness": "草×2",
+        "retreat": 2,
+        "illustrator": "Megumi Mizutani"
       },
       "128/100": {
         "name": "赫普的蒼響ex",
@@ -1009,7 +1617,35 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012654.png",
         "reg": "I",
-        "elem": "鋼"
+        "elem": "鋼",
+        "hp": 230,
+        "stage": "基礎",
+        "dex": "888",
+        "attacks": [
+          {
+            "name": "剎那斬",
+            "cost": [
+              "無色"
+            ],
+            "damage": "30",
+            "text": "對手的1隻備戰寶可夢也受到30點傷害。[在備戰區不計算弱點・抵抗力。]"
+          },
+          {
+            "name": "無畏斬",
+            "cost": [
+              "鋼",
+              "鋼",
+              "鋼",
+              "無色"
+            ],
+            "damage": "240",
+            "text": "在下個自己的回合，這隻寶可夢無法使用「無畏斬」。"
+          }
+        ],
+        "weakness": "火×2",
+        "resistance": "草-30",
+        "retreat": 2,
+        "illustrator": "DOM"
       },
       "129/100": {
         "name": "暴飛龍ex",
@@ -1017,7 +1653,36 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012655.png",
         "reg": "I",
-        "elem": "龍"
+        "elem": "龍",
+        "hp": 320,
+        "stage": "2階進化",
+        "evolvesFrom": "甲殼龍",
+        "dex": "373",
+        "attacks": [
+          {
+            "name": "廣域爆破",
+            "cost": [
+              "火",
+              "無色",
+              "無色"
+            ],
+            "damage": "",
+            "text": "對手的所有備戰寶可夢各受到50點傷害。[在備戰區不計算弱點・抵抗力。]"
+          },
+          {
+            "name": "狂龍衝擊",
+            "cost": [
+              "火",
+              "水",
+              "無色",
+              "無色"
+            ],
+            "damage": "300",
+            "text": "選擇2個這隻寶可夢身上附加的能量，將其丟棄。"
+          }
+        ],
+        "retreat": 2,
+        "illustrator": "Tsuyoshi Nagano"
       },
       "130/100": {
         "name": "奇樹的電肚蛙ex",
@@ -1025,7 +1690,33 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012656.png",
         "reg": "I",
-        "elem": "雷"
+        "elem": "雷",
+        "hp": 280,
+        "stage": "1階進化",
+        "evolvesFrom": "奇樹的光蚪仔",
+        "dex": "939",
+        "abilities": [
+          {
+            "name": "電氣流",
+            "text": "在自己的回合時，可不限次數使用。從自己的手牌選擇1張「基本【雷】能量」卡，附於自己的「奇樹的寶可夢」身上。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "閃電伏特",
+            "cost": [
+              "雷",
+              "雷",
+              "雷",
+              "無色"
+            ],
+            "damage": "230",
+            "text": "在下個自己的回合，這隻寶可夢無法使用招式。"
+          }
+        ],
+        "weakness": "鬥×2",
+        "retreat": 2,
+        "illustrator": "5ban Graphics"
       },
       "131/100": {
         "name": "N的索羅亞克ex",
@@ -1033,14 +1724,39 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012657.png",
         "reg": "I",
-        "elem": "惡"
+        "elem": "惡",
+        "hp": 280,
+        "stage": "1階進化",
+        "evolvesFrom": "N的索羅亞",
+        "dex": "571",
+        "abilities": [
+          {
+            "name": "交易",
+            "text": "在自己的回合，若將自己的1張手牌丟棄，則可使用1次。從自己的牌庫抽出2張卡。"
+          }
+        ],
+        "attacks": [
+          {
+            "name": "暗黑底牌",
+            "cost": [
+              "惡",
+              "惡"
+            ],
+            "damage": "",
+            "text": "選擇1個自己的備戰區的「N的寶可夢」持有的招式，作為這個招式使用。"
+          }
+        ],
+        "weakness": "草×2",
+        "retreat": 2,
+        "illustrator": "takuyoa"
       },
       "132/100": {
         "name": "扣殺能量",
         "rarity": "UR",
         "type": "特殊能量",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00012658.png",
-        "reg": "I"
+        "reg": "I",
+        "effect": "只要這張卡附於寶可夢身上，視為提供1個【無】能量。\r\n\r\n附有這張卡的寶可夢在戰鬥場受到對手的寶可夢招式的傷害時，在使用招式的寶可夢身上放置2個傷害指示物。"
       }
     },
     "match_reg": "I"

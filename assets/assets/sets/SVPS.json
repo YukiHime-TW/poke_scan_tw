@@ -9,7 +9,24 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00011095.png",
         "reg": "H",
-        "elem": "火"
+        "elem": "火",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "37",
+        "category": "狐狸寶可夢",
+        "attacks": [
+          {
+            "name": "猛撞",
+            "cost": [
+              "火"
+            ],
+            "damage": "30",
+            "text": "這隻寶可夢也受到10點傷害。"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 1,
+        "illustrator": "Narumi Sato"
       },
       "002/008": {
         "name": "九尾",
@@ -17,7 +34,25 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00011096.png",
         "reg": "H",
-        "elem": "火"
+        "elem": "火",
+        "hp": 120,
+        "stage": "1階進化",
+        "evolvesFrom": "六尾",
+        "dex": "38",
+        "category": "狐狸寶可夢",
+        "attacks": [
+          {
+            "name": "火焰聖靈",
+            "cost": [
+              "火"
+            ],
+            "damage": "50",
+            "text": "對手的1隻備戰寶可夢也受到30點傷害。[在備戰區不計算弱點・抵抗力。]"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 1,
+        "illustrator": "Kamome Shirahama"
       },
       "003/008": {
         "name": "鳳王",
@@ -25,7 +60,36 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00011097.png",
         "reg": "H",
-        "elem": "火"
+        "elem": "火",
+        "hp": 130,
+        "stage": "基礎",
+        "dex": "250",
+        "category": "虹色寶可夢",
+        "attacks": [
+          {
+            "name": "羽擊",
+            "cost": [
+              "火",
+              "無色"
+            ],
+            "damage": "50",
+            "text": ""
+          },
+          {
+            "name": "閃耀火焰",
+            "cost": [
+              "火",
+              "火",
+              "無色"
+            ],
+            "damage": "100+",
+            "text": "若自己的備戰區有「太晶」寶可夢，則增加100點傷害。"
+          }
+        ],
+        "weakness": "雷×2",
+        "resistance": "鬥-30",
+        "retreat": 2,
+        "illustrator": "kodama"
       },
       "004/008": {
         "name": "花舞鳥",
@@ -33,7 +97,32 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00011098.png",
         "reg": "H",
-        "elem": "火"
+        "elem": "火",
+        "hp": 90,
+        "stage": "基礎",
+        "dex": "741",
+        "category": "舞蹈寶可夢",
+        "attacks": [
+          {
+            "name": "能量支援",
+            "cost": [
+              "火"
+            ],
+            "damage": "",
+            "text": "從自己的棄牌區選擇最多2張基本能量卡，附於1隻備戰寶可夢身上。"
+          },
+          {
+            "name": "花火",
+            "cost": [
+              "火"
+            ],
+            "damage": "30",
+            "text": "選擇1個這隻寶可夢身上附加的能量，將其丟棄。"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 1,
+        "illustrator": "Heisuke Kitazawa"
       },
       "005/008": {
         "name": "炭小侍",
@@ -41,7 +130,24 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00011099.png",
         "reg": "H",
-        "elem": "火"
+        "elem": "火",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "935",
+        "category": "小火星寶可夢",
+        "attacks": [
+          {
+            "name": "鬼火",
+            "cost": [
+              "火"
+            ],
+            "damage": "20",
+            "text": ""
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 1,
+        "illustrator": "Kariya"
       },
       "006/008": {
         "name": "蒼炎刃鬼ex",
@@ -49,7 +155,40 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00011100.png",
         "reg": "H",
-        "elem": "火"
+        "elem": "火",
+        "hp": 270,
+        "stage": "1階進化",
+        "evolvesFrom": "炭小侍",
+        "dex": "937",
+        "attacks": [
+          {
+            "name": "太晶",
+            "cost": [],
+            "damage": "",
+            "text": "只要這隻寶可夢在備戰區，不會受到招式的傷害。"
+          },
+          {
+            "name": "深淵熾火",
+            "cost": [
+              "火"
+            ],
+            "damage": "30+",
+            "text": "增加自己的棄牌區的能量卡的張數×20點傷害。"
+          },
+          {
+            "name": "紫水晶激怒",
+            "cost": [
+              "火",
+              "超",
+              "鋼"
+            ],
+            "damage": "280",
+            "text": "將這隻寶可夢身上附加的能量卡全部丟棄。"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 2,
+        "illustrator": "5ban Graphics"
       },
       "007/008": {
         "name": "象徵鳥",
@@ -57,7 +196,35 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00011101.png",
         "reg": "H",
-        "elem": "超"
+        "elem": "超",
+        "hp": 110,
+        "stage": "基礎",
+        "dex": "561",
+        "category": "似鳥寶可夢",
+        "attacks": [
+          {
+            "name": "雙重抽出",
+            "cost": [
+              "無色"
+            ],
+            "damage": "",
+            "text": "從自己的牌庫抽出2張卡。"
+          },
+          {
+            "name": "念力",
+            "cost": [
+              "超",
+              "無色",
+              "無色"
+            ],
+            "damage": "60",
+            "text": "擲1次硬幣若為正面，則將對手的戰鬥寶可夢【麻痺】。"
+          }
+        ],
+        "weakness": "雷×2",
+        "resistance": "鬥-30",
+        "retreat": 1,
+        "illustrator": "svlt"
       },
       "008/008": {
         "name": "雷吉斯奇魯",
@@ -65,7 +232,26 @@
         "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00011102.png",
         "reg": "H",
-        "elem": "鋼"
+        "elem": "鋼",
+        "hp": 130,
+        "stage": "基礎",
+        "dex": "379",
+        "category": "黑金寶可夢",
+        "attacks": [
+          {
+            "name": "激怒之錘",
+            "cost": [
+              "鋼",
+              "無色"
+            ],
+            "damage": "60+",
+            "text": "增加這隻寶可夢身上放置的傷害指示物的數量×10點傷害。"
+          }
+        ],
+        "weakness": "火×2",
+        "resistance": "草-30",
+        "retreat": 3,
+        "illustrator": "Shiburingaru"
       }
     },
     "match_reg": "H"
