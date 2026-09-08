@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/rendering.dart' show RenderAbstractViewport;
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:sliver_tools/sliver_tools.dart';
 
@@ -138,6 +139,27 @@ class _HomeScreenState extends State<HomeScreen> {
   ElementFilter _elementFilter = ElementFilter.all;
   String? _rarityFilter; // null = 全部；"" = 無標記
   String? _tagFilter; // null = 全部
+
+  @override
+  void initState() {
+    super.initState();
+    // 只記住上次的「賽制」篩選（其他篩選每次開 App 還原預設）
+    SharedPreferences.getInstance().then((prefs) {
+      final f = prefs.getString('last_format');
+      if (f != null && mounted) {
+        setState(() {
+          _formatFilter = FormatFilter.values.firstWhere((e) => e.name == f,
+              orElse: () => FormatFilter.standard);
+        });
+      }
+    });
+  }
+
+  void _setFormat(FormatFilter f) {
+    _formatFilter = f;
+    SharedPreferences.getInstance()
+        .then((p) => p.setString('last_format', f.name));
+  }
 
   @override
   void dispose() {
@@ -556,7 +578,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _resetFilters() {
     _statusFilter = StatusFilter.all;
-    _formatFilter = FormatFilter.standard;
+    _setFormat(FormatFilter.standard);
     _typeFilter = TypeFilter.all;
     _elementFilter = ElementFilter.all;
     _rarityFilter = null;
@@ -712,14 +734,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       ]),
                       section("賽制", [
                         chip("不限", _formatFilter == FormatFilter.all,
-                            () => pick(
-                                () => _formatFilter = FormatFilter.all)),
+                            () => pick(() => _setFormat(FormatFilter.all))),
                         chip("標準", _formatFilter == FormatFilter.standard,
-                            () => pick(() =>
-                                _formatFilter = FormatFilter.standard)),
+                            () =>
+                                pick(() => _setFormat(FormatFilter.standard))),
                         chip("開放", _formatFilter == FormatFilter.expanded,
-                            () => pick(() =>
-                                _formatFilter = FormatFilter.expanded)),
+                            () =>
+                                pick(() => _setFormat(FormatFilter.expanded))),
                       ]),
                       section("種類", [
                         for (final e in kTypeFilterLabels.entries)

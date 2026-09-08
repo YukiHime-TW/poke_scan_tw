@@ -407,6 +407,20 @@ class CollectionProvider with ChangeNotifier {
 
   Future<void> signOut() async {
     try {
+      // 1. 最後同步一次（安全帶：萬一之前有靜默沒同步到）
+      if (_user != null) await _saveToCloud();
+
+      // 2. 清掉本機的收藏 / 願望清單 / 牌組，回到乾淨的訪客狀態
+      //    （避免同一台手機換帳號時，資料髒掉或被推進別人的雲端）
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('my_collection');
+      await prefs.remove('my_wishlist');
+      await prefs.remove('user_decks'); // deck_provider 的 auth listener 會讀空
+      _userCollection = {};
+      _wishlist = {};
+      notifyListeners();
+
+      // 3. 真正登出（auth listener 接著跑 _loadFromLocal，落在空白狀態）
       await GoogleSignIn().signOut();
       await FirebaseAuth.instance.signOut();
     } catch (e) {
