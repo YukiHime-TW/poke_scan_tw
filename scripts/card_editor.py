@@ -113,6 +113,8 @@ PAGE = """<!doctype html><html lang="zh-Hant"><meta charset="utf-8">
 .row img{width:28px;height:39px;object-fit:cover;border-radius:2px}
 .row .n{color:#888;font-variant-numeric:tabular-nums;min-width:56px}
 .row.tagged .n::after{content:" ●";color:#4B3BA6}
+.row.reviewed{color:#999}
+.row.reviewed .n::after{content:" ○";color:#999}
 #right{flex:1;overflow:auto;padding:16px;display:flex;gap:20px}
 #form{flex:1;max-width:560px}#pic img{width:240px;border-radius:8px}
 label{display:block;margin:8px 0 2px;color:#555;font-size:12px}
@@ -150,7 +152,7 @@ let TAGS=[];
 let SET=null, CODE=null, NUM=null, dirty=false;
 const $=s=>document.querySelector(s);
 const FIELDS=["name","rarity","type","reg","elem","hp","stage","evolvesFrom","dex","category","weakness","resistance","retreat","illustrator","image"];
-async function j(u,o){const r=await fetch(u,o);return r.json()}
+async function j(u,o){const r=await fetch(u,o);if(!r.ok){alert("請求失敗 "+r.status);throw new Error(r.status);}return r.json()}
 
 async function boot(){
   TAGS=await j("/api/tags");
