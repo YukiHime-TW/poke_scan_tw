@@ -100,7 +100,13 @@ _session = requests.Session()
 _session.headers.update({"User-Agent": "Mozilla/5.0"})
 
 
+class FetchError(RuntimeError):
+    """重試耗盡的網路 / HTTP 失敗——與『404＝沒有這一頁』區分開，
+    讓 build() 直接中止而不是把失敗頁當成清單結束、寫出殘缺的集合。"""
+
+
 def _get(url, params=None, tries=3):
+    last = None
     for i in range(tries):
         try:
             r = _session.get(url, params=params, timeout=25)
@@ -109,9 +115,10 @@ def _get(url, params=None, tries=3):
             r.raise_for_status()
             return r.text
         except Exception as e:
+            last = e
             print(f"      ⚠️ {params or url} 第 {i + 1} 次失敗: {e}")
             time.sleep(1.5 * (i + 1))
-    return None
+    raise FetchError(f"{url}  {params or ''}  連抓 {tries} 次都失敗：{last}")
 
 
 def _load(path, default):
@@ -196,6 +203,7 @@ def fetch_id_list(code, refresh=False):
         return cache[code]
     ids, page = [], 1
     while True:
+        # 網路失敗會 raise FetchError（中止建置）；回傳 None 只代表該頁 404＝沒這頁
         html = _get(BASE + "list/", {"expansionCodes": code, "pageNo": page})
         if not html:
             break
@@ -333,16 +341,18 @@ def build(code, expansions, rarity_map, refresh=False):
         prev = old_cards.get(key, {})
         card = {
             "name": prev.get("name") or raw["name"],
-            # 促銷冊整本用 "PROMO"；其餘查官方稀有度對照，查不到沿用既有
-            "rarity": (prev.get("rarity") or "PROMO") if is_promo
+            # 促銷冊整本一律 "PROMO"（不看既有值）；其餘查官方稀有度對照，查不到沿用既有
+            "rarity": "PROMO" if is_promo
                       else rarity_map.get(str(cid), prev.get("rarity", "")),
             "type": raw["type"],
             "image": IMG.format(cid),
             "reg": "None" if raw["type"] == "基本能量"
                    else clamp_reg(raw["alpha"], era, is_promo),
         }
-        if raw["elem"]:
-            card["elem"] = raw["elem"]
+        # 官方詳情頁沒抓到屬性時（圖片缺失 / 版型變動）沿用既有 elem，避免解析失敗變成資料遺失
+        elem = raw["elem"] or prev.get("elem", "")
+        if elem:
+            card["elem"] = elem
         for dk in DETAIL_KEYS:            # 詳情原封帶過來
             if dk in prev:
                 card[dk] = prev[dk]
@@ -438,7 +448,10 @@ def main():
             write_set(code, built)
     if args.details and not args.validate:
         print("\n🚦 接著跑 scrape_details.py …")
-        subprocess.run([sys.executable, "scrape_details.py"], check=True)
+        # 靜態參數、無 shell=True；sys.executable=當前直譯器、script=同目錄固定檔名，皆非外部輸入
+        script = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                              "scrape_details.py")
+        subprocess.run([sys.executable, script], check=True)  # noqa: S603
 
 
 if __name__ == "__main__":
