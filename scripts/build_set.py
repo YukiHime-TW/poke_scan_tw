@@ -394,6 +394,7 @@ def write_set(code, obj):
     path = os.path.join(SETS_DIR, f"{code}.json")
     with open(path, "w", encoding="utf-8") as f:
         json.dump(obj, f, ensure_ascii=False, indent=2)
+        f.write("\n")
     print(f"   ✅ 寫入 {path}（{len(obj[code]['cards'])} 張）")
     files = sorted(x[:-5] for x in os.listdir(SETS_DIR) if x.endswith(".json"))
     with open(INDEX_FILE, "w", encoding="utf-8") as f:
