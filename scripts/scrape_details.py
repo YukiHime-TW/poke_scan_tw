@@ -48,8 +48,12 @@ _EN2ZH = {
     "Psychic": "超", "Fighting": "鬥", "Darkness": "惡", "Metal": "鋼",
     "Fairy": "妖精", "Dragon": "龍", "Colorless": "無色", "Void": "虛",
 }
+# 官方頁的特性/規則名稱前面偶爾夾零寬字元（U+200B/C/D、U+FEFF），先清掉再比對
+_ZW_RE = re.compile("^[\s​‌‍﻿]+")
 _ABILITY_RE = re.compile(r"^\[[^\]]*特性\]")
-_RULE_RE = re.compile(r"^\[.*規則\]$")
+# 特殊規則框（不是招式也不是特性，不留）：◇（稜柱之星）規則 / TAG TEAM規則 /
+# V-UNION規則 …（結尾「規則」）、以及太晶關鍵字框「[太晶]」「太晶」「[太晶化]」
+_RULE_RE = re.compile(r"規則$|^\[?太晶化?\]?$")
 _SCRAPED_KEYS = (
     "hp", "stage", "evolvesFrom", "dex", "category", "abilities",
     "attacks", "weakness", "resistance", "retreat", "effect", "illustrator",
@@ -94,10 +98,10 @@ def parse(html):
     header = _txt(skill_box.select_one("h3.commonHeader")) if skill_box else ""
     is_trainer_energy = header not in ("招式", "")
     for sk in (skill_box.select("div.skill") if skill_box else []):
-        name = _txt(sk.select_one("span.skillName"))
+        name = _ZW_RE.sub("", _txt(sk.select_one("span.skillName")))
         eff = _txt(sk.select_one("p.skillEffect"))
-        if _RULE_RE.match(name):
-            continue  # 規則框（樣板文字）
+        if _RULE_RE.search(name):
+            continue  # 規則框（◇/TAG TEAM/V-UNION…規則，樣板文字，不留）
         if _ABILITY_RE.match(name):
             abilities.append({"name": _ABILITY_RE.sub("", name).strip(),
                               "text": eff})
