@@ -58,32 +58,27 @@ android/ ios/ web/      各平台設定
 
 ## 資料維護（scripts/）
 
-`python scraper.py` 會依序跑完整條管線：
+卡片資料一律以官方訓練家網站（`asia.pokemon-card.com/tw`）為唯一來源。
+新增 / 重建一個擴充包：
+
+```
+python build_set.py --list                # 官方擴充包清單（code / 名 / 日）
+python build_set.py <CODE>                # 寫回結構欄位（既有詳情保留）
+python build_set.py <CODE> --details      # 接著跑 scrape_details 補詳情
+python build_set.py --validate <CODE>     # 只比對現有 json 的結構欄位，不寫檔
+```
 
 | 腳本 | 作用 |
 |---|---|
-| `scraper.py` | 從卡表來源爬新卡（編號 / 名稱 / 稀有度），更新 `index.json` |
-| `convert.py` | 簡體 → 繁體（OpenCC `s2t`；`s2tw` 不適用，見檔內註解） |
-| `fix_translation.py` | 異體字與舊譯名修正字典 |
-| `add_date.py` | 補系列發售日期 |
-| `add_match.py` | 補賽制標記（reg） |
-| `add_type.py` | 補卡片種類（預設寶可夢，再由後續腳本 / 人工修正） |
-| `add_elem.py` | 補寶可夢屬性 elem（官方清單頁 `pokemonEnergy` 篩選） |
-| `add_elem_tcgdex.py` | 補無官方圖的卡的 elem（tcgdex API） |
-| `fix_type_tcgdex.py` / `fix_type_official.py` | 用 tcgdex / 官方詳情頁校對修正 type |
-
-管線外的獨立工具（各自手動執行，不在 `scraper.py` 裡）：
-
-| 腳本 | 作用 |
-|---|---|
-| `scrape_details.py` | 爬官方詳情頁補 hp / 招式 / 特性 / 效果 / 弱點 / 繪師等（量大、單獨跑） |
-| `card_editor.py` | 本機網頁工具 `localhost:8770`，瀏覽 / 編輯卡片欄位、勾機制標籤 → `card["tags"]`（標籤定義見 `mechanic_tags.json`） |
-| `check_names.py` | 對官方卡片頁核對卡名 |
-| `add_rarity.py` | 補空白稀有度 |
+| `build_set.py` | 從官方清單頁 + `expansionCodes` 清單 + 詳情頁 + `rarity[]` 清單，產出集合層（name / releaseDate / match_reg）與卡片結構欄位（name / rarity / type / image / reg / elem）。`reg` 取官方 `span.alpha` 與卡包發售期區塊較舊者（官方會回溯竄改仍在環境內的萬用卡標記）。更新既有包時只覆寫結構欄位，詳情原封保留；官方清單沒有的既有卡沿用不動 |
+| `scrape_details.py` | 爬官方詳情頁補 hp / 招式 / 特性 / 效果 / 弱點 / 進化 / 圖鑑 / 繪師等（只補缺欄位，量大、可單獨跑或由 `build_set.py --details` 帶跑） |
+| `add_rarity.py` | 回填空白稀有度（`build_set.py` 也內建，這支供單獨補洞用；`RARITY_CODES` 代碼表由 `build_set.py` 共用） |
+| `card_editor.py` | 本機網頁工具 `localhost:8770`，瀏覽卡片、勾機制標籤 → `card["tags"]`（標籤定義見 `mechanic_tags.json`） |
+| `sort_json.py` | 依卡號重新排序 `assets/sets/*.json` |
 | `gen_icons.py` | 產生 App 圖示與 Play 素材 |
 
 ```
-pip install -r scripts/requirements.txt   # requests, beautifulsoup4, opencc, Pillow ...
+pip install -r scripts/requirements.txt   # requests, beautifulsoup4, Pillow
 ```
 
 ## 建置
