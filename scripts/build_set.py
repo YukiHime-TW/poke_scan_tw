@@ -32,6 +32,10 @@ weakness / resistance / retreat / effect / illustrator）仍由 scrape_details.p
   python build_set.py <CODE> [<CODE> ...]   寫回結構欄位（既有詳情保留）
   python build_set.py <CODE> --details      寫完接著跑 scrape_details 補詳情
   加 --refresh 重抓清單頁 / id 清單 / 稀有度對照表
+
+促銷冊（S-P / SV-P / SM-P / M-P）會隨時間持續加卡：這幾包的 id 清單每次都
+重抓（不看快取），所以平常跑 `build_set.py M-P --details` 就會帶進新卡，
+既有卡的詳情 / 標籤原封保留，不必加 --refresh。
 """
 
 import argparse
@@ -199,7 +203,9 @@ def fetch_expansions(refresh=False):
 
 def fetch_id_list(code, refresh=False):
     cache = _load(IDLIST_CACHE, {})
-    if code in cache and not refresh:
+    # 促銷冊（-P）會隨時間持續加卡，id 清單永遠不算「抓完」，每次都重抓；
+    # 詳情頁仍走各自的快取，所以只有真正的新卡會實際發請求。
+    if code in cache and not refresh and code not in PROMO:
         return cache[code]
     ids, page = [], 1
     while True:
