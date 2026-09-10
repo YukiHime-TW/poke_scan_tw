@@ -140,7 +140,10 @@ class _StocktakeReviewScreenState extends State<StocktakeReviewScreen> {
           const Divider(height: 1),
           SwitchListTile(
             value: _zeroUnscanned,
-            onChanged: (x) => setState(() => _zeroUnscanned = x),
+            // 一張都沒掃就不可能是「完整盤點」，不給開
+            onChanged: _rows.isEmpty
+                ? null
+                : (x) => setState(() => _zeroUnscanned = x),
             activeThumbColor: Colors.red,
             title: const Text("把這次沒掃到的收藏卡全部歸零"),
             subtitle: Text(
@@ -157,14 +160,16 @@ class _StocktakeReviewScreenState extends State<StocktakeReviewScreen> {
 
   Future<void> _apply() async {
     final prov = context.read<CollectionProvider>();
+    final messenger = ScaffoldMessenger.of(context); // pop 後這個 context 會失效
+    final navigator = Navigator.of(context);
     if (_zeroUnscanned) {
       final ok = await _typeConfirm();
       if (ok != true) return;
     }
     await prov.commitStocktake(_final, zeroUnscanned: _zeroUnscanned);
     if (!mounted) return;
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
+    navigator.pop();
+    messenger.showSnackBar(
         const SnackBar(content: Text("盤點完成，收藏已更新")));
   }
 

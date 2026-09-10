@@ -148,9 +148,14 @@ class CollectionProvider with ChangeNotifier {
   // --- 盤點模式 ---
 
   Future<void> _loadStocktake() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString('stocktake_session');
-    _stocktake = (raw == null || raw.isEmpty) ? null : _decodeCounts(raw);
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('stocktake_session');
+      _stocktake = (raw == null || raw.isEmpty) ? null : _decodeCounts(raw);
+    } catch (e) {
+      print("盤點階段讀取失敗，忽略: $e");
+      _stocktake = null;
+    }
   }
 
   Future<void> _saveStocktake() async {
@@ -217,7 +222,8 @@ class CollectionProvider with ChangeNotifier {
   /// `zeroUnscanned` = 把這次沒掃到的收藏卡全部歸零。完成後結束盤點階段。
   Future<void> commitStocktake(Map<String, int> finalCounts,
       {bool zeroUnscanned = false}) async {
-    final t = _stocktake ?? const {};
+    if (_stocktake == null) return; // 階段已被取消 → 不動收藏（避免誤清）
+    final t = _stocktake!;
     t.forEach((id, scanned) {
       final db = _userCollection[id] ?? 0;
       final v = finalCounts[id] ?? (scanned > db ? scanned : db);
@@ -650,8 +656,10 @@ class CollectionProvider with ChangeNotifier {
       await prefs.remove('my_collection');
       await prefs.remove('my_wishlist');
       await prefs.remove('user_decks'); // deck_provider 的 auth listener 會讀空
+      await prefs.remove('stocktake_session'); // 盤點階段屬於原本的登入狀態
       _userCollection = {};
       _wishlist = {};
+      _stocktake = null;
       notifyListeners();
     }
 
