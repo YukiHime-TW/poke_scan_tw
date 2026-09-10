@@ -2,6 +2,7 @@
   "SV8": {
     "name": "超電突圍",
     "releaseDate": "2024-10-25",
+    "match_reg": "H",
     "cards": {
       "001/106": {
         "name": "蛋蛋",
@@ -814,6 +815,12 @@
         "stage": "1階進化",
         "evolvesFrom": "醜醜魚",
         "dex": "350",
+        "abilities": [
+          {
+            "name": "璀璨鱗片",
+            "text": "這隻寶可夢不會受到對手的「太晶」寶可夢招式的傷害與效果的影響。"
+          }
+        ],
         "attacks": [
           {
             "name": "昏睡飛濺",
@@ -828,13 +835,7 @@
         ],
         "weakness": "雷×2",
         "retreat": 2,
-        "illustrator": "hncl",
-        "abilities": [
-          {
-            "name": "璀璨鱗片",
-            "text": "這隻寶可夢不會受到對手的「太晶」寶可夢招式的傷害與效果的影響。"
-          }
-        ]
+        "illustrator": "hncl"
       },
       "027/106": {
         "name": "海豹球",
@@ -995,6 +996,12 @@
         "stage": "基礎",
         "dex": "1002",
         "category": "災厄寶可夢",
+        "abilities": [
+          {
+            "name": "沉雪",
+            "text": "在自己的回合，從手牌將這張卡放置於備戰區時，可使用1次。將場上的競技場卡丟棄。"
+          }
+        ],
         "attacks": [
           {
             "name": "冰柱閉環",
@@ -1009,13 +1016,7 @@
         ],
         "weakness": "鋼×2",
         "retreat": 1,
-        "illustrator": "Yuya Oka",
-        "abilities": [
-          {
-            "name": "沉雪",
-            "text": "在自己的回合，從手牌將這張卡放置於備戰區時，可使用1次。將場上的競技場卡丟棄。"
-          }
-        ]
+        "illustrator": "Yuya Oka"
       },
       "033/106": {
         "name": "皮卡丘ex",
@@ -1027,6 +1028,12 @@
         "hp": 200,
         "stage": "基礎",
         "dex": "25",
+        "abilities": [
+          {
+            "name": "勤奮之心",
+            "text": "‌這隻寶可夢的HP是全滿的狀態下，這隻寶可夢受到招式的傷害而【昏厥】時，這隻寶可夢不會【昏厥】，而是以剩餘HP為「10」的狀態留在場上。"
+          }
+        ],
         "attacks": [
           {
             "name": "黃玉伏特",
@@ -1041,13 +1048,7 @@
         ],
         "weakness": "鬥×2",
         "retreat": 1,
-        "illustrator": "aky CG Works",
-        "abilities": [
-          {
-            "name": "勤奮之心",
-            "text": "‌這隻寶可夢的HP是全滿的狀態下，這隻寶可夢受到招式的傷害而【昏厥】時，這隻寶可夢不會【昏厥】，而是以剩餘HP為「10」的狀態留在場上。"
-          }
-        ]
+        "illustrator": "aky CG Works"
       },
       "034/106": {
         "name": "小磁怪",
@@ -1086,6 +1087,12 @@
         "evolvesFrom": "小磁怪",
         "dex": "82",
         "category": "磁鐵寶可夢",
+        "abilities": [
+          {
+            "name": "過度放電",
+            "text": "在自己的回合時可使用1次，若使用，則將這隻寶可夢【昏厥】。從自己的棄牌區選擇最多3張基本能量卡，以任意方式附於自己的【雷】寶可夢身上。"
+          }
+        ],
         "attacks": [
           {
             "name": "雷電球",
@@ -1099,13 +1106,7 @@
         ],
         "weakness": "鬥×2",
         "retreat": 1,
-        "illustrator": "Nisota Niso",
-        "abilities": [
-          {
-            "name": "過度放電",
-            "text": "在自己的回合時可使用1次，若使用，則將這隻寶可夢【昏厥】。從自己的棄牌區選擇最多3張基本能量卡，以任意方式附於自己的【雷】寶可夢身上。"
-          }
-        ]
+        "illustrator": "Nisota Niso"
       },
       "036/106": {
         "name": "自爆磁怪",
@@ -3946,7 +3947,6 @@
         "effect": "雙方場上所有【2階進化】寶可夢的最大HP各「-30」。",
         "illustrator": "AYUMI ODASHIMA"
       }
-    },
-    "match_reg": "H"
+    }
   }
 }
