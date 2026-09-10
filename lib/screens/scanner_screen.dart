@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../providers/collection_provider.dart';
 import '../providers/deck_provider.dart';
 import '../utils/card_matcher.dart';
+import 'stocktake_review_screen.dart';
 
 // --- 裁切框的幾何（畫面比例）---
 // 紅框給使用者對準的可見區域
@@ -42,6 +43,8 @@ class _ScannerScreenState extends State<ScannerScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeCamera();
+    // 未完成的盤點階段會自動續用（mode bar 顯示「盤點中 · 本次 N 張」），
+    // 不另外跳提示；要結束就用切換的「新增」或「結束盤點 → 對帳」。
   }
 
   @override
@@ -145,10 +148,10 @@ class _ScannerScreenState extends State<ScannerScreen>
       }
 
       if (cand.isHighConfidence) {
-        final label = await collection.commitScan(cand, deckProvider: deck);
+        final label = await _record(collection, deck, cand);
         HapticFeedback.vibrate();
         if (!mounted) return;
-        setState(() => _statusMessage = "✅ $label");
+        setState(() => _statusMessage = label);
         await Future.delayed(const Duration(milliseconds: 1200));
         _resetScanner();
       } else {
@@ -176,12 +179,24 @@ class _ScannerScreenState extends State<ScannerScreen>
     }
     final collection = Provider.of<CollectionProvider>(context, listen: false);
     final deck = Provider.of<DeckProvider>(context, listen: false);
-    final label = await collection.commitScan(cand, deckProvider: deck);
+    final label = await _record(collection, deck, cand);
     HapticFeedback.vibrate();
     if (!mounted) return;
-    setState(() => _statusMessage = "✅ $label");
+    setState(() => _statusMessage = label);
     await Future.delayed(const Duration(milliseconds: 1000));
     _resetScanner();
+  }
+
+  /// 盤點模式（且不在編輯牌組）→ 只累積本次計數；否則走原本的加卡 / 加進牌組。
+  Future<String> _record(
+      CollectionProvider c, DeckProvider d, ScanCandidate cand) async {
+    if (c.stocktakeActive && d.currentDeck == null) {
+      final n = await c.stocktakeHit(cand.setCode, cand.rawNum);
+      final name = (cand.cardData['name'] ?? '').toString();
+      return n == null ? "⚠️ 找不到這張卡" : "📋 $name ×$n（本次盤點）";
+    }
+    final r = await c.commitScan(cand, deckProvider: d);
+    return "✅ ${r ?? ''}";
   }
 
   // 裁切：直接取「擷取到的圖片本身」的固定比例，不再靠螢幕座標換算
@@ -311,6 +326,106 @@ class _ScannerScreenState extends State<ScannerScreen>
     );
   }
 
+  Widget _modeBar() {
+    return Consumer<CollectionProvider>(
+      builder: (context, c, _) {
+        final on = c.stocktakeActive;
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          child: Column(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                    color: Colors.black54,
+                    borderRadius: BorderRadius.circular(20)),
+                padding: const EdgeInsets.all(3),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _modeChip("新增", !on, () {
+                      if (on) _leaveStocktake(c);
+                    }),
+                    _modeChip("盤點", on, () {
+                      if (!on) c.startStocktake();
+                    }),
+                  ],
+                ),
+              ),
+              if (on) ...[
+                const SizedBox(height: 8),
+                Text("盤點中 · 本次掃到 ${c.stocktakeScanned} 張",
+                    style: const TextStyle(
+                        color: Colors.tealAccent,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold)),
+                const SizedBox(height: 6),
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.teal,
+                      foregroundColor: Colors.white),
+                  onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const StocktakeReviewScreen())),
+                  icon: const Icon(Icons.fact_check),
+                  label: const Text("結束盤點 → 對帳"),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _modeChip(String label, bool active, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 6),
+        decoration: BoxDecoration(
+            color: active ? Colors.white : Colors.transparent,
+            borderRadius: BorderRadius.circular(18)),
+        child: Text(label,
+            style: TextStyle(
+                color: active ? Colors.black : Colors.white70,
+                fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+
+  void _leaveStocktake(CollectionProvider c) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("離開盤點模式"),
+        content: Text("這次已掃到 ${c.stocktakeScanned} 張。"),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text("取消")),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (_) => const StocktakeReviewScreen()));
+            },
+            child: const Text("去對帳"),
+          ),
+          TextButton(
+            onPressed: () {
+              c.cancelStocktake();
+              Navigator.pop(ctx);
+            },
+            child: const Text("放棄盤點", style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildUI() {
     return Column(
       children: [
@@ -337,6 +452,8 @@ class _ScannerScreenState extends State<ScannerScreen>
             ],
           ),
         ),
+        if (context.read<DeckProvider>().currentDeck == null)
+          _modeBar(),
         const Spacer(),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
