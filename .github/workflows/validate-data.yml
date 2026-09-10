@@ -1,0 +1,24 @@
+name: validate-data
+
+# App 直接抓 main 的 assets/，壞掉的資料會讓所有使用者的 App 崩，
+# 所以動到 assets/ 的 PR / push 一律先過 scripts/validate_data.py。
+on:
+  pull_request:
+    paths:
+      - 'assets/**'
+      - 'scripts/validate_data.py'
+  push:
+    branches: [main]
+    paths:
+      - 'assets/**'
+      - 'scripts/validate_data.py'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python scripts/validate_data.py
