@@ -10,6 +10,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from urllib.parse import urlparse
 
 ROOT = Path(__file__).resolve().parent.parent
 ASSETS = ROOT / "assets"
@@ -84,6 +85,9 @@ def check_set_file(code):
         err(f"{code}.json：最上層應為單一鍵 {{\"{code}\": ...}}")
         return {}
     sd = data[code]
+    if not isinstance(sd, dict):
+        err(f"{code}：最上層值應為物件")
+        return {}
     if not isinstance(sd.get("name"), str) or not sd["name"].strip():
         err(f"{code}：缺 name")
     if not _DATE_RE.match(str(sd.get("releaseDate", ""))):
@@ -126,20 +130,33 @@ def check_formats(all_cards, valid_codes):
     if not isinstance(fmt.get("standard"), list) or not fmt["standard"]:
         err("formats.json：standard 應為非空陣列")
     names = {c.get("name") for c in all_cards.values() if isinstance(c, dict)}
-    for bid in fmt.get("banned", []):
-        if bid not in all_cards:
-            err(f"formats.json banned：{bid} 在資料庫找不到對應卡片")
-    for nm in fmt.get("standardNames", []):
-        hit = nm in names or any(
-            isinstance(n, str) and
-            (n.startswith(f"{nm} ") or n.startswith(f"{nm}（")
-             or n.startswith(f"{nm}("))
-            for n in names)
-        if not hit:
-            warn(f"formats.json standardNames：「{nm}」目前沒有任何卡對應")
+
+    banned = fmt.get("banned", [])
+    if not isinstance(banned, list):
+        err("formats.json：banned 應為陣列")
+    else:
+        for bid in banned:
+            if bid not in all_cards:
+                err(f"formats.json banned：{bid} 在資料庫找不到對應卡片")
+
+    std_names = fmt.get("standardNames", [])
+    if not isinstance(std_names, list):
+        err("formats.json：standardNames 應為陣列")
+    else:
+        for nm in std_names:
+            hit = nm in names or any(
+                isinstance(n, str) and
+                (n.startswith(f"{nm} ") or n.startswith(f"{nm}（")
+                 or n.startswith(f"{nm}("))
+                for n in names)
+            if not hit:
+                err(f"formats.json standardNames：「{nm}」目前沒有任何卡對應")
+
     fu = fmt.get("feedbackUrl")
-    if fu not in (None, "") and not str(fu).startswith("http"):
-        err(f"formats.json：feedbackUrl 應為網址或空字串（現 {fu!r}）")
+    if fu not in (None, ""):
+        p = urlparse(str(fu))
+        if p.scheme not in ("http", "https") or not p.netloc:
+            err(f"formats.json：feedbackUrl 應為 http(s) 網址或空字串（現 {fu!r}）")
 
 
 def check_deck_rules():
@@ -158,8 +175,9 @@ def check_deck_rules():
             err(f"deck_rules.json cardLimits[{i}]：缺 id / label")
         if r.get("scope") not in ("deck", "name"):
             err(f"deck_rules.json cardLimits[{i}]：scope 應為 deck / name")
-        if not isinstance(r.get("max"), int):
-            err(f"deck_rules.json cardLimits[{i}]：max 應為整數")
+        mx = r.get("max")
+        if not isinstance(mx, int) or isinstance(mx, bool) or mx < 1:
+            err(f"deck_rules.json cardLimits[{i}]：max 應為 ≥1 的整數")
 
 
 def main():
