@@ -96,8 +96,35 @@ class CollectionProvider with ChangeNotifier {
       });
   }
 
+  // 清空收藏前的快照，供一次性「復原」；只存在記憶體，下次開 App 就沒了
+  Map<String, int>? _clearSnapshot;
+  Map<String, int>? _clearWishSnapshot;
+  bool get canUndoClear => _clearSnapshot != null;
+
   CollectionProvider() {
     _init();
+  }
+
+  /// 清空整個收藏與願望清單（牌組 / 收藏本不受影響）。
+  /// 已登入時空資料也會同步到雲端（＝其他裝置一起清）。留一次復原快照。
+  Future<void> clearCollection() async {
+    _clearSnapshot = Map<String, int>.from(_userCollection);
+    _clearWishSnapshot = Map<String, int>.from(_wishlist);
+    _userCollection = {};
+    _wishlist = {};
+    notifyListeners();
+    await _save();
+  }
+
+  /// 復原剛才的「清空收藏」（快照還在的話）。
+  Future<void> undoClearCollection() async {
+    if (_clearSnapshot == null) return;
+    _userCollection = _clearSnapshot!;
+    _wishlist = _clearWishSnapshot ?? {};
+    _clearSnapshot = null;
+    _clearWishSnapshot = null;
+    notifyListeners();
+    await _save();
   }
 
   Future<void> _init() async {
