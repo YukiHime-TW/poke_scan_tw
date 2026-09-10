@@ -27,6 +27,8 @@
   （稀有度與機制標籤依卡表內容動態產生）+ 關鍵字（名稱・編號・系列）
 - **雲端同步**：Google 登入後收藏、願望清單與牌組跨裝置同步（Firestore）；
   不登入則只存本機，登出時清除本機資料
+- **問題回報**：使用說明對話框內的入口（網址取自 `formats.json` 的 `feedbackUrl`，
+  沒設就不顯示）；卡表整包載入失敗時主畫面顯示重試
 
 ## 技術
 
@@ -40,7 +42,7 @@ JSON 與設定檔，**所以卡片資料變更需合併進 `main` 才會生效**
 | 檔案 | 作用 |
 |---|---|
 | `assets/rarity_order.json` | 稀有度篩選 chip 的排序（陣列，不在清單內的排最後） |
-| `assets/formats.json` | `standard`：標準賽制 reg 白名單；`standardNames`：reg 為 A–G 但官方仍列標準合法的卡名（過往可用卡清單，含新舊名並列）；`banned`：全面禁用卡的 `setCode-num`。供賽制篩選與牌組合法性檢查共用 |
+| `assets/formats.json` | `standard`：標準賽制 reg 白名單；`standardNames`：reg 為 A–G 但官方仍列標準合法的卡名（過往可用卡清單，含新舊名並列）；`banned`：全面禁用卡的 `setCode-num`；`feedbackUrl`：問題回報表單網址（空字串＝不顯示入口）。供賽制篩選與牌組合法性檢查共用 |
 | `assets/tags_order.json` | 機制標籤 chip 的分組排序 |
 | `assets/deck_rules.json` | 追加組牌張數上限；`cardLimits[]`，每條 `where`（nameContains / type / rarity，全中才算命中）+ `scope`（`deck` 整套牌總量 / `name` 每個同名）+ `max` + 選用 `weight`（畫面 1 張實際算幾張，如傳說的競技場 2、V-UNION 4）。新規則同型只改資料 |
 
