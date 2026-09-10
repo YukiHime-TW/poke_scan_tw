@@ -353,7 +353,12 @@ def build(code, expansions, rarity_map, refresh=False):
             "rarity": "PROMO" if is_promo
                       else (rarity_map.get(str(cid)) or prev.get("rarity", "")),
             "type": raw["type"],
-            "image": IMG.format(cid),
+            # image 策略 A：現有圖已是官方 tw 網址就不動（避免 MC 這種重印包
+            # 「同卡兩組官方 id」每次重跑翻來翻去）；只換 tcgdex / 空 / "X" / 52poke
+            "image": prev.get("image", "")
+                     if str(prev.get("image", "")).startswith(
+                         "https://asia.pokemon-card.com/tw/card-img/tw")
+                     else IMG.format(cid),
             "reg": "None" if raw["type"] == "基本能量"
                    else clamp_reg(raw["alpha"], era, is_promo),
         }
@@ -433,6 +438,8 @@ def main():
     ap.add_argument("codes", nargs="*")
     ap.add_argument("--validate", action="store_true")
     ap.add_argument("--list", action="store_true")
+    ap.add_argument("--all", action="store_true",
+                    help="對 index.json 裡每個包都跑（結構重推）")
     ap.add_argument("--refresh", action="store_true")
     ap.add_argument("--details", action="store_true",
                     help="寫完後接著跑 scrape_details.py 補詳情")
@@ -445,11 +452,18 @@ def main():
             print(f"  {c:8} {m['releaseDate']}  {m['name']}")
         print(f"\n共 {len(expansions)} 個擴充包")
         return
-    if not args.codes:
-        ap.error("需要指定擴充包代碼，或用 --list")
+
+    codes = list(args.codes)
+    if args.all:
+        with open(INDEX_FILE, encoding="utf-8") as f:
+            codes = [c for c in json.load(f) if c in expansions]
+    if not codes:
+        ap.error("需要指定擴充包代碼，或用 --all / --list")
 
     rarity_map = fetch_rarity_map(refresh=args.refresh)
-    for code in args.codes:
+    for n, code in enumerate(codes, 1):
+        if args.all:
+            print(f"\n———— [{n}/{len(codes)}] {code} ————")
         built = build(code, expansions, rarity_map, refresh=args.refresh)
         if args.validate:
             validate(code, built)
