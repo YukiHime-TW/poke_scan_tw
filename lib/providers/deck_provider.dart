@@ -344,14 +344,13 @@ class DeckProvider with ChangeNotifier {
     });
 
     // 打牌的人分享牌組時，通常想讓新環境的卡在最上面：
-    // 先照系列發售日新→舊，同一包內再照卡號小→大。
+    // 發售日新→舊；同日期的不同包照系列碼分組；同一包內再照卡號小→大。
     sortedCards.sort((a, b) {
       final byDate = (b['date'] as String).compareTo(a['date'] as String);
       if (byDate != 0) return byDate;
-      final byNum =
-          _cardNumCompare(a['cNum'] as String, b['cNum'] as String);
-      if (byNum != 0) return byNum;
-      return (a['sCode'] as String).compareTo(b['sCode'] as String);
+      final bySet = (a['sCode'] as String).compareTo(b['sCode'] as String);
+      if (bySet != 0) return bySet;
+      return _cardNumCompare(a['cNum'] as String, b['cNum'] as String);
     });
 
     Map<String, List<String>> categories = {
