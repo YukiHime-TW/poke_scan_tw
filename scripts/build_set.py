@@ -347,9 +347,11 @@ def build(code, expansions, rarity_map, refresh=False):
         prev = old_cards.get(key, {})
         card = {
             "name": prev.get("name") or raw["name"],
-            # 促銷冊整本一律 "PROMO"（不看既有值）；其餘查官方稀有度對照，查不到沿用既有
+            # 促銷冊整本一律 "PROMO"（不看既有值）；其餘查官方稀有度對照，
+            # 查不到 or 官方回空（無標記代碼 11）時沿用既有——別把既有的
+            # ACE / C… 弄成空白
             "rarity": "PROMO" if is_promo
-                      else rarity_map.get(str(cid), prev.get("rarity", "")),
+                      else (rarity_map.get(str(cid)) or prev.get("rarity", "")),
             "type": raw["type"],
             "image": IMG.format(cid),
             "reg": "None" if raw["type"] == "基本能量"
