@@ -377,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 "• 點卡片：收藏數 +1\n"
                 "• 長按卡片：看詳情、調整「收藏 / 這副 / 想要」張數\n"
                 "• 右下角相機：對準卡片左下角編號自動登錄\n"
-                "• 右上角板手：進牌組編輯　·　？：完整說明",
+                "• 右上角板手：進牌組編輯　·　頭像：設定與完整說明",
                 style: TextStyle(
                     fontSize: 13, color: Colors.black54, height: 1.7),
               ),
