@@ -12,10 +12,25 @@ import 'package:google_sign_in/google_sign_in.dart';
 import '../utils/card_matcher.dart';
 import 'deck_provider.dart' show DeckRule;
 
+/// 盤點對帳的一列：本次掃到 `scanned` 張、收藏現有 `db` 張。
+class StocktakeRow {
+  final String id; // "setCode-realKey"
+  final String name;
+  final String image;
+  final int db;
+  final int scanned;
+  const StocktakeRow(this.id, this.name, this.image, this.db, this.scanned);
+  bool get matches => db == scanned;
+}
+
 class CollectionProvider with ChangeNotifier {
   Map<String, dynamic> _database = {};
   Map<String, int> _userCollection = {};
   Map<String, int> _wishlist = {}; // "setCode-num" -> 想要張數
+
+  // 盤點階段：掃描時只累積這裡的計數，不動 _userCollection。null = 沒在盤點。
+  // 存本機（不上雲），可跨 App 重啟續掃。
+  Map<String, int>? _stocktake;
   bool _isLoading = true;
   User? _user;
   int _sessionId = 0; // 每次登入狀態改變都 +1，用來作廢進行中的雲端載入
@@ -36,6 +51,9 @@ class CollectionProvider with ChangeNotifier {
 
   bool get isLoading => _isLoading;
   bool get loadFailed => _loadFailed;
+  bool get stocktakeActive => _stocktake != null;
+  int get stocktakeScanned =>
+      _stocktake?.values.fold<int>(0, (a, b) => a + b) ?? 0;
   String? get feedbackUrl => _feedbackUrl;
   Map<String, dynamic> get database => _database;
   Map<String, int> get userCollection => _userCollection;
@@ -127,11 +145,104 @@ class CollectionProvider with ChangeNotifier {
     await _save();
   }
 
+  // --- 盤點模式 ---
+
+  Future<void> _loadStocktake() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString('stocktake_session');
+    _stocktake = (raw == null || raw.isEmpty) ? null : _decodeCounts(raw);
+  }
+
+  Future<void> _saveStocktake() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (_stocktake == null) {
+      await prefs.remove('stocktake_session');
+    } else {
+      await prefs.setString('stocktake_session', json.encode(_stocktake));
+    }
+  }
+
+  Future<void> startStocktake() async {
+    _stocktake ??= {};
+    notifyListeners();
+    await _saveStocktake();
+  }
+
+  /// 放棄整個盤點階段，不動收藏。
+  Future<void> cancelStocktake() async {
+    _stocktake = null;
+    notifyListeners();
+    await _saveStocktake();
+  }
+
+  /// 盤點模式掃到一張：本次計數 +1（不動收藏）。回傳這張的本次累計，找不到卡回 null。
+  Future<int?> stocktakeHit(String setCode, String rawCardNum) async {
+    if (_stocktake == null) return null;
+    final realKey = _findRealKeyInDatabase(setCode, rawCardNum);
+    if (realKey == null) return null;
+    final id = "$setCode-$realKey";
+    final n = (_stocktake![id] ?? 0) + 1;
+    _stocktake![id] = n;
+    notifyListeners();
+    await _saveStocktake();
+    return n;
+  }
+
+  Map<String, dynamic>? _cardByFullId(String id) {
+    for (var i = id.indexOf('-'); i != -1; i = id.indexOf('-', i + 1)) {
+      final c = _database[id.substring(0, i)]?['cards']?[id.substring(i + 1)];
+      if (c is Map) return c.cast<String, dynamic>();
+    }
+    return null;
+  }
+
+  /// 對帳清單：本次掃到的每一張（含與收藏一致的），依 setCode-卡號排序。
+  List<StocktakeRow> stocktakeRows() {
+    final t = _stocktake ?? const {};
+    final rows = t.entries.map((e) {
+      final card = _cardByFullId(e.key);
+      return StocktakeRow(
+        e.key,
+        (card?['name'] ?? e.key).toString(),
+        (card?['image'] ?? "").toString(),
+        _userCollection[e.key] ?? 0,
+        e.value,
+      );
+    }).toList()
+      ..sort((a, b) => a.id.compareTo(b.id));
+    return rows;
+  }
+
+  /// 套用盤點：`finalCounts` 是每張卡的最終數量（沒指定的用 max(收藏, 本次)）。
+  /// `zeroUnscanned` = 把這次沒掃到的收藏卡全部歸零。完成後結束盤點階段。
+  Future<void> commitStocktake(Map<String, int> finalCounts,
+      {bool zeroUnscanned = false}) async {
+    final t = _stocktake ?? const {};
+    t.forEach((id, scanned) {
+      final db = _userCollection[id] ?? 0;
+      final v = finalCounts[id] ?? (scanned > db ? scanned : db);
+      if (v <= 0) {
+        _userCollection.remove(id);
+      } else {
+        _userCollection[id] = v;
+      }
+    });
+    if (zeroUnscanned) {
+      _userCollection.removeWhere((id, _) => !t.containsKey(id));
+    }
+    _pruneWishlist();
+    _stocktake = null;
+    notifyListeners();
+    await _saveStocktake();
+    await _save();
+  }
+
   Future<void> _init() async {
     _isLoading = true;
     notifyListeners();
 
     await _loadDatabase();
+    await _loadStocktake();
 
     // 4. 監聽 Firebase 登入狀態
     FirebaseAuth.instance.authStateChanges().listen((User? firebaseUser) async {
