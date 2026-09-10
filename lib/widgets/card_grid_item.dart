@@ -52,8 +52,8 @@ class _CardGridItemState extends State<CardGridItem> {
             fit: BoxFit.scaleDown,
             child: Builder(
               builder: (context) {
-                String name = widget.cardData['name'];
-                String rarity = widget.cardData['rarity'];
+                String name = (widget.cardData['name'] ?? '').toString();
+                String rarity = (widget.cardData['rarity'] ?? '').toString();
                 String displayText = (rarity == '—' ||
                         rarity == 'C' ||
                         rarity == 'U' ||
