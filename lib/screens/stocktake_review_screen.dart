@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -17,6 +18,7 @@ class _StocktakeReviewScreenState extends State<StocktakeReviewScreen> {
   late final List<StocktakeRow> _rows;
   final Map<String, int> _final = {};
   bool _zeroUnscanned = false;
+  final TextEditingController _confirmController = TextEditingController();
 
   @override
   void initState() {
@@ -25,6 +27,12 @@ class _StocktakeReviewScreenState extends State<StocktakeReviewScreen> {
     for (final r in _rows) {
       _final[r.id] = r.scanned > r.db ? r.scanned : r.db; // max(db, scanned)
     }
+  }
+
+  @override
+  void dispose() {
+    _confirmController.dispose();
+    super.dispose();
   }
 
   @override
@@ -93,10 +101,12 @@ class _StocktakeReviewScreenState extends State<StocktakeReviewScreen> {
         width: 40,
         child: r.image.isEmpty
             ? const Icon(Icons.image_not_supported, color: Colors.black26)
-            : Image.network(r.image,
+            : CachedNetworkImage(
+                imageUrl: r.image,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.broken_image, color: Colors.black26)),
+                errorWidget: (_, __, ___) =>
+                    const Icon(Icons.broken_image, color: Colors.black26),
+              ),
       ),
       title: Text(r.name, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(
@@ -174,12 +184,12 @@ class _StocktakeReviewScreenState extends State<StocktakeReviewScreen> {
   }
 
   Future<bool?> _typeConfirm() {
-    final controller = TextEditingController();
+    _confirmController.clear();
     return showDialog<bool>(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) {
-          final ok = controller.text.trim() == "歸零";
+          final ok = _confirmController.text.trim() == "歸零";
           return AlertDialog(
             title: const Text("確認全部歸零"),
             content: Column(
@@ -193,7 +203,7 @@ class _StocktakeReviewScreenState extends State<StocktakeReviewScreen> {
                 ),
                 const SizedBox(height: 12),
                 TextField(
-                  controller: controller,
+                  controller: _confirmController,
                   autofocus: true,
                   decoration: const InputDecoration(
                     labelText: "輸入「歸零」以確認",

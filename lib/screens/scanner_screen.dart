@@ -43,35 +43,8 @@ class _ScannerScreenState extends State<ScannerScreen>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _initializeCamera();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _resumePrompt());
-  }
-
-  /// 開掃描器時若有未完成的盤點階段（且不在編輯牌組），先問要不要繼續。
-  void _resumePrompt() {
-    if (!mounted) return;
-    final c = context.read<CollectionProvider>();
-    final d = context.read<DeckProvider>();
-    if (!c.stocktakeActive || d.currentDeck != null) return;
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text("有未完成的盤點"),
-        content: Text("這次已經掃到 ${c.stocktakeScanned} 張。要繼續盤點嗎？"),
-        actions: [
-          TextButton(
-            onPressed: () {
-              c.cancelStocktake();
-              Navigator.pop(ctx);
-            },
-            child: const Text("放棄", style: TextStyle(color: Colors.red)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("繼續盤點"),
-          ),
-        ],
-      ),
-    );
+    // 未完成的盤點階段會自動續用（mode bar 顯示「盤點中 · 本次 N 張」），
+    // 不另外跳提示；要結束就用切換的「新增」或「結束盤點 → 對帳」。
   }
 
   @override

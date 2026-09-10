@@ -10,6 +10,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../utils/card_matcher.dart';
+import '../utils/card_sort.dart';
 import 'deck_provider.dart' show DeckRule;
 
 /// 盤點對帳的一列：本次掃到 `scanned` 張、收藏現有 `db` 張。
@@ -22,6 +23,7 @@ class StocktakeRow {
   const StocktakeRow(this.id, this.name, this.image, this.db, this.scanned);
   bool get matches => db == scanned;
 }
+
 
 class CollectionProvider with ChangeNotifier {
   Map<String, dynamic> _database = {};
@@ -193,29 +195,39 @@ class CollectionProvider with ChangeNotifier {
     return n;
   }
 
-  Map<String, dynamic>? _cardByFullId(String id) {
+  /// "setCode-realKey" → (setCode, realKey, 卡資料)；找不到卡回 (setCode, key, null)。
+  (String, String, Map<String, dynamic>?) _splitFullId(String id) {
     for (var i = id.indexOf('-'); i != -1; i = id.indexOf('-', i + 1)) {
-      final c = _database[id.substring(0, i)]?['cards']?[id.substring(i + 1)];
-      if (c is Map) return c.cast<String, dynamic>();
+      final sc = id.substring(0, i), num = id.substring(i + 1);
+      final c = _database[sc]?['cards']?[num];
+      if (c is Map) return (sc, num, c.cast<String, dynamic>());
     }
-    return null;
+    final dash = id.indexOf('-');
+    return dash < 0 ? (id, "", null) : (id.substring(0, dash),
+        id.substring(dash + 1), null);
   }
 
-  /// 對帳清單：本次掃到的每一張（含與收藏一致的），依 setCode-卡號排序。
+  /// 對帳清單：本次掃到的每一張（含與收藏一致的），
+  /// 依「發售日新→舊 → 系列碼 → 卡號」排序（與牌組匯出一致）。
   List<StocktakeRow> stocktakeRows() {
-    final t = _stocktake ?? const {};
-    final rows = t.entries.map((e) {
-      final card = _cardByFullId(e.key);
-      return StocktakeRow(
+    final t = _stocktake ?? const <String, int>{};
+    final entries = t.entries.map((e) {
+      final (sc, num, card) = _splitFullId(e.key);
+      final row = StocktakeRow(
         e.key,
         (card?['name'] ?? e.key).toString(),
         (card?['image'] ?? "").toString(),
         _userCollection[e.key] ?? 0,
         e.value,
       );
+      final date = (_database[sc]?['releaseDate'] ?? "").toString();
+      return (row, date, sc, num);
     }).toList()
-      ..sort((a, b) => a.id.compareTo(b.id));
-    return rows;
+      ..sort((a, b) => compareCardEntry(
+            dateA: a.$2, setA: a.$3, numA: a.$4,
+            dateB: b.$2, setB: b.$3, numB: b.$4,
+          ));
+    return [for (final e in entries) e.$1];
   }
 
   /// 套用盤點：`finalCounts` 是每張卡的最終數量（沒指定的用 max(收藏, 本次)）。

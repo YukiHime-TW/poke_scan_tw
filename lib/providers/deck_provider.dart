@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../utils/card_sort.dart';
 
 class Deck {
   String id;
@@ -172,28 +173,6 @@ class DeckProvider with ChangeNotifier {
     return c is Map ? c : null;
   }
 
-  /// 卡號自然排序：取斜線前的部分，拆成（文字前綴, 數字, 尾綴）比較，
-  /// 讓 "2/100" 排在 "10/100" 前面，"TG05" 排在 "TG10" 前面。
-  static int _cardNumCompare(String a, String b) {
-    (String, int, String) key(String s) {
-      final head = s.split('/').first.trim();
-      final m = RegExp(r'^(\D*)(\d+)(.*)$').firstMatch(head);
-      if (m == null) return (head.toLowerCase(), 1 << 30, '');
-      return (
-        m.group(1)!.toLowerCase(),
-        int.tryParse(m.group(2)!) ?? 1 << 30,
-        m.group(3)!.toLowerCase(),
-      );
-    }
-
-    final ka = key(a), kb = key(b);
-    final p = ka.$1.compareTo(kb.$1);
-    if (p != 0) return p;
-    final n = ka.$2.compareTo(kb.$2);
-    if (n != 0) return n;
-    return ka.$3.compareTo(kb.$3);
-  }
-
   /// 畫面上 1 張此卡實際要算成幾張（傳說的競技場=2、V-UNION=4…），預設 1。
   /// 命中多條帶 weight 的規則時取最大值。
   int cardWeight(Map? card, List<DeckRule> rules) {
@@ -343,15 +322,15 @@ class DeckProvider with ChangeNotifier {
       }
     });
 
-    // 打牌的人分享牌組時，通常想讓新環境的卡在最上面：
-    // 發售日新→舊；同日期的不同包照系列碼分組；同一包內再照卡號小→大。
-    sortedCards.sort((a, b) {
-      final byDate = (b['date'] as String).compareTo(a['date'] as String);
-      if (byDate != 0) return byDate;
-      final bySet = (a['sCode'] as String).compareTo(b['sCode'] as String);
-      if (bySet != 0) return bySet;
-      return _cardNumCompare(a['cNum'] as String, b['cNum'] as String);
-    });
+    // 打牌的人分享牌組時，通常想讓新環境的卡在最上面（見 utils/card_sort）。
+    sortedCards.sort((a, b) => compareCardEntry(
+          dateA: a['date'] as String,
+          setA: a['sCode'] as String,
+          numA: a['cNum'] as String,
+          dateB: b['date'] as String,
+          setB: b['sCode'] as String,
+          numB: b['cNum'] as String,
+        ));
 
     Map<String, List<String>> categories = {
       "▼ 寶可夢": [],
