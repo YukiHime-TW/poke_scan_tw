@@ -225,8 +225,6 @@ Future<void> _openFeedback(BuildContext context, String url) async {
 }
 
 void showHelpDialog(BuildContext context) {
-  final hasFeedback =
-      context.read<CollectionProvider>().feedbackUrl != null;
   showDialog(
     context: context,
     builder: (ctx) => AlertDialog(
@@ -310,8 +308,6 @@ void showHelpDialog(BuildContext context) {
               _buildHelpItem("牌組導出", "牌組清單點「複製」生成對齊的分享文字。"),
               _buildHelpItem("雲端同步", "登入 Google 後收藏與牌組跨裝置自動同步；登出會清掉本機資料。"),
               _buildHelpItem("設定", "右上角頭像進入：登入 / 登出、清空收藏、使用說明、回報問題、版本。"),
-              if (hasFeedback)
-                _buildHelpItem("回報問題", "遇到錯誤或有建議，點下方「回報問題」開啟表單。"),
               const Divider(height: 30),
               _buildHelpHeader("💡 小提示", Icons.lightbulb_outline),
               const Padding(
@@ -330,19 +326,9 @@ void showHelpDialog(BuildContext context) {
         ),
       ),
       actions: [
-        if (hasFeedback)
-          TextButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              _openFeedback(
-                  context, context.read<CollectionProvider>().feedbackUrl!);
-            },
-            icon: const Icon(Icons.feedback_outlined, size: 18),
-            label: const Text("回報問題"),
-          ),
         TextButton(
           onPressed: () => Navigator.pop(ctx),
-          child: const Text("我知道了",
+          child: const Text("關閉",
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
         ),
       ],
