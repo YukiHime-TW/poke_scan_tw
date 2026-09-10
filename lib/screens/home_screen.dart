@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:provider/provider.dart';
 import 'package:sliver_tools/sliver_tools.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../providers/collection_provider.dart';
 import '../providers/deck_provider.dart';
@@ -108,6 +109,7 @@ class _HomeScreenState extends State<HomeScreen> {
   final Map<String, GlobalKey> _headerKeys = {};
   final ScrollController _scrollController = ScrollController();
   bool _isSearching = false;
+  bool _firstRunHintDismissed = false;
   final TextEditingController _searchController = TextEditingController();
   String _searchText = "";
 
@@ -298,8 +300,92 @@ class _HomeScreenState extends State<HomeScreen> {
           body: Center(child: CircularProgressIndicator(color: themeColor)));
     }
 
+    if (provider.loadFailed) {
+      return Scaffold(
+        backgroundColor: const Color(0xFFF5F5F5),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.cloud_off, size: 56, color: Colors.grey.shade400),
+                const SizedBox(height: 16),
+                const Text("卡片資料載入失敗",
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                Text("請確認網路連線後再試一次。",
+                    style: TextStyle(color: Colors.grey.shade600)),
+                const SizedBox(height: 24),
+                FilledButton.icon(
+                  onPressed: () => context.read<CollectionProvider>().retry(),
+                  icon: const Icon(Icons.refresh),
+                  label: const Text("重試"),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     List<Widget> slivers = [];
     String query = _searchText.trim().toLowerCase();
+
+    // 首次使用引導：全新使用者（收藏是空的）、且在預設檢視時，
+    // 上方顯示一次性提示，加入第一張卡或關掉後就不再出現。
+    final bool showFirstRunHint = !_firstRunHintDismissed &&
+        !isDeckMode &&
+        query.isEmpty &&
+        _statusFilter == StatusFilter.all &&
+        provider.userCollection.isEmpty &&
+        provider.wishlist.isEmpty;
+    if (showFirstRunHint) {
+      slivers.add(SliverToBoxAdapter(
+        child: Container(
+          margin: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: themeColor.withOpacity(0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.waving_hand, color: themeColor, size: 20),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                      child: Text("開始使用",
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 15))),
+                  InkWell(
+                    onTap: () =>
+                        setState(() => _firstRunHintDismissed = true),
+                    child: const Padding(
+                      padding: EdgeInsets.all(4),
+                      child: Icon(Icons.close, size: 18, color: Colors.grey),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                "• 點卡片：收藏數 +1\n"
+                "• 長按卡片：看詳情、調整「收藏 / 這副 / 想要」張數\n"
+                "• 右下角相機：對準卡片左下角編號自動登錄\n"
+                "• 右上角板手：進牌組編輯　·　？：完整說明",
+                style: TextStyle(
+                    fontSize: 13, color: Colors.black54, height: 1.7),
+              ),
+            ],
+          ),
+        ),
+      ));
+    }
 
     var sortedKeys = provider.database.keys.toList();
     sortedKeys.sort((a, b) => (provider.database[b]['releaseDate'] ?? "")
@@ -823,7 +909,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 ]));
   }
 
+  Future<void> _openFeedback(BuildContext context) async {
+    final url = context.read<CollectionProvider>().feedbackUrl;
+    final uri = url == null ? null : Uri.tryParse(url);
+    final messenger = ScaffoldMessenger.of(context);
+    final ok = uri != null &&
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok) {
+      messenger.showSnackBar(
+          const SnackBar(content: Text("無法開啟回報頁面")));
+    }
+  }
+
   void _showHelpDialog(BuildContext context) {
+    final hasFeedback =
+        context.read<CollectionProvider>().feedbackUrl != null;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -907,6 +1007,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildHelpItem("卡片用途查詢", "非編輯模式點卡片底部「用於 N 副牌」可查看位置。"),
                 _buildHelpItem("牌組導出", "牌組清單點「複製」生成對齊的分享文字。"),
                 _buildHelpItem("雲端同步", "登入 Google 後收藏與牌組跨裝置自動同步；登出會清掉本機資料。"),
+                if (hasFeedback)
+                  _buildHelpItem("回報問題", "遇到錯誤或有建議，點下方「回報問題」開啟表單。"),
                 const Divider(height: 30),
                 _buildHelpHeader("💡 小提示", Icons.lightbulb_outline),
                 const Padding(
@@ -925,6 +1027,15 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         actions: [
+          if (hasFeedback)
+            TextButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                _openFeedback(context);
+              },
+              icon: const Icon(Icons.feedback_outlined, size: 18),
+              label: const Text("回報問題"),
+            ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: const Text("我知道了",

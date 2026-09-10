@@ -254,7 +254,16 @@ class DeckProvider with ChangeNotifier {
         nonStd.add(name);
         nonStdCount += n;
       }
-      if (card['type'] == "寶可夢" && card['stage'] == "基礎") hasBasic = true;
+      // 基礎寶可夢：stage 明寫「基礎」，或（舊資料缺 stage 時）沒有進化前、
+      // 也不是 1/2 階進化，就當作基礎。
+      if (card['type'] == "寶可夢") {
+        final stage = card['stage']?.toString();
+        final isBasic = stage == "基礎" ||
+            (stage == null &&
+                (card['evolvesFrom'] == null ||
+                    card['evolvesFrom'].toString().isEmpty));
+        if (isBasic) hasBasic = true;
+      }
     });
     final int count = deckSize(deck, database, deckRules);
     final violations = _ruleViolations(deck, database, deckRules);

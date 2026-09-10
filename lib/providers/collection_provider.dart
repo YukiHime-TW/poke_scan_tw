@@ -27,12 +27,16 @@ class CollectionProvider with ChangeNotifier {
   Set<String> _bannedIds = {}; // 全面禁用卡「setCode-num」
   List<String> _tagOrder = [];
   List<DeckRule> _deckRules = []; // 追加組牌規則（光輝 / ACE SPEC / ◇ …）
+  String? _feedbackUrl; // 「回報問題」入口網址（來自 formats.json，沒有就不顯示入口）
+  bool _loadFailed = false; // 卡片資料庫最後一次載入是否整包失敗（空的）
 
   // --- GitHub Raw 網址配置 ---
   final String _remoteBaseUrl =
       "https://raw.githubusercontent.com/YukiHime-TW/poke_scan_tw/refs/heads/main/assets";
 
   bool get isLoading => _isLoading;
+  bool get loadFailed => _loadFailed;
+  String? get feedbackUrl => _feedbackUrl;
   Map<String, dynamic> get database => _database;
   Map<String, int> get userCollection => _userCollection;
   Map<String, int> get wishlist => _wishlist;
@@ -100,6 +104,34 @@ class CollectionProvider with ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
+    await _loadDatabase();
+
+    // 4. 監聽 Firebase 登入狀態
+    FirebaseAuth.instance.authStateChanges().listen((User? firebaseUser) async {
+      _user = firebaseUser;
+      final session = ++_sessionId;
+      if (firebaseUser != null) {
+        await _loadFromCloud(firebaseUser.uid, session);
+      } else {
+        await _loadFromLocal();
+      }
+      if (session != _sessionId) return; // 已被後續的登入事件取代
+      _isLoading = false;
+      notifyListeners();
+    });
+  }
+
+  /// 使用者在「載入失敗」畫面按重試：重新抓卡片資料庫與設定檔。
+  Future<void> retry() async {
+    _isLoading = true;
+    _loadFailed = false;
+    notifyListeners();
+    await _loadDatabase();
+    _isLoading = false;
+    notifyListeners();
+  }
+
+  Future<void> _loadDatabase() async {
     try {
       // 1. 取得索引 (優先找網路，失敗則找內建)
       List<dynamic> setList = await _fetchIndex();
@@ -166,6 +198,9 @@ class CollectionProvider with ChangeNotifier {
       if (fmt is Map && fmt['banned'] is List) {
         _bannedIds = (fmt['banned'] as List).map((e) => e.toString()).toSet();
       }
+      if (fmt is Map && (fmt['feedbackUrl']?.toString().isNotEmpty ?? false)) {
+        _feedbackUrl = fmt['feedbackUrl'].toString();
+      }
       final to = await _loadJsonConfig('tags_order.json');
       if (to is List) _tagOrder = to.map((e) => e.toString()).toList();
       final dr = await _loadJsonConfig('deck_rules.json');
@@ -179,19 +214,8 @@ class CollectionProvider with ChangeNotifier {
       print("⚠️ 初始化資料庫發生嚴重錯誤: $e");
     }
 
-    // 4. 監聽 Firebase 登入狀態
-    FirebaseAuth.instance.authStateChanges().listen((User? firebaseUser) async {
-      _user = firebaseUser;
-      final session = ++_sessionId;
-      if (firebaseUser != null) {
-        await _loadFromCloud(firebaseUser.uid, session);
-      } else {
-        await _loadFromLocal();
-      }
-      if (session != _sessionId) return; // 已被後續的登入事件取代
-      _isLoading = false;
-      notifyListeners();
-    });
+    // 一張卡都沒載到 = 這次載入整包失敗（網路 + 內建都拿不到），讓 UI 顯示重試
+    _loadFailed = _database.isEmpty;
   }
 
   // --- 資料讀取與更新邏輯 ---
@@ -256,6 +280,7 @@ class CollectionProvider with ChangeNotifier {
         if (res.statusCode == 200 && res.body != cachedContent) {
           await file.writeAsString(res.body);
           print("🔄 卡包 $code 背景更新完成");
+          _applyFreshSet(code, res.body);
         }
       }).catchError((_) {});
 
@@ -269,6 +294,21 @@ class CollectionProvider with ChangeNotifier {
       return await rootBundle.loadString('assets/sets/$code.json');
     } catch (e) {
       return null;
+    }
+  }
+
+  /// 背景抓到某個卡包的新版時，直接併進記憶體中的資料庫並刷新畫面，
+  /// 不用等使用者重開兩次 App（第一次抓、第二次才載）。
+  /// 初次載入還在進行時交給主流程處理，這裡略過。
+  void _applyFreshSet(String code, String body) {
+    if (_isLoading) return;
+    try {
+      final decoded = json.decode(body) as Map<String, dynamic>;
+      if (decoded.isEmpty) return;
+      _database.addAll(decoded);
+      notifyListeners();
+    } catch (e) {
+      print("❌ 背景更新併入失敗 ($code): $e");
     }
   }
 
