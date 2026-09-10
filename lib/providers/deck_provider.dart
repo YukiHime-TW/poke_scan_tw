@@ -315,7 +315,7 @@ class DeckProvider with ChangeNotifier {
           'cNum': parts[1], // 原始卡號字串
           'date': database[parts[0]]?['releaseDate']?.toString() ?? '',
           'name': card['name'],
-          'rarity': card['rarity'],
+          'rarity': card['rarity'] ?? '',
           'type': card['type'],
           'count': count
         });

@@ -369,8 +369,9 @@ def build(code, expansions, rarity_map, refresh=False):
         for dk in DETAIL_KEYS:            # 詳情原封帶過來
             if dk in prev:
                 card[dk] = prev[dk]
+        # reg / rarity 即使是空字串也保留鍵（App 預期讀到 "" 而非缺鍵）
         cards[key] = {k: card[k] for k in KEY_ORDER
-                      if k in card and (card[k] != "" or k == "reg")}
+                      if k in card and (card[k] != "" or k in ("reg", "rarity"))}
         if n % 50 == 0:
             print(f"   … {n}/{len(ids)}")
             _save(RAW_CACHE, rcache)
