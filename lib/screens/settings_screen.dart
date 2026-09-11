@@ -236,7 +236,7 @@ void showHelpDialog(BuildContext context) {
         ],
       ),
       content: SizedBox(
-        width: double.maxFinite,
+        width: 360,
         child: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

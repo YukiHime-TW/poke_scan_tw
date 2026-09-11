@@ -336,7 +336,7 @@ class DeckListScreen extends StatelessWidget {
       builder: (ctx) => AlertDialog(
         title: Text("合法性詳情（${legal.status}）"),
         content: SizedBox(
-          width: double.maxFinite,
+          width: 340,
           child: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
