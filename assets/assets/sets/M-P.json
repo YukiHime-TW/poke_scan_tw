@@ -2,6 +2,7 @@
   "M-P": {
     "name": "M-P 超級進化 特典卡",
     "releaseDate": "2025-08-07",
+    "match_reg": "I",
     "cards": {
       "001/M-P": {
         "name": "妙蛙種子",
@@ -1087,6 +1088,115 @@
         "type": "訓練家|支援者",
         "image": "X",
         "reg": "I"
+      },
+      "051/M-P": {
+        "name": "菊草葉",
+        "rarity": "PROMO",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019243.png",
+        "reg": "I",
+        "elem": "草",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "152",
+        "category": "葉子寶可夢",
+        "attacks": [
+          {
+            "name": "飛葉快刀",
+            "cost": [
+              "草"
+            ],
+            "damage": "20",
+            "text": ""
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 1,
+        "illustrator": "kamonabe"
+      },
+      "052/M-P": {
+        "name": "暖暖豬",
+        "rarity": "PROMO",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019244.png",
+        "reg": "I",
+        "elem": "火",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "498",
+        "category": "火豬寶可夢",
+        "attacks": [
+          {
+            "name": "撞擊",
+            "cost": [
+              "火"
+            ],
+            "damage": "10",
+            "text": ""
+          },
+          {
+            "name": "滾動",
+            "cost": [
+              "火",
+              "火"
+            ],
+            "damage": "30",
+            "text": ""
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 1,
+        "illustrator": "Teeziro"
+      },
+      "053/M-P": {
+        "name": "小鋸鱷",
+        "rarity": "PROMO",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019245.png",
+        "reg": "H",
+        "elem": "水",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "158",
+        "category": "大顎寶可夢",
+        "attacks": [
+          {
+            "name": "咬緊",
+            "cost": [
+              "水"
+            ],
+            "damage": "10",
+            "text": "在下個對手的回合，受到這個招式的寶可夢無法撤退。"
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 1,
+        "illustrator": "MINAMINAMI Take"
+      },
+      "054/M-P": {
+        "name": "皮卡丘",
+        "rarity": "PROMO",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019246.png",
+        "reg": "H",
+        "elem": "雷",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "25",
+        "category": "鼠寶可夢",
+        "attacks": [
+          {
+            "name": "電磁電光",
+            "cost": [
+              "雷"
+            ],
+            "damage": "",
+            "text": "對手的1隻寶可夢受到10點傷害。[在備戰區不計算弱點・抵抗力。]"
+          }
+        ],
+        "weakness": "鬥×2",
+        "retreat": 1,
+        "illustrator": "kodama"
       },
       "055/M-P": {
         "name": "大竺葵",
@@ -3007,9 +3117,9 @@
       "146/M-P": {
         "name": "溜溜糖球",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019527.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "草",
         "hp": 50,
         "stage": "基礎",
@@ -3040,9 +3150,9 @@
       "147/M-P": {
         "name": "雨翅蛾",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019528.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "草",
         "hp": 110,
         "stage": "1階進化",
@@ -3074,9 +3184,9 @@
       "148/M-P": {
         "name": "膽小蟲",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019529.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "草",
         "hp": 70,
         "stage": "基礎",
@@ -3105,9 +3215,9 @@
       "149/M-P": {
         "name": "卡蒂狗",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019530.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "火",
         "hp": 80,
         "stage": "基礎",
@@ -3140,9 +3250,9 @@
       "150/M-P": {
         "name": "鴨嘴火獸",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019531.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "火",
         "hp": 90,
         "stage": "基礎",
@@ -3174,22 +3284,22 @@
       "151/M-P": {
         "name": "鴨嘴炎獸",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019532.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "火",
         "hp": 140,
         "stage": "1階進化",
         "evolvesFrom": "鴨嘴火獸",
         "dex": "467",
         "category": "爆炎寶可夢",
-        "attacks": [
+        "abilities": [
           {
-            "name": "‌[特性] 拍檔提升",
-            "cost": [],
-            "damage": "",
+            "name": "拍檔提升",
             "text": "在自己的回合時可使用1次。從自己的手牌選擇「基本【火】能量」卡與「基本【雷】能量」卡最多各1張，以任意方式附於自己的「電擊魔獸」或者「鴨嘴炎獸」身上。"
-          },
+          }
+        ],
+        "attacks": [
           {
             "name": "高溫重壓",
             "cost": [
@@ -3208,9 +3318,9 @@
       "152/M-P": {
         "name": "電擊獸",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019533.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "雷",
         "hp": 90,
         "stage": "基礎",
@@ -3243,9 +3353,9 @@
       "153/M-P": {
         "name": "電擊魔獸",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019534.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "雷",
         "hp": 140,
         "stage": "1階進化",
@@ -3281,9 +3391,9 @@
       "154/M-P": {
         "name": "啪嚓海膽",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019535.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "雷",
         "hp": 80,
         "stage": "基礎",
@@ -3307,9 +3417,9 @@
       "155/M-P": {
         "name": "菊草葉",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019536.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "草",
         "hp": 70,
         "stage": "基礎",
@@ -3341,9 +3451,9 @@
       "156/M-P": {
         "name": "月桂葉",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019537.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "草",
         "hp": 100,
         "stage": "1階進化",
@@ -3368,9 +3478,9 @@
       "157/M-P": {
         "name": "超級大竺葵ex",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019538.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "草",
         "hp": 360,
         "stage": "2階進化",
@@ -3395,9 +3505,9 @@
       "158/M-P": {
         "name": "暖暖豬",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019539.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "火",
         "hp": 80,
         "stage": "基礎",
@@ -3420,9 +3530,9 @@
       "159/M-P": {
         "name": "炒炒豬",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019540.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "火",
         "hp": 110,
         "stage": "1階進化",
@@ -3448,9 +3558,9 @@
       "160/M-P": {
         "name": "超級炎武王ex",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019541.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "火",
         "hp": 380,
         "stage": "2階進化",
@@ -3475,9 +3585,9 @@
       "161/M-P": {
         "name": "小鋸鱷",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019542.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "水",
         "hp": 80,
         "stage": "基礎",
@@ -3501,9 +3611,9 @@
       "162/M-P": {
         "name": "藍鱷",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019543.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "水",
         "hp": 100,
         "stage": "1階進化",
@@ -3528,9 +3638,9 @@
       "163/M-P": {
         "name": "超級大力鱷ex",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019544.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "水",
         "hp": 370,
         "stage": "2階進化",
@@ -3555,30 +3665,30 @@
       "164/M-P": {
         "name": "基本【草】能量",
         "rarity": "PROMO",
+        "type": "基本能量",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019545.png",
-        "reg": "None",
-        "type": "基本能量"
+        "reg": "None"
       },
       "165/M-P": {
         "name": "基本【火】能量",
         "rarity": "PROMO",
+        "type": "基本能量",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019546.png",
-        "reg": "None",
-        "type": "基本能量"
+        "reg": "None"
       },
       "166/M-P": {
         "name": "基本【水】能量",
         "rarity": "PROMO",
+        "type": "基本能量",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019547.png",
-        "reg": "None",
-        "type": "基本能量"
+        "reg": "None"
       },
       "167/M-P": {
         "name": "新葉喵",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019378.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "草",
         "hp": 70,
         "stage": "基礎",
@@ -3601,9 +3711,9 @@
       "168/M-P": {
         "name": "蒂蕾喵",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019379.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "草",
         "hp": 90,
         "stage": "1階進化",
@@ -3628,9 +3738,9 @@
       "169/M-P": {
         "name": "魔幻假面喵ex",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019380.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "草",
         "hp": 320,
         "stage": "2階進化",
@@ -3654,9 +3764,9 @@
       "170/M-P": {
         "name": "索羅亞",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019381.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "惡",
         "hp": 70,
         "stage": "基礎",
@@ -3688,9 +3798,9 @@
       "171/M-P": {
         "name": "索羅亞克ex",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019382.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "惡",
         "hp": 270,
         "stage": "1階進化",
@@ -3723,9 +3833,9 @@
       "172/M-P": {
         "name": "伊布ex",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019383.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "無色",
         "hp": 200,
         "stage": "基礎",
@@ -3757,230 +3867,796 @@
       "173/M-P": {
         "name": "妙蛙種子",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019720.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "草",
+        "hp": 80,
+        "stage": "基礎",
+        "dex": "1",
+        "category": "種子寶可夢",
+        "attacks": [
+          {
+            "name": "寄生種子",
+            "cost": [
+              "草"
+            ],
+            "damage": "10",
+            "text": "將這隻寶可夢恢復「10」HP。"
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 2,
+        "illustrator": "Saboteri"
       },
       "174/M-P": {
         "name": "小火龍",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019721.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "火",
+        "hp": 80,
+        "stage": "基礎",
+        "dex": "4",
+        "category": "蜥蜴寶可夢",
+        "attacks": [
+          {
+            "name": "火花",
+            "cost": [
+              "火"
+            ],
+            "damage": "30",
+            "text": "選擇1個這隻寶可夢身上附加的能量，將其丟棄。"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 2,
+        "illustrator": "Saboteri"
       },
       "175/M-P": {
         "name": "傑尼龜",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019722.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "水",
+        "hp": 80,
+        "stage": "基礎",
+        "dex": "7",
+        "category": "小龜寶可夢",
+        "attacks": [
+          {
+            "name": "泡沫",
+            "cost": [
+              "水"
+            ],
+            "damage": "10",
+            "text": "擲1次硬幣若為正面，則將對手的戰鬥寶可夢【麻痺】。"
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 2,
+        "illustrator": "Saboteri"
       },
       "176/M-P": {
         "name": "菊草葉",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019723.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "草",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "152",
+        "category": "葉子寶可夢",
+        "attacks": [
+          {
+            "name": "飛葉快刀",
+            "cost": [
+              "草",
+              "無色"
+            ],
+            "damage": "30",
+            "text": ""
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "177/M-P": {
         "name": "火球鼠",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019724.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "火",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "155",
+        "category": "火鼠寶可夢",
+        "attacks": [
+          {
+            "name": "撞擊",
+            "cost": [
+              "火",
+              "無色",
+              "無色"
+            ],
+            "damage": "40",
+            "text": ""
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "178/M-P": {
         "name": "小鋸鱷",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019725.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "水",
+        "hp": 80,
+        "stage": "基礎",
+        "dex": "158",
+        "category": "大顎寶可夢",
+        "attacks": [
+          {
+            "name": "咬住",
+            "cost": [
+              "水",
+              "水",
+              "無色"
+            ],
+            "damage": "50",
+            "text": ""
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 2,
+        "illustrator": "Saboteri"
       },
       "179/M-P": {
         "name": "木守宮",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019726.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "草",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "252",
+        "category": "林蜥寶可夢",
+        "attacks": [
+          {
+            "name": "拍擊",
+            "cost": [
+              "草"
+            ],
+            "damage": "20",
+            "text": ""
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "180/M-P": {
         "name": "火稚雞",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019727.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "火",
+        "hp": 60,
+        "stage": "基礎",
+        "dex": "255",
+        "category": "雛雞寶可夢",
+        "attacks": [
+          {
+            "name": "啄",
+            "cost": [
+              "無色"
+            ],
+            "damage": "20",
+            "text": ""
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "181/M-P": {
         "name": "水躍魚",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019728.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "水",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "258",
+        "category": "沼魚寶可夢",
+        "attacks": [
+          {
+            "name": "擲泥",
+            "cost": [
+              "水",
+              "水"
+            ],
+            "damage": "40",
+            "text": ""
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "182/M-P": {
         "name": "草苗龜",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019729.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "草",
+        "hp": 90,
+        "stage": "基礎",
+        "dex": "387",
+        "category": "嫩葉寶可夢",
+        "attacks": [
+          {
+            "name": "飛葉快刀",
+            "cost": [
+              "草",
+              "草",
+              "無色"
+            ],
+            "damage": "60",
+            "text": ""
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 3,
+        "illustrator": "Saboteri"
       },
       "183/M-P": {
         "name": "小火焰猴",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019730.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "火",
+        "hp": 60,
+        "stage": "基礎",
+        "dex": "390",
+        "category": "小猴寶可夢",
+        "attacks": [
+          {
+            "name": "亂抓",
+            "cost": [
+              "無色",
+              "無色"
+            ],
+            "damage": "20×",
+            "text": "擲3次硬幣，造成正面出現的次數×20點傷害。"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "184/M-P": {
         "name": "波加曼",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019731.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "水",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "393",
+        "category": "企鵝寶可夢",
+        "attacks": [
+          {
+            "name": "啄",
+            "cost": [
+              "水"
+            ],
+            "damage": "20",
+            "text": ""
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "185/M-P": {
         "name": "藤藤蛇",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019732.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "草",
+        "hp": 60,
+        "stage": "基礎",
+        "dex": "495",
+        "category": "草蛇寶可夢",
+        "attacks": [
+          {
+            "name": "藤鞭",
+            "cost": [
+              "無色"
+            ],
+            "damage": "20",
+            "text": ""
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "186/M-P": {
         "name": "暖暖豬",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019733.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "火",
+        "hp": 80,
+        "stage": "基礎",
+        "dex": "498",
+        "category": "火豬寶可夢",
+        "attacks": [
+          {
+            "name": "火花",
+            "cost": [
+              "火",
+              "火"
+            ],
+            "damage": "40",
+            "text": "選擇1個這隻寶可夢身上附加的能量，將其丟棄。"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 2,
+        "illustrator": "Saboteri"
       },
       "187/M-P": {
         "name": "水水獺",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019734.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "水",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "501",
+        "category": "海獺寶可夢",
+        "attacks": [
+          {
+            "name": "貝殼刃",
+            "cost": [
+              "水",
+              "無色"
+            ],
+            "damage": "10+",
+            "text": "擲1次硬幣若為正面，則增加30點傷害。"
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "188/M-P": {
         "name": "哈力栗",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019735.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "草",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "650",
+        "category": "刺栗寶可夢",
+        "attacks": [
+          {
+            "name": "飛彈針",
+            "cost": [
+              "草",
+              "無色"
+            ],
+            "damage": "10×",
+            "text": "擲4次硬幣，造成正面出現的次數×10點傷害。"
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 2,
+        "illustrator": "Saboteri"
       },
       "189/M-P": {
         "name": "火狐狸",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019736.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "火",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "653",
+        "category": "狐狸寶可夢",
+        "attacks": [
+          {
+            "name": "抓",
+            "cost": [
+              "火",
+              "無色"
+            ],
+            "damage": "30",
+            "text": ""
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "190/M-P": {
         "name": "呱呱泡蛙",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019737.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "水",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "656",
+        "category": "泡蛙寶可夢",
+        "attacks": [
+          {
+            "name": "拍擊",
+            "cost": [
+              "無色",
+              "無色"
+            ],
+            "damage": "20",
+            "text": ""
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "191/M-P": {
         "name": "木木梟",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019738.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "草",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "722",
+        "category": "草羽寶可夢",
+        "attacks": [
+          {
+            "name": "撞擊",
+            "cost": [
+              "無色",
+              "無色"
+            ],
+            "damage": "20",
+            "text": ""
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "192/M-P": {
         "name": "火斑喵",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019739.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "火",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "725",
+        "category": "火貓寶可夢",
+        "attacks": [
+          {
+            "name": "火焰牙",
+            "cost": [
+              "火",
+              "火"
+            ],
+            "damage": "20",
+            "text": "將對手的戰鬥寶可夢【灼傷】。"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "193/M-P": {
         "name": "球球海獅",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019740.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "水",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "728",
+        "category": "海獅寶可夢",
+        "attacks": [
+          {
+            "name": "魅惑之聲",
+            "cost": [
+              "水",
+              "水"
+            ],
+            "damage": "20",
+            "text": "將對手的戰鬥寶可夢【混亂】。"
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "194/M-P": {
         "name": "敲音猴",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019741.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "草",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "810",
+        "category": "小猴寶可夢",
+        "attacks": [
+          {
+            "name": "木枝突刺",
+            "cost": [
+              "草",
+              "草"
+            ],
+            "damage": "40",
+            "text": ""
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "195/M-P": {
         "name": "炎兔兒",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019742.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "火",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "813",
+        "category": "兔子寶可夢",
+        "attacks": [
+          {
+            "name": "二連踢",
+            "cost": [
+              "火",
+              "無色"
+            ],
+            "damage": "20×",
+            "text": "擲2次硬幣，造成正面出現的次數×20點傷害。"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "196/M-P": {
         "name": "淚眼蜥",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019743.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "水",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "816",
+        "category": "水蜥寶可夢",
+        "attacks": [
+          {
+            "name": "水槍",
+            "cost": [
+              "水",
+              "無色",
+              "無色"
+            ],
+            "damage": "40",
+            "text": ""
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "197/M-P": {
         "name": "新葉喵",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019744.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "草",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "906",
+        "category": "草貓寶可夢",
+        "attacks": [
+          {
+            "name": "樹葉",
+            "cost": [
+              "草",
+              "無色",
+              "無色"
+            ],
+            "damage": "40",
+            "text": ""
+          }
+        ],
+        "weakness": "火×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "198/M-P": {
         "name": "呆火鱷",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019745.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "火",
+        "hp": 90,
+        "stage": "基礎",
+        "dex": "909",
+        "category": "火鱷寶可夢",
+        "attacks": [
+          {
+            "name": "噴射火焰",
+            "cost": [
+              "火",
+              "火",
+              "無色"
+            ],
+            "damage": "70",
+            "text": "選擇1個這隻寶可夢身上附加的能量，將其丟棄。"
+          }
+        ],
+        "weakness": "水×2",
+        "retreat": 3,
+        "illustrator": "Saboteri"
       },
       "199/M-P": {
         "name": "潤水鴨",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019746.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "水",
+        "hp": 70,
+        "stage": "基礎",
+        "dex": "912",
+        "category": "小鴨寶可夢",
+        "attacks": [
+          {
+            "name": "翅膀攻擊",
+            "cost": [
+              "水",
+              "無色"
+            ],
+            "damage": "30",
+            "text": ""
+          }
+        ],
+        "weakness": "雷×2",
+        "retreat": 1,
+        "illustrator": "Saboteri"
       },
       "200/M-P": {
         "name": "皮卡丘ex",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019747.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "雷",
+        "hp": 190,
+        "stage": "基礎",
+        "dex": "25",
+        "attacks": [
+          {
+            "name": "皮卡皮卡大遊行",
+            "cost": [
+              "無色"
+            ],
+            "damage": "",
+            "text": "從自己的牌庫選擇任意數量的【基礎】寶可夢卡，放置於備戰區。並且重洗牌庫。"
+          },
+          {
+            "name": "十萬伏特",
+            "cost": [
+              "雷",
+              "雷",
+              "無色"
+            ],
+            "damage": "200",
+            "text": "將這隻寶可夢身上附加的能量卡全部丟棄。"
+          }
+        ],
+        "weakness": "鬥×2",
+        "retreat": 1,
+        "illustrator": "YOSHIROTTEN"
       },
       "201/M-P": {
         "name": "皮卡丘ex",
         "rarity": "PROMO",
-        "image": "X",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00019748.png",
         "reg": "J",
-        "type": "寶可夢"
+        "elem": "雷",
+        "hp": 190,
+        "stage": "基礎",
+        "dex": "25",
+        "attacks": [
+          {
+            "name": "劈哩劈哩夜狂歡",
+            "cost": [
+              "雷"
+            ],
+            "damage": "",
+            "text": "從自己的手牌選擇任意數量的基本能量卡，以任意方式附於自己的寶可夢身上。"
+          },
+          {
+            "name": "打雷",
+            "cost": [
+              "雷",
+              "雷",
+              "無色"
+            ],
+            "damage": "200",
+            "text": "這隻寶可夢也受到30點傷害。"
+          }
+        ],
+        "weakness": "鬥×2",
+        "retreat": 1,
+        "illustrator": "YOSHIROTTEN"
       },
       "206/M-P": {
         "name": "寶可平板",
         "rarity": "PROMO",
+        "type": "訓練家|物品",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019548.png",
         "reg": "J",
-        "type": "訓練家|物品",
         "effect": "從自己的牌庫選擇1張寶可夢卡（「擁有規則的寶可夢」除外），在給對手看過後加入手牌。並且重洗牌庫。",
         "illustrator": "Studio Bora Inc."
       },
       "207/M-P": {
         "name": "蓋伊",
         "rarity": "PROMO",
+        "type": "訓練家|支援者",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019549.png",
         "reg": "J",
-        "type": "訓練家|支援者",
         "effect": "從自己的牌庫抽出3張卡。",
         "illustrator": "Teeziro"
       },
       "208/M-P": {
         "name": "超級艾路雷朵ex",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019550.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "鬥",
         "hp": 350,
         "stage": "2階進化",
@@ -4012,9 +4688,9 @@
       "209/M-P": {
         "name": "膽小蟲",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019624.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "草",
         "hp": 70,
         "stage": "基礎",
@@ -4043,9 +4719,9 @@
       "210/M-P": {
         "name": "超級米立龍ex",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019625.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "水",
         "hp": 260,
         "stage": "基礎",
@@ -4069,9 +4745,9 @@
       "211/M-P": {
         "name": "麻麻小魚",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019626.png",
         "reg": "I",
-        "type": "寶可夢",
         "elem": "雷",
         "hp": 40,
         "stage": "基礎",
@@ -4094,9 +4770,9 @@
       "212/M-P": {
         "name": "探探鼠",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019627.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "無色",
         "hp": 70,
         "stage": "基礎",
@@ -4125,27 +4801,27 @@
       "213/M-P": {
         "name": "特殊紅牌",
         "rarity": "PROMO",
+        "type": "訓練家|物品",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019628.png",
         "reg": "J",
-        "type": "訓練家|物品",
         "effect": "這張卡只有在對手剩餘獎賞卡的張數為3張以下時才可使用。\n \n對手將對手自己的手牌全部翻回反面並重洗，放回牌庫下方。然後，對手從牌庫抽出3張卡。",
         "illustrator": "Studio Bora Inc."
       },
       "214/M-P": {
         "name": "玳蘿",
         "rarity": "PROMO",
+        "type": "訓練家|支援者",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019629.png",
         "reg": "J",
-        "type": "訓練家|支援者",
         "effect": "這張卡必須在上個對手的回合自己的「超級進化寶可夢【ex】」【昏厥】了才可使用。\n\n從自己的牌庫選擇最多2張基本能量卡，附於自己的1隻「超級進化寶可夢【ex】」身上。並且重洗牌庫。",
         "illustrator": "En Morikura"
       },
       "215/M-P": {
         "name": "老大的指令 烏羽",
         "rarity": "PROMO",
+        "type": "訓練家|支援者",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019630.png",
         "reg": "I",
-        "type": "訓練家|支援者",
         "effect": "選擇1隻對手的備戰寶可夢，與戰鬥寶可夢互換。",
         "illustrator": "akagi"
       },
@@ -4159,9 +4835,9 @@
       "217/M-P": {
         "name": "皮卡丘",
         "rarity": "PROMO",
+        "type": "寶可夢",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019669.png",
         "reg": "J",
-        "type": "寶可夢",
         "elem": "雷",
         "hp": 70,
         "stage": "基礎",
@@ -4186,9 +4862,9 @@
       "218/M-P": {
         "name": "慶祝開場樂",
         "rarity": "PROMO",
+        "type": "訓練家|競技場",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00019668.png",
         "reg": "J",
-        "type": "訓練家|競技場",
         "effect": "雙方玩家在每個自己的回合時，可使用1次，可將自己的所有寶可夢各恢復「10」HP。這個情況下，自己的回合結束。",
         "illustrator": "Yuu Nishida"
       },
@@ -4204,7 +4880,7 @@
         "rarity": "PROMO",
         "image": "X",
         "reg": "I",
-        "type": "寶可夢"
+        "type": "訓練家|道具"
       },
       "224/M-P": {
         "name": "花舞鳥ex",
@@ -4218,7 +4894,7 @@
         "rarity": "PROMO",
         "image": "X",
         "reg": "J",
-        "type": "寶可夢"
+        "type": "訓練家|支援者"
       },
       "226/M-P": {
         "name": "喵喵ex",
@@ -4227,7 +4903,6 @@
         "reg": "J",
         "type": "寶可夢"
       }
-    },
-    "match_reg": "I"
+    }
   }
 }

@@ -2,6 +2,7 @@
   "SLD": {
     "name": "起始組合VSTAR 達克萊伊",
     "releaseDate": "2022-03-11",
+    "match_reg": "DEF",
     "cards": {
       "001/020": {
         "name": "叉字蝠V",
@@ -247,6 +248,12 @@
         "stage": "1階進化",
         "evolvesFrom": "達克萊伊V",
         "dex": "491",
+        "abilities": [
+          {
+            "name": "[VSTAR力量] 星星深淵",
+            "text": "在自己的回合時可使用。從自己的棄牌區選擇最多2張物品卡，在給對手看過後加入手牌。[對戰中，己方只可使用1次【VSTAR】力量。]"
+          }
+        ],
         "attacks": [
           {
             "name": "惡之波動",
@@ -256,12 +263,6 @@
             ],
             "damage": "30+",
             "text": "增加自己的場上寶可夢身上附加的【惡】能量的數量×30點傷害。"
-          },
-          {
-            "name": "[VSTAR力量][特性] 星星深淵",
-            "cost": [],
-            "damage": "",
-            "text": "在自己的回合時可使用。從自己的棄牌區選擇最多2張物品卡，在給對手看過後加入手牌。[對戰中，己方只可使用1次【VSTAR】力量。]"
           }
         ],
         "weakness": "草×2",
@@ -369,7 +370,7 @@
         "rarity": "",
         "type": "訓練家|物品",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00006221.png",
-        "reg": "D",
+        "reg": "F",
         "effect": "查看自己的牌庫上方7張卡。選擇其中1張支援者卡，在給對手看過後加入手牌。將剩餘卡放回牌庫並重洗。",
         "illustrator": "Ryo Ueda"
       },
@@ -427,7 +428,6 @@
         "effect": "選擇1隻對手的備戰寶可夢，與戰鬥寶可夢互換。",
         "illustrator": "GIDORA"
       }
-    },
-    "match_reg": "DEF"
+    }
   }
 }

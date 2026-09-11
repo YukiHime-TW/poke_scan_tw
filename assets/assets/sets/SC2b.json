@@ -2,6 +2,7 @@
   "SC2b": {
     "name": "無極力量 SET B",
     "releaseDate": "2020-08-21",
+    "match_reg": "D",
     "cards": {
       "001/144": {
         "name": "榛果球",
@@ -774,39 +775,42 @@
         "illustrator": "Hitoshi Ariga"
       },
       "024/144": {
-        "name": "哥德寶寶",
+        "name": "鰓魚海獸",
         "rarity": "U",
         "type": "寶可夢",
-        "image": "https://asia.pokemon-card.com/tw/card-img/tw00001013.png",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00001113.png",
         "reg": "D",
-        "elem": "超",
-        "hp": 60,
+        "elem": "水",
+        "hp": 150,
         "stage": "基礎",
-        "dex": "574",
-        "category": "凝視寶可夢",
+        "dex": "883",
+        "category": "化石寶可夢",
         "attacks": [
           {
-            "name": "天眼",
+            "name": "堅硬面孔",
             "cost": [
-              "超"
-            ],
-            "damage": "",
-            "text": "查看對手的牌庫上方5張卡，以任意順序排列，放回牌庫上方。"
-          },
-          {
-            "name": "重摑",
-            "cost": [
-              "超",
+              "水",
+              "無色",
               "無色"
             ],
-            "damage": "30",
-            "text": ""
+            "damage": "90",
+            "text": "在下個對手的回合，這隻寶可夢受到招式的傷害「-60」點。"
+          },
+          {
+            "name": "極寒吐息",
+            "cost": [
+              "水",
+              "無色",
+              "無色",
+              "無色"
+            ],
+            "damage": "130",
+            "text": "將對手的戰鬥寶可夢【睡眠】。"
           }
         ],
-        "weakness": "惡×2",
-        "resistance": "鬥-30",
-        "retreat": 1,
-        "illustrator": "Mizue"
+        "weakness": "雷×2",
+        "retreat": 2,
+        "illustrator": "Shin Nagasawa"
       },
       "025/144": {
         "name": "皮卡丘V",
@@ -4665,7 +4669,6 @@
         "image": "",
         "reg": "D"
       }
-    },
-    "match_reg": "D"
+    }
   }
 }

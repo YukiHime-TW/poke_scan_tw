@@ -2,6 +2,7 @@
   "AC1D": {
     "name": "G超起始牌組 眾星雲集組合篇",
     "releaseDate": "2019-10-09",
+    "match_reg": "A",
     "cards": {
       "001/157": {
         "name": "蔓藤怪",
@@ -2702,6 +2703,41 @@
           "修改弱點"
         ]
       },
+      "073/157": {
+        "name": "超能妙喵",
+        "rarity": "",
+        "type": "寶可夢",
+        "image": "https://asia.pokemon-card.com/tw/card-img/tw00004357.png",
+        "reg": "A",
+        "elem": "超",
+        "hp": 90,
+        "stage": "1階進化",
+        "evolvesFrom": "妙喵",
+        "dex": "678",
+        "category": "抑制寶可夢",
+        "attacks": [
+          {
+            "name": "吸引",
+            "cost": [
+              "超"
+            ],
+            "damage": "",
+            "text": "從自己的牌庫抽出3張。"
+          },
+          {
+            "name": "手中強念",
+            "cost": [
+              "無色",
+              "無色"
+            ],
+            "damage": "10×",
+            "text": "造成自己的手牌的張數×10點傷害。"
+          }
+        ],
+        "weakness": "超×2",
+        "retreat": 1,
+        "illustrator": "Anesaki Dynamic"
+      },
       "074/157": {
         "name": "卡璞・蝶蝶GX",
         "rarity": "",
@@ -4982,7 +5018,7 @@
       "145/157": {
         "name": "伊利馬",
         "rarity": "",
-        "type": "訓練家|支援者",
+        "type": "訓練家|物品",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00004429.png",
         "reg": "A",
         "effect": "雙方玩家各將所有手牌放回牌庫並重洗。然後，雙方玩家各擲1次硬幣，若為正面，則從牌庫抽6張，若為反面，則從牌庫抽3張。",
@@ -5007,7 +5043,7 @@
       "147/157": {
         "name": "庫庫伊博士",
         "rarity": "",
-        "type": "訓練家|支援者",
+        "type": "訓練家|物品",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00004431.png",
         "reg": "A",
         "effect": "從自己的牌庫抽出2張。在這個回合，自己的寶可夢使出的招式，對對手的戰鬥寶可夢造成的傷害「+20」點。",
@@ -5020,7 +5056,7 @@
       "148/157": {
         "name": "哈烏",
         "rarity": "",
-        "type": "訓練家|支援者",
+        "type": "訓練家|物品",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00004432.png",
         "reg": "A",
         "effect": "從自己的牌庫抽出3張。",
@@ -5032,7 +5068,7 @@
       "149/157": {
         "name": "碧珂",
         "rarity": "",
-        "type": "訓練家|支援者",
+        "type": "訓練家|物品",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00004433.png",
         "reg": "A",
         "effect": "雙方玩家各將所有手牌放回牌庫並重洗。然後，雙方玩家各從牌庫抽出與放回張數相同數量的卡。",
@@ -5044,7 +5080,7 @@
       "150/157": {
         "name": "寶可夢培育家",
         "rarity": "",
-        "type": "訓練家|支援者",
+        "type": "訓練家|物品",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00004434.png",
         "reg": "A",
         "effect": "從自己的牌庫抽出2張。然後，將自己的戰鬥寶可夢恢復「20」HP。",
@@ -5057,7 +5093,7 @@
       "151/157": {
         "name": "馬瑪內",
         "rarity": "",
-        "type": "訓練家|支援者",
+        "type": "訓練家|物品",
         "image": "https://asia.pokemon-card.com/tw/card-img/tw00004435.png",
         "reg": "A",
         "effect": "這張卡只有在將自己的2張手牌丟到棄牌區才可使用。從自己的牌庫抽出4張。",
@@ -5137,7 +5173,6 @@
         "illustrator": "n/a",
         "tagsReviewed": true
       }
-    },
-    "match_reg": "A"
+    }
   }
 }
