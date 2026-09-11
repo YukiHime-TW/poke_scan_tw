@@ -51,6 +51,7 @@ class DeckLegality {
   final String status; // "標準" | "開放" | "未完成"
   final List<String> nonStandardNames; // 已輪替（非標準）的卡名（去重）
   final int nonStandardCount; // 非標準卡的張數（含重複）
+  final Map<String, List<String>> nonStandardByReg; // 賽制標記 -> 卡名清單（已排序）
   final int cardCount;
   final bool hasBasic; // 至少一張基礎寶可夢
   final List<String> ruleViolations; // 追加組牌規則的違規訊息（光輝 / ACE SPEC / ◇ 等）
@@ -60,10 +61,21 @@ class DeckLegality {
       {required this.status,
       required this.nonStandardNames,
       required this.nonStandardCount,
+      this.nonStandardByReg = const {},
       required this.cardCount,
       required this.hasBasic,
       this.ruleViolations = const [],
       this.bannedNames = const []});
+}
+
+/// 賽制標記排序：A..J 依序，其餘（無標記 / PROMO…）排最後、依字母排。
+int compareRegMark(String a, String b) {
+  const order = "ABCDEFGHIJ";
+  final ia = order.indexOf(a), ib = order.indexOf(b);
+  if (ia != -1 && ib != -1) return ia.compareTo(ib);
+  if (ia != -1) return -1;
+  if (ib != -1) return 1;
+  return a.compareTo(b);
 }
 
 /// 追加的組牌張數限制，來自 `deck_rules.json`（啟動時抓 main，離線用 bundled）。
@@ -242,6 +254,7 @@ class DeckProvider with ChangeNotifier {
         : standardRegs;
     int nonStdCount = 0;
     final nonStd = <String>{};
+    final nonStdReg = <String, String>{}; // 卡名 -> 賽制標記（同名卡取第一次遇到的）
     final banned = <String>{};
     bool hasBasic = false;
     deck.cards.forEach((id, n) {
@@ -253,6 +266,7 @@ class DeckProvider with ChangeNotifier {
       if (bannedIds.contains(id)) banned.add(name);
       if (!regs.contains(reg) && !standardNames.contains(name)) {
         nonStd.add(name);
+        nonStdReg.putIfAbsent(name, () => reg.isEmpty ? "無標記" : reg);
         nonStdCount += n;
       }
       // 基礎寶可夢：stage 明寫「基礎」，或（舊資料缺 stage 時）沒有進化前、
@@ -275,10 +289,16 @@ class DeckProvider with ChangeNotifier {
             banned.isNotEmpty)
         ? "未完成"
         : (nonStd.isEmpty ? "標準" : "開放");
+    final byReg = <String, List<String>>{};
+    for (final name in nonStd) {
+      byReg.putIfAbsent(nonStdReg[name] ?? "無標記", () => []).add(name);
+    }
+    for (final list in byReg.values) list.sort();
     return DeckLegality(
         status: status,
         nonStandardNames: nonStd.toList(),
         nonStandardCount: nonStdCount,
+        nonStandardByReg: byReg,
         cardCount: count,
         hasBasic: hasBasic,
         ruleViolations: violations,

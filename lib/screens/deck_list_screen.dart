@@ -359,8 +359,17 @@ class DeckListScreen extends StatelessWidget {
                     legal.bannedNames, color: Colors.red.shade700),
                 section("違反追加規則", legal.ruleViolations,
                     color: Colors.orange.shade800),
-                section("非標準卡（${legal.nonStandardCount} 張）",
-                    legal.nonStandardNames),
+                if (legal.nonStandardByReg.isNotEmpty) ...[
+                  Text("非標準卡（${legal.nonStandardCount} 張）",
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 13)),
+                  const SizedBox(height: 4),
+                  for (final reg in legal.nonStandardByReg.keys.toList()
+                    ..sort(compareRegMark))
+                    section(
+                        "【$reg 標記】（${legal.nonStandardByReg[reg]!.length}）",
+                        legal.nonStandardByReg[reg]!),
+                ],
               ],
             ),
           ),
