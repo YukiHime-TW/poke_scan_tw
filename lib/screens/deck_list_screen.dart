@@ -251,17 +251,35 @@ class DeckListScreen extends StatelessWidget {
                     style: const TextStyle(
                         fontSize: 18, fontWeight: FontWeight.bold)),
                 if (legal != null)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 4),
-                    child: Text(
-                      [
-                        "賽制：${legal.status}",
-                        ...legalityLines,
-                      ].join("　·　"),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade700),
+                  InkWell(
+                    onTap: legalityLines.isEmpty
+                        ? null
+                        : () => _showLegalityDetail(context, legal),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 4),
+                      child: Column(
+                        children: [
+                          Text(
+                            [
+                              "賽制：${legal.status}",
+                              ...legalityLines,
+                            ].join("　·　"),
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey.shade700),
+                          ),
+                          if (legalityLines.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Text("點看完整清單",
+                                  style: TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.teal.shade700,
+                                      decoration: TextDecoration.underline)),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 const Divider(),
@@ -286,6 +304,73 @@ class DeckListScreen extends StatelessWidget {
                         })),
               ]),
             ));
+  }
+
+  // 合法性摘要點下去 → 完整清單（禁用卡 / 違反規則 / 非標準卡），不截斷。
+  void _showLegalityDetail(BuildContext context, DeckLegality legal) {
+    Widget section(String title, List<String> items, {Color? color}) {
+      if (items.isEmpty) return const SizedBox.shrink();
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: color ?? Colors.black87)),
+            const SizedBox(height: 4),
+            ...items.map((t) => Padding(
+                  padding: const EdgeInsets.only(left: 8, bottom: 2),
+                  child: Text("• $t",
+                      style: TextStyle(fontSize: 13, color: color)),
+                )),
+          ],
+        ),
+      );
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text("合法性詳情（${legal.status}）"),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (legal.cardCount != 60)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Text(
+                        legal.cardCount < 60
+                            ? "尚缺 ${60 - legal.cardCount} 張"
+                            : "多了 ${legal.cardCount - 60} 張",
+                        style: const TextStyle(fontSize: 13)),
+                  ),
+                if (!legal.hasBasic && legal.cardCount > 0)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8),
+                    child: Text("沒有基礎寶可夢", style: TextStyle(fontSize: 13)),
+                  ),
+                section("禁用卡（${legal.bannedNames.length}）",
+                    legal.bannedNames, color: Colors.red.shade700),
+                section("違反追加規則", legal.ruleViolations,
+                    color: Colors.orange.shade800),
+                section("非標準卡（${legal.nonStandardCount} 張）",
+                    legal.nonStandardNames),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: const Text("關閉")),
+        ],
+      ),
+    );
   }
 
   void _confirmDelete(BuildContext context, DeckProvider provider, Deck deck) {
